@@ -1,0 +1,5 @@
+-- Add consent tracking fields to users table
+ALTER TABLE users ADD COLUMN IF NOT EXISTS data_consent BOOLEAN DEFAULT FALSE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS data_consent_date TIMESTAMP;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS terms_accepted BOOLEAN DEFAULT FALSE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS terms_accepted_date TIMESTAMP;

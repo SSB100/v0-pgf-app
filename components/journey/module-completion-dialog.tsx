@@ -1,0 +1,79 @@
+"use client"
+
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { CheckCircle2, Sprout, ArrowRight } from "lucide-react"
+import { useRouter } from "next/navigation"
+
+interface ModuleCompletionDialogProps {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  moduleTitle: string
+  keyLearning: string
+  creditsAwarded: number
+  nextModule?: {
+    title: string
+    slug: string
+  }
+}
+
+export function ModuleCompletionDialog({
+  open,
+  onOpenChange,
+  moduleTitle,
+  keyLearning,
+  creditsAwarded,
+  nextModule,
+}: ModuleCompletionDialogProps) {
+  const router = useRouter()
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <div className="mx-auto w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mb-4">
+            <CheckCircle2 className="w-10 h-10 text-green-600" />
+          </div>
+          <DialogTitle className="text-2xl text-center">Module Complete!</DialogTitle>
+          <DialogDescription className="text-center">You've completed {moduleTitle}</DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4 py-4">
+          <div className="bg-secondary/50 rounded-lg p-4">
+            <h4 className="font-semibold text-sm mb-2">What You Learned</h4>
+            <p className="text-sm text-muted-foreground">{keyLearning}</p>
+          </div>
+
+          <div className="bg-primary/10 rounded-lg p-4 flex items-center gap-3">
+            <Sprout className="w-8 h-8 text-primary flex-shrink-0" />
+            <div>
+              <p className="font-semibold text-sm">
+                +{creditsAwarded} Growth Credit{creditsAwarded > 1 ? "s" : ""}
+              </p>
+              <p className="text-xs text-muted-foreground">Added to your tree progress</p>
+            </div>
+          </div>
+
+          {nextModule && (
+            <div className="border-t pt-4">
+              <h4 className="font-semibold text-sm mb-2">Next Step</h4>
+              <p className="text-sm text-muted-foreground mb-3">Continue to: {nextModule.title}</p>
+              <Button
+                onClick={() => {
+                  onOpenChange(false)
+                  router.push("/journey")
+                }}
+                className="w-full"
+              >
+                Back to Journey
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+export default ModuleCompletionDialog
