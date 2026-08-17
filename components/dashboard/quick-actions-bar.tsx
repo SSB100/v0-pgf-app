@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
 import CommunityButton from "./community-button"
+import { Share2 } from "lucide-react"
 
 interface QuickActionsBarProps {
   userId: string
@@ -118,6 +119,15 @@ export default function QuickActionsBar({ userId }: QuickActionsBarProps) {
           />
         </svg>
         Browse Skills
+      </Button>
+
+      <Button
+        onClick={() => router.push("/share-journey")}
+        variant="outline"
+        className="w-full gap-2 border-primary/30 font-medium hover:border-primary hover:bg-primary/10 sm:w-auto"
+      >
+        <Share2 data-icon="inline-start" />
+        Share Journey
       </Button>
 
       <CommunityButton userId={userId} />
