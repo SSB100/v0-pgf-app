@@ -88,10 +88,6 @@ export default function WeeklyOverviewCard({ checkins, journeyTypes = [] }: Week
   const avgMood = validCheckins.length ? validCheckins.reduce((sum, checkin) => sum + checkin.mood_rating, 0) / validCheckins.length : 0
   const avgUrges = validCheckins.length ? validCheckins.reduce((sum, checkin) => sum + checkin.urge_strength, 0) / validCheckins.length : 0
 
-  const allEmotions = validCheckins.flatMap((checkin) => checkin.emotions_felt ?? [])
-  const emotionCounts: Record<string, number> = {}
-  allEmotions.forEach((emotion) => { emotionCounts[emotion] = (emotionCounts[emotion] ?? 0) + 1 })
-  const topEmotions = Object.entries(emotionCounts).sort(([, a], [, b]) => b - a).slice(0, 3)
   const positiveRatio = validCheckins.length ? validCheckins.filter((checkin) => checkin.good_things?.trim()).length / validCheckins.length : 0
   const positiveDays = chartData.filter((day) => day.delta !== null && day.delta >= 2)
   const harderDays = chartData.filter((day) => day.delta !== null && day.delta <= -2)
@@ -139,7 +135,6 @@ export default function WeeklyOverviewCard({ checkins, journeyTypes = [] }: Week
 
         {cleanDays > 0 && <div className="flex items-center justify-between rounded-lg border border-emerald-500/20 bg-emerald-500/10 p-2.5"><div><div className="text-xs font-medium text-emerald-700">{cleanLabel} This Week</div><div className="text-2xl font-bold text-emerald-600">{cleanDays}</div></div><Heart className="size-7 text-emerald-500" /> </div>}
         {behaviorDays > 0 && <div className="rounded-lg border border-primary/20 bg-primary/10 p-2.5 text-xs text-muted-foreground"><span className="font-semibold text-foreground">{behaviorDays === 1 ? "One challenging day" : `${behaviorDays} challenging days`} with {challengingLabel}.</span> Setbacks are part of recovery. What matters is that you kept checking in.</div>}
-        {topEmotions.length > 0 && <div className="rounded-lg border border-border bg-muted/30 p-2.5"><div className="mb-1 text-xs font-medium text-muted-foreground">Top emotions</div><div className="flex flex-wrap gap-x-4 gap-y-1 text-xs">{topEmotions.map(([emotion, count]) => <span key={emotion} className="capitalize text-foreground">{emotion} <span className="text-muted-foreground">{count}x</span></span>)}</div></div>}
         <div className="flex flex-wrap gap-2 text-[11px] text-muted-foreground"><span>Average mood {avgMood.toFixed(1)}</span><span>Average urges {avgUrges.toFixed(1)}</span>{positiveRatio > 0.7 && <span className="font-medium text-emerald-600">Strong positive mindset</span>}{avgUrges > 7 && <span className="font-medium text-amber-600">Urges are high — review coping skills</span>}</div>
       </CardContent>
     </Card>
