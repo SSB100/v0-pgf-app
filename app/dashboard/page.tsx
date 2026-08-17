@@ -116,7 +116,7 @@ export default async function DashboardPage() {
       good_things,
       bad_things
     FROM daily_checkins
-    WHERE user_id = ${user.id} AND date >= CURRENT_DATE - INTERVAL '6 days'
+    WHERE user_id = ${user.id} AND date >= CURRENT_DATE - INTERVAL '6 days' AND date <= CURRENT_DATE
     ORDER BY date ASC
   `
 
@@ -142,7 +142,14 @@ export default async function DashboardPage() {
   const values = valuesResult || []
   const allProblems = problemsResult || []
   const recentSkills = skillsResult || []
-  const weeklyCheckins = weeklyCheckinsResult || []
+  // The Postgres `date` column comes back as a Date object from the driver. Normalize it to a
+  // plain "YYYY-MM-DD" string here on the server so the client component (which does string-based
+  // date-key comparisons) always receives a consistent, serializable value instead of a Date
+  // instance that silently fails those comparisons.
+  const weeklyCheckins = (weeklyCheckinsResult || []).map((checkin: any) => ({
+    ...checkin,
+    date: checkin.date instanceof Date ? checkin.date.toISOString().slice(0, 10) : String(checkin.date).slice(0, 10),
+  }))
   const todayCheckIn = todayCheckInResult[0] || null
 
   // Parse journey types from profile
@@ -326,7 +333,7 @@ export default async function DashboardPage() {
         )}
 
         {/* Pass journeyTypes to WeeklyOverviewCard for dynamic behavior tracking */}
-        <WeeklyOverviewCard checkins={weeklyCheckins} journeyTypes={journeyTypes} />
+        <WeeklyOverviewCard checkins={weeklyCheckins} journeyTypes={journeyTypes} accountCreatedAt={user.created_at} />
 
         <CoreValuesCard values={values} />
 
