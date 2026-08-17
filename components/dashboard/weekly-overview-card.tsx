@@ -1,7 +1,7 @@
 "use client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from "recharts"
+import { LineChart, Line, XAxis, YAxis, CartesianGrid } from "recharts"
 import { AlertCircle, Smile, Frown, TrendingUp, Heart } from "lucide-react"
 
 interface CheckinData {
@@ -63,67 +63,28 @@ export default function WeeklyOverviewCard({ checkins, journeyTypes = [] }: Week
     }
   }
 
-  const interpolateMissingDays = (data: any[]) => {
-    const result = [...data]
-
-    for (let i = 0; i < result.length; i++) {
-      if (!result[i].hasData) {
-        let prevIndex = i - 1
-        while (prevIndex >= 0 && !result[prevIndex].hasData) {
-          prevIndex--
-        }
-
-        let nextIndex = i + 1
-        while (nextIndex < result.length && !result[nextIndex].hasData) {
-          nextIndex++
-        }
-
-        if (prevIndex >= 0 && nextIndex < result.length) {
-          const prevData = result[prevIndex]
-          const nextData = result[nextIndex]
-          const gap = nextIndex - prevIndex
-          const position = i - prevIndex
-
-          result[i].mood =
-            prevData.mood !== null && nextData.mood !== null
-              ? Math.round((prevData.mood * (gap - position) + nextData.mood * position) / gap)
-              : null
-
-          result[i].overall =
-            prevData.overall !== null && nextData.overall !== null
-              ? Math.round((prevData.overall * (gap - position) + nextData.overall * position) / gap)
-              : null
-
-          result[i].urges =
-            prevData.urges !== null && nextData.urges !== null
-              ? Math.round((prevData.urges * (gap - position) + nextData.urges * position) / gap)
-              : null
-
-          result[i].isInterpolated = true
-        }
-      }
-    }
-
-    return result
-  }
-
   const getWeekDays = () => {
     const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+    const toDateKey = (date: Date) => {
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, "0")
+      const day = String(date.getDate()).padStart(2, "0")
+      return `${year}-${month}-${day}`
+    }
     const today = new Date()
     today.setHours(0, 0, 0, 0)
 
     const checkinMap = new Map(
       checkins.map((c) => {
-        const date = new Date(c.date)
-        date.setHours(0, 0, 0, 0)
-        return [date.toISOString().split("T")[0], c]
+        const date = new Date(`${c.date}T00:00:00`)
+        return [toDateKey(date), c]
       }),
     )
 
     const rawData = Array.from({ length: 7 }, (_, index) => {
       const date = new Date(today)
       date.setDate(today.getDate() - (6 - index))
-      const dateKey = date.toISOString().split("T")[0]
+      const dateKey = toDateKey(date)
       const checkin = checkinMap.get(dateKey)
       const dayIndex = date.getDay()
 
@@ -138,7 +99,7 @@ export default function WeeklyOverviewCard({ checkins, journeyTypes = [] }: Week
       }
     })
 
-    return interpolateMissingDays(rawData)
+    return rawData
   }
 
   const chartData = getWeekDays()
@@ -182,11 +143,12 @@ export default function WeeklyOverviewCard({ checkins, journeyTypes = [] }: Week
   ).length
   const cleanDays = validCheckins.length - behaviorDays
 
-  const daysWithData = chartData.filter((d) => d.hasData && d.mood !== null)
+  const moodDays = chartData.filter((d) => d.hasData && d.mood !== null)
+  const urgeDays = chartData.filter((d) => d.hasData && d.urges !== null)
   const moodImprovement =
-    daysWithData.length >= 2 ? daysWithData[daysWithData.length - 1].mood! - daysWithData[0].mood! : 0
+    moodDays.length >= 2 ? moodDays[moodDays.length - 1].mood! - moodDays[0].mood! : 0
   const urgeImprovement =
-    daysWithData.length >= 2 ? daysWithData[0].urges! - daysWithData[daysWithData.length - 1].urges! : 0
+    urgeDays.length >= 2 ? urgeDays[0].urges! - urgeDays[urgeDays.length - 1].urges! : 0
 
   const allEmotions = validCheckins
     .filter((c) => c.emotions_felt && c.emotions_felt.length > 0)
@@ -218,7 +180,7 @@ export default function WeeklyOverviewCard({ checkins, journeyTypes = [] }: Week
           <span className="text-xs font-normal text-muted-foreground ml-auto">{completedDays}/7 days</span>
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4 pb-3">
+      <CardContent className="space-y-3 pb-3">
         {missingDays > 0 && missingDays < 7 && (
           <div className="bg-gradient-to-br from-blue-500/10 to-indigo-500/10 border-2 border-blue-500/30 rounded-lg p-3">
             <div className="flex items-start gap-2">
@@ -276,10 +238,9 @@ export default function WeeklyOverviewCard({ checkins, journeyTypes = [] }: Week
               mood: { label: "Mood", color: "hsl(217, 91%, 60%)" },
               overall: { label: "Overall", color: "hsl(142, 71%, 45%)" },
             }}
-            className="h-[120px] w-full"
+            className="h-[104px] w-full"
           >
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData}>
+            <LineChart data={chartData} margin={{ top: 4, right: 8, left: -18, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
                 <XAxis
                   dataKey="day"
@@ -315,7 +276,6 @@ export default function WeeklyOverviewCard({ checkins, journeyTypes = [] }: Week
                   connectNulls={false}
                 />
               </LineChart>
-            </ResponsiveContainer>
           </ChartContainer>
           {moodImprovement > 1 && (
             <p className="text-xs text-green-600 flex items-center gap-1">
@@ -343,10 +303,9 @@ export default function WeeklyOverviewCard({ checkins, journeyTypes = [] }: Week
             config={{
               urges: { label: "Urge Strength", color: "hsl(25, 95%, 53%)" },
             }}
-            className="h-[100px] w-full"
+            className="h-[88px] w-full"
           >
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData}>
+            <LineChart data={chartData} margin={{ top: 4, right: 8, left: -18, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
                 <XAxis
                   dataKey="day"
@@ -373,7 +332,6 @@ export default function WeeklyOverviewCard({ checkins, journeyTypes = [] }: Week
                   connectNulls={false}
                 />
               </LineChart>
-            </ResponsiveContainer>
           </ChartContainer>
           {urgeImprovement > 1 && (
             <p className="text-xs text-green-600 flex items-center gap-1">
