@@ -6,9 +6,9 @@ import { Card, CardContent } from "@/components/ui/card"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 
-interface SkillFeedbackProps {
-  skillSlug: string
-}
+type SkillFeedbackProps =
+  | { skillSlug: string; skillName?: never }
+  | { skillName: string; skillSlug?: never }
 
 interface SkillFeedbackResponse {
   message?: string
@@ -17,7 +17,22 @@ interface SkillFeedbackResponse {
   suggestedSkill?: { slug: string; name: string } | null
 }
 
-export function SkillFeedback({ skillSlug }: SkillFeedbackProps) {
+const LEGACY_SKILL_NAME_TO_SLUG: Record<string, string> = {
+  "Distress Tolerance": "distress-tolerance",
+  IMPROVE: "improve",
+  "DEAR MAN": "interpersonal/dear-man",
+  FAST: "interpersonal/fast",
+  GIVE: "interpersonal/give",
+  "Opposite Action": "opposite-action",
+  "Reality Acceptance": "reality-acceptance",
+  Willingness: "willingness",
+}
+
+export function SkillFeedback(props: SkillFeedbackProps) {
+  const skillSlug = "skillSlug" in props
+    ? props.skillSlug
+    : LEGACY_SKILL_NAME_TO_SLUG[props.skillName] || props.skillName.toLowerCase().replace(/\s+/g, "-")
+
   const [submitted, setSubmitted] = useState(false)
   const [loading, setLoading] = useState(false)
   const [response, setResponse] = useState<SkillFeedbackResponse | null>(null)
