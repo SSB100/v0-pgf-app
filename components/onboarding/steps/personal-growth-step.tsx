@@ -14,34 +14,34 @@ interface PersonalGrowthStepProps {
 }
 
 const GROWTH_GOALS = [
-  "Build better habits",
-  "Manage stress better",
+  "Build helpful habits",
+  "Manage stress",
   "Improve emotional awareness",
-  "Increase self-confidence",
-  "Better work-life balance",
+  "Build confidence",
+  "Improve work-life balance",
   "Improve relationships",
-  "Break procrastination",
-  "Develop resilience",
-  "Find more purpose",
-  "Increase mindfulness",
+  "Work with procrastination",
+  "Build resilience",
+  "Explore purpose or direction",
+  "Practise mindfulness",
 ]
 
 const MOTIVATION_LEVEL = [
-  { value: "very_high", label: "Very motivated - ready to commit fully" },
-  { value: "high", label: "Motivated - willing to put in the work" },
-  { value: "moderate", label: "Moderately motivated - exploring options" },
-  { value: "building", label: "Building motivation - need some guidance" },
+  { value: "very_high", label: "I feel ready to make changes now" },
+  { value: "high", label: "I feel fairly motivated" },
+  { value: "moderate", label: "I'm interested and still exploring" },
+  { value: "building", label: "I'm not very motivated yet, but I'm open to support" },
 ]
 
 const CHALLENGES = [
   "Staying consistent",
-  "Lack of time",
+  "Limited time or energy",
   "Self-doubt",
   "Unclear direction",
-  "Past failures",
-  "Overwhelm",
+  "Previous attempts that didn't go as planned",
+  "Feeling overwhelmed",
   "Perfectionism",
-  "Fear of change",
+  "Uncertainty about change",
 ]
 
 export default function PersonalGrowthStep({ data, updateData, onNext, onBack }: PersonalGrowthStepProps) {
@@ -58,11 +58,7 @@ export default function PersonalGrowthStep({ data, updateData, onNext, onBack }:
   }
 
   function handleNext() {
-    updateData({
-      growthGoals,
-      growthMotivation: motivation,
-      growthChallenges: challenges,
-    })
+    updateData({ growthGoals, growthMotivation: motivation, growthChallenges: challenges })
     onNext()
   }
 
@@ -71,29 +67,18 @@ export default function PersonalGrowthStep({ data, updateData, onNext, onBack }:
   return (
     <Card className="soft-shadow-lg border-border/50">
       <CardHeader>
-        <CardTitle className="text-2xl text-foreground">Your Personal Growth Journey</CardTitle>
+        <CardTitle className="text-2xl text-foreground">Personal Growth</CardTitle>
         <p className="text-muted-foreground text-pretty">
-          Tell us about your goals for personal development so we can support your growth.
+          Choose the areas you would like to work on. Your motivation can change from day to day, so there is no "right" answer here.
         </p>
       </CardHeader>
 
       <CardContent className="space-y-4">
         <div className="space-y-2">
-          <Label className="text-lg font-semibold text-foreground">
-            What areas do you want to grow in? (select all that apply)
-          </Label>
+          <Label className="text-lg font-semibold text-foreground">What would you like to work on? (select all that apply)</Label>
           <div className="grid grid-cols-2 gap-1.5">
             {GROWTH_GOALS.map((goal) => (
-              <button
-                key={goal}
-                type="button"
-                onClick={() => toggleGoal(goal)}
-                className={`px-3 py-2 rounded-lg border-2 text-sm font-medium transition-all ${
-                  growthGoals.includes(goal)
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "border-border bg-card text-foreground hover:border-primary/50"
-                }`}
-              >
+              <button key={goal} type="button" onClick={() => toggleGoal(goal)} className={`px-3 py-2 rounded-lg border-2 text-sm font-medium transition-all ${growthGoals.includes(goal) ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-foreground hover:border-primary/50"}`}>
                 {goal}
               </button>
             ))}
@@ -101,19 +86,10 @@ export default function PersonalGrowthStep({ data, updateData, onNext, onBack }:
         </div>
 
         <div className="space-y-2">
-          <Label             className="text-lg font-semibold text-foreground">How motivated do you feel right now?</Label>
+          <Label className="text-lg font-semibold text-foreground">How motivated do you feel right now?</Label>
           <div className="space-y-1.5">
             {MOTIVATION_LEVEL.map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() => setMotivation(option.value)}
-                className={`w-full px-3 py-2 rounded-lg border-2 text-left text-sm font-medium transition-all ${
-                  motivation === option.value
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "border-border bg-card text-foreground hover:border-primary/50"
-                }`}
-              >
+              <button key={option.value} type="button" onClick={() => setMotivation(option.value)} className={`w-full px-3 py-2 rounded-lg border-2 text-left text-sm font-medium transition-all ${motivation === option.value ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-foreground hover:border-primary/50"}`}>
                 {option.label}
               </button>
             ))}
@@ -121,21 +97,10 @@ export default function PersonalGrowthStep({ data, updateData, onNext, onBack }:
         </div>
 
         <div className="space-y-2">
-          <Label             className="text-lg font-semibold text-foreground">
-            What challenges typically hold you back? <span className="text-xs text-muted-foreground">(Optional)</span>
-          </Label>
+          <Label className="text-lg font-semibold text-foreground">What tends to make change harder for you? <span className="text-xs text-muted-foreground">(Optional)</span></Label>
           <div className="grid grid-cols-2 gap-1.5">
             {CHALLENGES.map((challenge) => (
-              <button
-                key={challenge}
-                type="button"
-                onClick={() => toggleChallenge(challenge)}
-                className={`px-3 py-2 rounded-lg border-2 text-sm font-medium transition-all ${
-                  challenges.includes(challenge)
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "border-border bg-card text-foreground hover:border-primary/50"
-                }`}
-              >
+              <button key={challenge} type="button" onClick={() => toggleChallenge(challenge)} className={`px-3 py-2 rounded-lg border-2 text-sm font-medium transition-all ${challenges.includes(challenge) ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-foreground hover:border-primary/50"}`}>
                 {challenge}
               </button>
             ))}
@@ -144,14 +109,11 @@ export default function PersonalGrowthStep({ data, updateData, onNext, onBack }:
 
         <div className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/20 rounded-lg p-4">
           <p className="text-sm text-foreground text-pretty">
-            Personal growth is a lifelong journey. The skills and insights you'll gain here will help you become the
-            best version of yourself. Every small step counts.
+            You can change direction, take breaks and revisit these goals later. Waypoint uses them to personalise your experience; they are not a measure of success or failure.
           </p>
         </div>
 
-        <div className="flex gap-3 pt-2">
-          <StepButtonFooter onBack={onBack} onNext={handleNext} disabled={!canContinue} />
-        </div>
+        <div className="flex gap-3 pt-2"><StepButtonFooter onBack={onBack} onNext={handleNext} disabled={!canContinue} /></div>
       </CardContent>
     </Card>
   )
