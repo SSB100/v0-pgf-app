@@ -162,7 +162,7 @@ export default function SignUpForm() {
             <Checkbox id="dataConsent" checked={dataConsent} onCheckedChange={(checked) => setDataConsent(checked === true)} disabled={loading} className="mt-1" />
             <div className="flex-1">
               <label htmlFor="dataConsent" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer">
-                I am interested in allowing de-identified Waypoint activity data to contribute to future research
+                I am interested in contributing Waypoint activity data to future research, subject to a separate approved consent process
               </label>
               <Dialog>
                 <DialogTrigger asChild>
@@ -181,7 +181,7 @@ export default function SignUpForm() {
                         Any formal research project would need its own approved participant information, consent process, data rules and governance before your information could be used under that study.
                       </p>
                       <p>
-                        Waypoint's research and privacy processes are still being developed. We will not describe data as anonymous, de-identified or excluded from a research dataset unless the implemented process supports that claim.
+                        The way information is de-identified, accessed, retained and used would need to be defined in that study's approved documents and systems before any research use occurs.
                       </p>
                     </DialogDescription>
                   </DialogHeader>
