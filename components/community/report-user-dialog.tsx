@@ -25,8 +25,7 @@ interface ReportUserDialogProps {
   onClose: () => void
   reportedAlias: string
   groupId: string
-  reportedUserId: string
-  messageId?: string
+  messageId: string
 }
 
 const REPORT_REASONS = [
@@ -42,7 +41,6 @@ export default function ReportUserDialog({
   onClose,
   reportedAlias,
   groupId,
-  reportedUserId,
   messageId,
 }: ReportUserDialogProps) {
   const [reason, setReason] = useState("")
@@ -66,8 +64,7 @@ export default function ReportUserDialog({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           groupId,
-          reportedUserId,
-          messageId: messageId || null,
+          messageId,
           reason,
           description: description || null,
         }),
@@ -111,7 +108,7 @@ export default function ReportUserDialog({
             Report a community concern
           </DialogTitle>
           <DialogDescription>
-            Record a concern about content posted under the alias {reportedAlias}. Reports are not an emergency-support channel.
+            Record a concern about a message posted under the alias {reportedAlias}. Reports are not an emergency-support channel.
           </DialogDescription>
         </DialogHeader>
 
@@ -151,9 +148,7 @@ export default function ReportUserDialog({
               <p className="text-xs text-muted-foreground text-right">{description.length}/500</p>
             </div>
 
-            <p className="text-xs text-muted-foreground">
-              Do not use this form for an emergency or to request urgent clinical support.
-            </p>
+            <p className="text-xs text-muted-foreground">Do not use this form for an emergency or to request urgent clinical support.</p>
 
             {error && <div className="text-sm text-destructive bg-destructive/10 p-2 rounded">{error}</div>}
           </div>
