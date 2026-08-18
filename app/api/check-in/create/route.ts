@@ -1,75 +1,95 @@
 import { NextResponse } from "next/server"
-import { neon } from "@neondatabase/serverless"
+import { sql } from "@/lib/db"
 import { getUserFromSession } from "@/lib/session"
 
-const sql = neon(process.env.NEON_DATABASE_URL!)
+const MAX_REFLECTION_LENGTH = 4000
+const MAX_LIST_ITEMS = 30
+
+function isIntegerInRange(value: unknown, min: number, max: number): value is number {
+  return Number.isInteger(value) && Number(value) >= min && Number(value) <= max
+}
+
+function cleanOptionalText(value: unknown) {
+  if (typeof value !== "string") return null
+  const trimmed = value.trim()
+  if (!trimmed) return null
+  return trimmed.slice(0, MAX_REFLECTION_LENGTH)
+}
+
+function cleanStringList(value: unknown) {
+  if (!Array.isArray(value)) return []
+  return value
+    .filter((item): item is string => typeof item === "string")
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .slice(0, MAX_LIST_ITEMS)
+}
 
 export async function POST(request: Request) {
   try {
+    const user = await getUserFromSession()
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
     const body = await request.json()
     const {
-      userId,
       moodRating,
       overallRating,
       urgeStrength,
-      behaviorOccurred,
       gamblingOccurred,
       alcoholOccurred,
       substanceOccurred,
       selfHarmThoughts,
       selfHarmActions,
-      skillsUsed,
-      badThings,
-      goodThings,
-      emotionsFelt,
-      strongestEmotion,
-      emotionContext,
     } = body
 
-    if (!userId) {
-      return NextResponse.json({ error: "User ID is required" }, { status: 400 })
+    if (!isIntegerInRange(moodRating, 1, 10)) {
+      return NextResponse.json({ error: "Mood rating must be a whole number from 1 to 10" }, { status: 400 })
     }
 
-    // Verify user is authenticated by checking session
-    const user = await getUserFromSession()
-    if (!user || user.id !== userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    if (!isIntegerInRange(overallRating, 1, 10)) {
+      return NextResponse.json({ error: "Overall rating must be a whole number from 1 to 10" }, { status: 400 })
+    }
+
+    if (!isIntegerInRange(urgeStrength, 0, 10)) {
+      return NextResponse.json({ error: "Urge strength must be a whole number from 0 to 10" }, { status: 400 })
+    }
+
+    const booleanFields = [gamblingOccurred, alcoholOccurred, substanceOccurred, selfHarmThoughts, selfHarmActions]
+    if (booleanFields.some((value) => typeof value !== "boolean")) {
+      return NextResponse.json({ error: "Invalid check-in response" }, { status: 400 })
+    }
+
+    const skillsUsed = cleanStringList(body.skillsUsed)
+    const emotionsFelt = cleanStringList(body.emotionsFelt)
+    const strongestEmotion = cleanOptionalText(body.strongestEmotion)
+
+    if (strongestEmotion && emotionsFelt.length > 0 && !emotionsFelt.includes(strongestEmotion)) {
+      return NextResponse.json({ error: "Strongest emotion must be one of the emotions you selected" }, { status: 400 })
     }
 
     const existingCheckIn = await sql`
-      SELECT id, created_at FROM daily_checkins
-      WHERE user_id = ${userId}::uuid AND date = CURRENT_DATE
+      SELECT id
+      FROM daily_checkins
+      WHERE user_id = ${user.id}::uuid AND date = CURRENT_DATE
       LIMIT 1
     `
 
-    if (existingCheckIn && existingCheckIn.length > 0) {
-      console.log("[v0] Check-in already exists for today for user", userId)
+    if (existingCheckIn.length > 0) {
       return NextResponse.json(
         {
           error: "You've already completed your daily check-in today",
-          message: "You can only earn level points once per day from check-ins",
+          message: "One check-in can be recorded per day in the current MVP",
         },
-        { status: 400 },
+        { status: 409 },
       )
     }
 
-    const occurred =
-      behaviorOccurred !== undefined
-        ? behaviorOccurred
-        : gamblingOccurred || alcoholOccurred || substanceOccurred || selfHarmActions || false
-
-    if (moodRating === undefined || moodRating === null) {
-      return NextResponse.json({ error: "Mood rating is required" }, { status: 400 })
-    }
-
-    if (urgeStrength === undefined || urgeStrength === null) {
-      return NextResponse.json({ error: "Urge strength is required" }, { status: 400 })
-    }
+    const occurred = gamblingOccurred || alcoholOccurred || substanceOccurred || selfHarmActions
 
     const userProfile = await sql`
       SELECT check_in_streak, last_check_in_date, longest_streak, level_credits, total_points_earned
       FROM user_profiles
-      WHERE user_id = ${userId}::uuid
+      WHERE user_id = ${user.id}::uuid
     `
 
     const currentStreak = userProfile[0]?.check_in_streak || 0
@@ -88,36 +108,32 @@ export async function POST(request: Request) {
       todayDay.setHours(0, 0, 0, 0)
 
       const daysDifference = Math.floor((todayDay.getTime() - lastCheckInDay.getTime()) / (1000 * 60 * 60 * 24))
-
-      if (daysDifference === 0) {
-        newStreak = currentStreak
-      } else if (daysDifference === 1) {
-        newStreak = currentStreak + 1
-      } else if (daysDifference > 1) {
+      if (daysDifference === 0) newStreak = currentStreak
+      else if (daysDifference === 1) newStreak = currentStreak + 1
+      else if (daysDifference > 1) {
         newStreak = 1
         streakBroken = currentStreak > 0
       }
     }
 
     const newLongestStreak = Math.max(longestStreak, newStreak)
-
     const newLevelCredits = currentLevelCredits + 1
     const newTotalPoints = totalPointsEarned + 1
 
     await sql`
       INSERT INTO daily_checkins (
-        user_id, 
-        date, 
+        user_id,
+        date,
         mood_rating,
         overall_rating,
-        urge_strength, 
+        urge_strength,
         behavior_occurred,
         gambling_occurred,
         alcohol_occurred,
         substance_occurred,
         self_harm_thoughts,
         self_harm_actions,
-        skills_used, 
+        skills_used,
         bad_things,
         good_things,
         emotions_felt,
@@ -125,61 +141,57 @@ export async function POST(request: Request) {
         emotion_context
       )
       VALUES (
-        ${userId}::uuid,
+        ${user.id}::uuid,
         CURRENT_DATE,
         ${moodRating},
-        ${overallRating || null},
+        ${overallRating},
         ${urgeStrength},
         ${occurred},
-        ${gamblingOccurred || false},
-        ${alcoholOccurred || false},
-        ${substanceOccurred || false},
-        ${selfHarmThoughts || false},
-        ${selfHarmActions || false},
+        ${gamblingOccurred},
+        ${alcoholOccurred},
+        ${substanceOccurred},
+        ${selfHarmThoughts},
+        ${selfHarmActions},
         ${JSON.stringify(skillsUsed)}::jsonb,
-        ${badThings || null},
-        ${goodThings || null},
-        ${emotionsFelt && emotionsFelt.length > 0 ? emotionsFelt : null},
-        ${strongestEmotion || null},
-        ${emotionContext || null}
+        ${cleanOptionalText(body.badThings)},
+        ${cleanOptionalText(body.goodThings)},
+        ${emotionsFelt.length > 0 ? emotionsFelt : null},
+        ${strongestEmotion},
+        ${cleanOptionalText(body.emotionContext)}
       )
     `
 
-    if (occurred) {
-      const problemTypes: string[] = []
-      if (gamblingOccurred) problemTypes.push("gambling")
-      if (alcoholOccurred) problemTypes.push("alcohol")
-      if (substanceOccurred) problemTypes.push("substances")
-      if (selfHarmActions) problemTypes.push("mental_health")
+    const problemTypes: string[] = []
+    if (gamblingOccurred) problemTypes.push("gambling")
+    if (alcoholOccurred) problemTypes.push("alcohol")
+    if (substanceOccurred) problemTypes.push("substances")
+    if (selfHarmActions) problemTypes.push("mental_health")
 
-      for (const problemType of problemTypes) {
-        await sql`
-          UPDATE problem_areas
-          SET last_occurrence_date = CURRENT_DATE,
-              last_bet_date = CASE WHEN ${problemType} = 'gambling' THEN CURRENT_DATE ELSE last_bet_date END
-          WHERE user_id = ${userId}::uuid AND problem_type = ${problemType}
-        `
-      }
+    for (const problemType of problemTypes) {
+      await sql`
+        UPDATE problem_areas
+        SET last_occurrence_date = CURRENT_DATE,
+            last_bet_date = CASE WHEN ${problemType} = 'gambling' THEN CURRENT_DATE ELSE last_bet_date END
+        WHERE user_id = ${user.id}::uuid AND problem_type = ${problemType}
+      `
     }
 
     await sql`
       UPDATE user_profiles
-      SET 
+      SET
         check_in_streak = ${newStreak},
         last_check_in_date = CURRENT_TIMESTAMP,
         longest_streak = ${newLongestStreak},
         level_credits = ${newLevelCredits},
         total_points_earned = ${newTotalPoints}
-      WHERE user_id = ${userId}::uuid
+      WHERE user_id = ${user.id}::uuid
     `
 
-    if (skillsUsed && skillsUsed.length > 0) {
-      for (const skill of skillsUsed) {
-        await sql`
-          INSERT INTO skills_practice (user_id, skill_name, skill_category, practiced_at)
-          VALUES (${userId}::uuid, ${skill}, 'DBT', CURRENT_TIMESTAMP)
-        `
-      }
+    for (const skill of skillsUsed) {
+      await sql`
+        INSERT INTO skills_practice (user_id, skill_name, skill_category, practiced_at)
+        VALUES (${user.id}::uuid, ${skill}, 'self-reported', CURRENT_TIMESTAMP)
+      `
     }
 
     return NextResponse.json({
@@ -191,12 +203,6 @@ export async function POST(request: Request) {
     })
   } catch (error) {
     console.error("[v0] Check-in creation error:", error)
-    return NextResponse.json(
-      {
-        error: "Failed to create check-in",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 },
-    )
+    return NextResponse.json({ error: "Failed to create check-in" }, { status: 500 })
   }
 }
