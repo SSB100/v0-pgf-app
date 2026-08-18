@@ -1,14 +1,14 @@
--- Create table to track which skills users have read and found helpful
+-- Create table to track which skills users have read and found helpful.
+-- users.id is UUID, so the foreign key must use UUID as well.
 CREATE TABLE IF NOT EXISTS skills_completed (
-  id SERIAL PRIMARY KEY,
-  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   skill_slug VARCHAR(100) NOT NULL,
   was_helpful BOOLEAN NOT NULL,
   completed_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   UNIQUE(user_id, skill_slug)
 );
 
--- Add index for faster lookups
 CREATE INDEX IF NOT EXISTS idx_skills_completed_user ON skills_completed(user_id);
 
-COMMENT ON TABLE skills_completed IS 'Tracks which skills users have completed and whether they found them helpful';
+COMMENT ON TABLE skills_completed IS 'Tracks which Waypoint skills users have completed and whether they reported finding them helpful';
