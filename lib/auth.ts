@@ -1,3 +1,4 @@
+import { compare, hash } from "bcryptjs"
 import { sql } from "./db"
 
 export interface User {
@@ -12,7 +13,9 @@ export interface UserWithPassword extends User {
   password_hash: string
 }
 
-async function hashPassword(password: string): Promise<string> {
+const BCRYPT_ROUNDS = 12
+
+async function legacySha256(password: string): Promise<string> {
   const encoder = new TextEncoder()
   const data = encoder.encode(password)
   const hashBuffer = await crypto.subtle.digest("SHA-256", data)
@@ -20,12 +23,22 @@ async function hashPassword(password: string): Promise<string> {
   return hashArray.map((byte) => byte.toString(16).padStart(2, "0")).join("")
 }
 
-async function verifyPassword(password: string, hash: string): Promise<boolean> {
-  const passwordHash = await hashPassword(password)
-  return passwordHash === hash
+export function isLegacyPasswordHash(passwordHash: string): boolean {
+  return /^[a-f0-9]{64}$/i.test(passwordHash)
 }
 
-export { hashPassword, verifyPassword }
+export async function hashPassword(password: string): Promise<string> {
+  return hash(password, BCRYPT_ROUNDS)
+}
+
+export async function verifyPassword(password: string, passwordHash: string): Promise<boolean> {
+  if (isLegacyPasswordHash(passwordHash)) {
+    const legacyHash = await legacySha256(password)
+    return legacyHash === passwordHash
+  }
+
+  return compare(password, passwordHash)
+}
 
 export async function createUser(email: string, password: string, fullName?: string): Promise<User> {
   const passwordHash = await hashPassword(password)
