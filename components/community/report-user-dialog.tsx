@@ -117,7 +117,7 @@ export default function ReportUserDialog({
             <div className="text-3xl">✓</div>
             <p className="font-medium text-sm">Report recorded</p>
             <p className="text-xs text-muted-foreground">
-              The current MVP records reports for moderation work, but it does not guarantee continuous monitoring or a response time. If there is an immediate safety risk, use the Support page or emergency services instead.
+              The current MVP does not have a staffed real-time moderation service. Reports are stored for later review during development, so no response time is promised. If there is an immediate safety risk, use the Support page or emergency services instead.
             </p>
           </div>
         ) : (
