@@ -1,24 +1,19 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextResponse } from "next/server"
 import { sql } from "@/lib/db"
+import { getSession } from "@/lib/session"
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    const { searchParams } = new URL(request.url)
-    const userId = searchParams.get("userId")
-
-    if (!userId) {
-      return NextResponse.json({ error: "User ID is required" }, { status: 400 })
-    }
+    const user = await getSession()
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
     const result = await sql`
       SELECT id FROM daily_checkins
-      WHERE user_id = ${userId}::uuid AND date = CURRENT_DATE
+      WHERE user_id = ${user.id}::uuid AND date = CURRENT_DATE
       LIMIT 1
     `
 
-    const completed = result && result.length > 0
-
-    return NextResponse.json({ completed })
+    return NextResponse.json({ completed: result.length > 0 })
   } catch (error) {
     console.error("[v0] Error checking daily check-in:", error)
     return NextResponse.json({ error: "Failed to check check-in status" }, { status: 500 })
