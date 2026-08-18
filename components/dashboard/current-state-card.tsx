@@ -8,9 +8,7 @@ import { differenceInCalendarDays, getAotearoaDateKey, normaliseDateKey } from "
 interface CurrentStateCardProps {
   awareness: any
   problems: any
-  userId: string
   todayCheckIn?: any
-  journeyTypes?: string[]
 }
 
 export default function CurrentStateCard({ awareness, problems, todayCheckIn }: CurrentStateCardProps) {
