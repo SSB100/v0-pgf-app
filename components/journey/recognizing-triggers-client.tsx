@@ -1,15 +1,13 @@
 "use client"
 
-import { CardContent } from "@/components/ui/card"
-
-import { CardTitle } from "@/components/ui/card"
-
-import { CardHeader } from "@/components/ui/card"
-
-import { Card } from "@/components/ui/card"
-
-import { useState } from "react"
-import { Target } from "lucide-react" // Import Target component
+import { useMemo, useState } from "react"
+import Link from "next/link"
+import { ArrowLeft, Target } from "lucide-react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import ModuleCompletionDialog from "@/components/journey/module-completion-dialog"
 
 interface Props {
   journeyTypes: string[]
@@ -17,283 +15,121 @@ interface Props {
 }
 
 export default function RecognizingTriggersClient({ journeyTypes, problemAreas }: Props) {
-  const [triggerChain, setTriggerChain] = useState({
-    trigger: "",
-    feeling: "",
-    thoughts: "",
-    location: "",
-    nextTime: "",
-  })
-  const [isCompleting, setIsCompleting] = useState(false)
-  const [showDialog, setShowDialog] = useState(false)
-  const [errors, setErrors] = useState<Record<string, boolean>>({})
+  const [triggerChain, setTriggerChain] = useState({ situation: "", thoughts: "", feelings: "", urges: "", action: "" })
+  const [showCompletion, setShowCompletion] = useState(false)
+  const [saving, setSaving] = useState(false)
 
-  const behaviorTerm = journeyTypes.includes("gambling")
-    ? "gamble"
-    : journeyTypes.includes("alcohol")
-      ? "drink"
-      : journeyTypes.includes("substances")
-        ? "use"
-        : journeyTypes.includes("gaming")
-          ? "game excessively"
-          : "engage in unwanted behavior"
+  const onboardingTriggers = useMemo(() => {
+    const triggers = problemAreas.flatMap((area) => {
+      if (!area?.triggers) return []
+      if (Array.isArray(area.triggers)) return area.triggers
+      try {
+        const parsed = JSON.parse(area.triggers)
+        return Array.isArray(parsed) ? parsed : []
+      } catch {
+        return []
+      }
+    })
+    return Array.from(new Set(triggers.map((trigger) => String(trigger)))).slice(0, 8)
+  }, [problemAreas])
 
-  const behaviorNoun = journeyTypes.includes("gambling")
+  const focusLabel = journeyTypes.includes("gambling")
     ? "gambling"
     : journeyTypes.includes("alcohol")
-      ? "drinking"
+      ? "alcohol use"
       : journeyTypes.includes("substances")
         ? "substance use"
         : journeyTypes.includes("gaming")
-          ? "gaming"
-          : "this behavior"
+          ? "gaming or internet use"
+          : "a pattern you want to understand"
+
+  const isComplete = Object.values(triggerChain).every((value) => value.trim().length > 0)
+
+  async function saveActivity() {
+    if (!isComplete) return
+    setSaving(true)
+    try {
+      const response = await fetch("/api/journey/complete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ moduleSlug: "recognizing-triggers", moduleTitle: "Recognising Your Triggers" }),
+      })
+      if (!response.ok) throw new Error("Failed to record module activity")
+      setShowCompletion(true)
+    } catch (error) {
+      console.error("[v0] Error recording trigger module:", error)
+      alert("Unable to record this module right now. Please try again.")
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const updateChain = (key: keyof typeof triggerChain, value: string) => {
+    setTriggerChain((current) => ({ ...current, [key]: value }))
+  }
 
   return (
-    <div className="min-h-screen bg-background py-8">
-      <div className="max-w-4xl mx-auto px-4 space-y-6">
+    <div className="min-h-screen bg-background py-8 pb-24 lg:pb-8">
+      <div className="max-w-3xl mx-auto px-4 space-y-6">
+        <Link href="/journey"><Button variant="ghost" size="sm"><ArrowLeft className="w-4 h-4 mr-2" />Back to Journey</Button></Link>
+
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Target className="w-6 h-6 text-primary" />
-              What Are Triggers?
-            </CardTitle>
+            <CardTitle className="flex items-center gap-2"><Target className="w-5 h-5 text-primary" />Recognising Your Triggers</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-sm">
-              A <span className="font-semibold text-primary">trigger</span> is anything that increases your urge to{" "}
-              {behaviorTerm}. It could be a feeling, a place, a person, a thought, or even a time of day.
+          <CardContent className="space-y-5">
+            <p className="text-sm text-foreground/90">
+              In Waypoint, a trigger is a cue or situation that seems to make a thought, emotion or urge more likely or more intense for you. It is not necessarily the sole cause of what happens next, and having a trigger does not mean you are weak or destined to act on it.
             </p>
-            <p className="text-sm">
-              Understanding your personal triggers is one of the most important parts of recovery. When you know what
-              sets off your urges, you can prepare yourself and use skills before the urge gets too strong.
+
+            {onboardingTriggers.length > 0 && (
+              <div className="rounded-lg border border-border bg-muted/20 p-4">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Cues you selected during onboarding</p>
+                <div className="flex flex-wrap gap-2">
+                  {onboardingTriggers.map((trigger) => <span key={trigger} className="rounded-full border border-border bg-background px-2.5 py-1 text-xs">{trigger}</span>)}
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-3">
+              <h3 className="font-semibold text-foreground">Look for a chain, not a single cause</h3>
+              <p className="text-sm text-muted-foreground">
+                A useful reflection can include the situation, what you were thinking, what you felt, the urge that showed up, and what happened next. Looking at the whole chain can reveal more than blaming one moment or one emotion.
+              </p>
+            </div>
+
+            <p className="text-sm text-muted-foreground">
+              If {focusLabel} is one of your focus areas, this exercise can help you look for patterns around it. You can use a hypothetical example if a recent experience feels too personal or uncomfortable to revisit.
             </p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="pt-6 space-y-6">
-            <h3 className="text-xl font-bold text-foreground">The 5 Types of Triggers</h3>
-
-            <div className="space-y-3">
-              {/* Emotional Triggers */}
-              <div className="bg-gradient-to-r from-red-500/10 to-red-600/10 border-l-4 border-red-500 rounded-lg p-4">
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center flex-shrink-0">
-                    <span className="text-xl">😰</span>
-                  </div>
-                  <div className="space-y-2">
-                    <h4 className="font-bold text-foreground">1. Emotional Triggers</h4>
-                    <p className="text-sm text-foreground/80">
-                      Certain feelings make you want to {behaviorTerm} to escape, numb, or feel different.
-                    </p>
-                    <div className="bg-card rounded p-3 text-sm">
-                      <p className="font-semibold mb-1">Common examples:</p>
-                      <ul className="space-y-1 pl-4 text-foreground/70">
-                        <li>• Stress, anxiety, or overwhelm</li>
-                        <li>• Loneliness or boredom</li>
-                        <li>• Sadness or depression</li>
-                        <li>• Anger or frustration</li>
-                        <li>• Even positive emotions like excitement or celebration</li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Environmental Triggers - personalized */}
-              <div className="bg-gradient-to-r from-blue-500/10 to-blue-600/10 border-l-4 border-blue-500 rounded-lg p-4">
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0">
-                    <span className="text-xl">📍</span>
-                  </div>
-                  <div className="space-y-2">
-                    <h4 className="font-bold text-foreground">2. Environmental Triggers</h4>
-                    <p className="text-sm text-foreground/80">
-                      Specific places or situations that you associate with {behaviorNoun}.
-                    </p>
-                    <div className="bg-card rounded p-3 text-sm">
-                      <p className="font-semibold mb-1">Common examples:</p>
-                      <ul className="space-y-1 pl-4 text-foreground/70">
-                        {journeyTypes.includes("gambling") && (
-                          <>
-                            <li>• Passing by a casino or TAB</li>
-                            <li>• Payday or having money in your account</li>
-                            <li>• Seeing gambling ads or sports on TV</li>
-                          </>
-                        )}
-                        {journeyTypes.includes("alcohol") && (
-                          <>
-                            <li>• Passing by a bottle shop or pub</li>
-                            <li>• Social events where alcohol is present</li>
-                            <li>• Seeing alcohol ads or drinks on TV</li>
-                          </>
-                        )}
-                        {journeyTypes.includes("substances") && (
-                          <>
-                            <li>• Places where you used to use</li>
-                            <li>• Being around people who use</li>
-                            <li>• Having cash on hand</li>
-                          </>
-                        )}
-                        {journeyTypes.includes("gaming") && (
-                          <>
-                            <li>• Seeing your gaming setup</li>
-                            <li>• Gaming ads or streamers</li>
-                            <li>• Being home alone with free time</li>
-                          </>
-                        )}
-                        <li>• Being alone at home with access to your phone/computer</li>
-                        <li>• Certain streets, areas, or times of day</li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Social Triggers - personalized */}
-              <div className="bg-gradient-to-r from-purple-500/10 to-purple-600/10 border-l-4 border-purple-500 rounded-lg p-4">
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center flex-shrink-0">
-                    <span className="text-xl">👥</span>
-                  </div>
-                  <div className="space-y-2">
-                    <h4 className="font-bold text-foreground">3. Social Triggers</h4>
-                    <p className="text-sm text-foreground/80">
-                      Certain people or social situations that make urges stronger.
-                    </p>
-                    <div className="bg-card rounded p-3 text-sm">
-                      <p className="font-semibold mb-1">Common examples:</p>
-                      <ul className="space-y-1 pl-4 text-foreground/70">
-                        {journeyTypes.includes("gambling") && (
-                          <>
-                            <li>• Friends who gamble or talk about gambling</li>
-                            <li>• Social events where others are gambling</li>
-                            <li>• Peer pressure to 'just have a punt'</li>
-                          </>
-                        )}
-                        {journeyTypes.includes("alcohol") && (
-                          <>
-                            <li>• Friends who drink or party</li>
-                            <li>• Social events centered around drinking</li>
-                            <li>• Peer pressure to 'just have one'</li>
-                          </>
-                        )}
-                        {journeyTypes.includes("substances") && (
-                          <>
-                            <li>• Friends who use or talk about using</li>
-                            <li>• People connected to your past use</li>
-                            <li>• Being offered substances</li>
-                          </>
-                        )}
-                        <li>• Arguments or conflict with loved ones</li>
-                        <li>• Feeling judged or criticized</li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Thought Triggers - personalized */}
-              <div className="bg-gradient-to-r from-green-500/10 to-green-600/10 border-l-4 border-green-500 rounded-lg p-4">
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
-                    <span className="text-xl">💭</span>
-                  </div>
-                  <div className="space-y-2">
-                    <h4 className="font-bold text-foreground">4. Thought Triggers</h4>
-                    <p className="text-sm text-foreground/80">Specific thoughts or beliefs that lead to urges.</p>
-                    <div className="bg-card rounded p-3 text-sm">
-                      <p className="font-semibold mb-1">Common examples:</p>
-                      <ul className="space-y-1 pl-4 text-foreground/70">
-                        {journeyTypes.includes("gambling") && (
-                          <>
-                            <li>• 'I could win back what I lost'</li>
-                            <li>• 'I'm feeling lucky today'</li>
-                          </>
-                        )}
-                        {(journeyTypes.includes("alcohol") || journeyTypes.includes("substances")) && (
-                          <>
-                            <li>• 'I can handle just one'</li>
-                            <li>• 'I'll quit tomorrow'</li>
-                          </>
-                        )}
-                        <li>• 'Just one more time won't hurt'</li>
-                        <li>• 'I deserve to treat myself'</li>
-                        <li>• 'This time will be different'</li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Time-Based Triggers */}
-              <div className="bg-gradient-to-r from-orange-500/10 to-orange-600/10 border-l-4 border-orange-500 rounded-lg p-4">
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-full bg-orange-500/20 flex items-center justify-center flex-shrink-0">
-                    <span className="text-xl">🕐</span>
-                  </div>
-                  <div className="space-y-2">
-                    <h4 className="font-bold text-foreground">5. Time-Based Triggers</h4>
-                    <p className="text-sm text-foreground/80">Certain times or patterns that increase your risk.</p>
-                    <div className="bg-card rounded p-3 text-sm">
-                      <p className="font-semibold mb-1">Common examples:</p>
-                      <ul className="space-y-1 pl-4 text-foreground/70">
-                        <li>• Late at night when you can't sleep</li>
-                        <li>• Weekends or days off with unstructured time</li>
-                        <li>• After work before going home</li>
-                        {journeyTypes.includes("gambling") && <li>• During sporting events or race days</li>}
-                        {journeyTypes.includes("alcohol") && <li>• Friday nights or social occasions</li>}
-                        <li>• Anniversaries or difficult dates</li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+          <CardHeader><CardTitle>Map one situation</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+            <div><Label htmlFor="trigger-situation">Situation or cue</Label><Textarea id="trigger-situation" value={triggerChain.situation} onChange={(event) => updateChain("situation", event.target.value)} placeholder="What was happening around you?" /></div>
+            <div><Label htmlFor="trigger-thoughts">Thoughts or interpretations</Label><Textarea id="trigger-thoughts" value={triggerChain.thoughts} onChange={(event) => updateChain("thoughts", event.target.value)} placeholder="What was going through your mind?" /></div>
+            <div><Label htmlFor="trigger-feelings">Emotions or body sensations</Label><Textarea id="trigger-feelings" value={triggerChain.feelings} onChange={(event) => updateChain("feelings", event.target.value)} placeholder="What did you notice emotionally or physically?" /></div>
+            <div><Label htmlFor="trigger-urges">Urges</Label><Textarea id="trigger-urges" value={triggerChain.urges} onChange={(event) => updateChain("urges", event.target.value)} placeholder="What did you feel pulled toward doing?" /></div>
+            <div><Label htmlFor="trigger-action">What happened next?</Label><Textarea id="trigger-action" value={triggerChain.action} onChange={(event) => updateChain("action", event.target.value)} placeholder="Record what happened without judging it as success or failure." /></div>
           </CardContent>
         </Card>
 
-        <Card className="border-2 border-primary">
-          <CardContent className="pt-6 space-y-6">
-            <div>
-              <h3 className="text-xl font-bold text-foreground mb-4">Your Trigger Chain</h3>
-              <p className="text-sm text-foreground/80 mb-6">
-                Think about a recent time when you felt a strong urge to {behaviorTerm}. Work through this trigger chain
-                to understand what led up to that moment.
-              </p>
+        <div className="rounded-lg border border-info/20 bg-info/10 p-4 text-sm text-foreground/90">
+          Recognising a pattern does not mean every similar situation will end the same way. It gives you information you can use when deciding what support, boundary or skill may be useful next time.
+        </div>
 
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-semibold text-foreground block mb-2">
-                    What happened right before the urge? (The Trigger)
-                  </label>
-                  <input
-                    type="text"
-                    value={triggerChain.trigger}
-                    onChange={(e) => {
-                      setTriggerChain({ ...triggerChain, trigger: e.target.value })
-                      if (errors.trigger) setErrors({ ...errors, trigger: false })
-                    }}
-                    className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent ${
-                      errors.trigger ? "border-red-500 border-2" : "border-gray-300"
-                    }`}
-                    placeholder={
-                      journeyTypes.includes("gambling")
-                        ? "Example: Got paid, saw a gambling ad, had an argument"
-                        : journeyTypes.includes("alcohol")
-                          ? "Example: Saw friends drinking, got stressed at work, drove past a pub"
-                          : journeyTypes.includes("substances")
-                            ? "Example: Ran into old friends, got cash, felt overwhelmed"
-                            : "Example: Had a stressful day, felt lonely, saw a triggering situation"
-                    }
-                  />
-                  {errors.trigger && <p className="text-sm text-red-600 mt-1">This field is required</p>}
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <Button onClick={saveActivity} disabled={saving || !isComplete} className="w-full">{saving ? "Saving activity..." : "Record Module Activity"}</Button>
       </div>
+
+      <ModuleCompletionDialog
+        open={showCompletion}
+        onOpenChange={setShowCompletion}
+        moduleTitle="Recognising Your Triggers"
+        keyLearning="Triggers are cues or situations that may be part of a larger pattern. Mapping the situation, thoughts, feelings, urges and actions can give you information without treating any one factor as the whole cause."
+        creditsAwarded={1}
+        nextModule={{ title: "Your Choice Points", slug: "choice-points" }}
+      />
     </div>
   )
 }
