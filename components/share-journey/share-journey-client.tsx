@@ -11,11 +11,11 @@ import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 
 const shareOptions = [
-  { id: "journey", label: "Journey progress", description: "Your completed modules and current growth focus." },
-  { id: "checkins", label: "Daily check-ins", description: "Mood, urges, reflections, and check-in patterns." },
-  { id: "skills", label: "Skills practice", description: "The tools you have explored and practiced." },
-  { id: "values", label: "Core values", description: "The values guiding your personal growth journey." },
-  { id: "safeguards", label: "Safeguards", description: "Your personal support plan and safety preferences." },
+  { id: "journey", label: "Journey progress", description: "Completed modules and current Waypoint activity." },
+  { id: "checkins", label: "Daily check-ins", description: "A future sharing option for selected check-in information." },
+  { id: "skills", label: "Skills practice", description: "The skills and tools you have explored in Waypoint." },
+  { id: "values", label: "Core values", description: "Values you have chosen to record in Waypoint." },
+  { id: "safeguards", label: "Safeguards", description: "A future option for selected support and safeguard information." },
 ]
 
 export default function ShareJourneyClient({ identifyingCode }: { identifyingCode: string }) {
@@ -31,7 +31,7 @@ export default function ShareJourneyClient({ identifyingCode }: { identifyingCod
     window.setTimeout(() => setCopied(false), 1800)
   }
 
-  function sendInvite(event: React.FormEvent<HTMLFormElement>) {
+  function previewInvite(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (!email.trim()) return
     setSent(true)
@@ -49,11 +49,18 @@ export default function ShareJourneyClient({ identifyingCode }: { identifyingCod
             <div className="flex size-11 items-center justify-center rounded-xl border border-primary/25 bg-primary/10">
               <HeartHandshake className="size-5" />
             </div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em]">Private sharing</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em]">Sharing prototype</p>
           </div>
-          <h1 className="max-w-2xl text-pretty text-3xl font-bold tracking-tight sm:text-4xl">Share your journey, on your terms.</h1>
-          <p className="max-w-2xl text-pretty leading-6 text-muted-foreground">Choose what you feel comfortable sharing with a healthcare professional. You stay in control of your information at every step.</p>
+          <h1 className="max-w-2xl text-pretty text-3xl font-bold tracking-tight sm:text-4xl">Preview how professional sharing could work.</h1>
+          <p className="max-w-2xl text-pretty leading-6 text-muted-foreground">
+            This screen demonstrates a proposed future feature for consent-based sharing with a healthcare professional.
+            It does not currently create a professional connection, send an invitation or give anyone access to your Waypoint information.
+          </p>
         </header>
+
+        <div className="rounded-lg border border-amber-300/60 bg-amber-50 p-4 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100">
+          The controls on this page are a prototype only. Your selections are not saved as sharing permissions and no healthcare professional is monitoring your information through this screen.
+        </div>
 
         <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
           <div className="flex flex-col gap-6">
@@ -61,8 +68,8 @@ export default function ShareJourneyClient({ identifyingCode }: { identifyingCod
               <CardHeader>
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex flex-col gap-2">
-                    <CardTitle className="flex items-center gap-2"><ShieldCheck className="size-5 text-primary" /> Your identifying code</CardTitle>
-                    <CardDescription>Share this code with your healthcare professional so they can find your profile.</CardDescription>
+                    <CardTitle className="flex items-center gap-2"><ShieldCheck className="size-5 text-primary" /> Prototype connection code</CardTitle>
+                    <CardDescription>This code is currently a demonstration identifier. It cannot be used by a professional to open or access your profile.</CardDescription>
                   </div>
                   <LockKeyhole className="size-5 text-muted-foreground" />
                 </div>
@@ -75,23 +82,25 @@ export default function ShareJourneyClient({ identifyingCode }: { identifyingCod
                     {copied ? "Copied" : "Copy"}
                   </Button>
                 </div>
-                <p className="text-xs leading-5 text-muted-foreground">This code is unique to you. It does not reveal your name or personal information by itself.</p>
+                <p className="text-xs leading-5 text-muted-foreground">
+                  Future versions should use a secure, random and expiring invitation process rather than relying on this prototype identifier.
+                </p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2"><Mail className="size-5 text-primary" /> Invite a healthcare professional</CardTitle>
-                <CardDescription>Enter their email and we&apos;ll prepare an invitation to connect with your shared journey.</CardDescription>
+                <CardTitle className="flex items-center gap-2"><Mail className="size-5 text-primary" /> Preview a professional invitation</CardTitle>
+                <CardDescription>Enter an email address to preview the current interface. Waypoint will not send an email.</CardDescription>
               </CardHeader>
               <CardContent>
-                <form className="flex flex-col gap-4" onSubmit={sendInvite}>
+                <form className="flex flex-col gap-4" onSubmit={previewInvite}>
                   <div className="flex flex-col gap-2">
                     <Label htmlFor="professional-email">Healthcare professional&apos;s email</Label>
                     <Input id="professional-email" type="email" placeholder="name@clinic.org" value={email} onChange={(event) => { setEmail(event.target.value); setSent(false) }} required />
                   </div>
-                  <Button type="submit" className="w-full gap-2"><Send data-icon="inline-start" /> {sent ? "Invitation ready" : "Send invitation"}</Button>
-                  {sent && <p className="text-center text-sm text-primary">Mock invite prepared for {email}. Email delivery will be connected in a future update.</p>}
+                  <Button type="submit" className="w-full gap-2"><Send data-icon="inline-start" /> {sent ? "Preview prepared" : "Preview invitation"}</Button>
+                  {sent && <p className="text-center text-sm text-primary">Preview prepared for {email}. No email has been sent and no connection has been created.</p>}
                 </form>
               </CardContent>
             </Card>
@@ -99,8 +108,8 @@ export default function ShareJourneyClient({ identifyingCode }: { identifyingCod
 
           <Card>
             <CardHeader>
-              <CardTitle>What would you like to share?</CardTitle>
-              <CardDescription>Only the items you turn on will be included in the connection request.</CardDescription>
+              <CardTitle>What might you choose to share?</CardTitle>
+              <CardDescription>These switches demonstrate the type of granular consent a future connection could offer. They do not currently change data access.</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col divide-y divide-border/70">
               {shareOptions.map((option) => (
@@ -109,12 +118,14 @@ export default function ShareJourneyClient({ identifyingCode }: { identifyingCod
                     <Label htmlFor={`share-${option.id}`} className="cursor-pointer text-sm font-semibold">{option.label}</Label>
                     <p className="text-sm leading-5 text-muted-foreground">{option.description}</p>
                   </div>
-                  <Switch id={`share-${option.id}`} checked={sharing[option.id] ?? false} onCheckedChange={(checked) => setSharing((current) => ({ ...current, [option.id]: checked }))} aria-label={`Share ${option.label}`} />
+                  <Switch id={`share-${option.id}`} checked={sharing[option.id] ?? false} onCheckedChange={(checked) => setSharing((current) => ({ ...current, [option.id]: checked }))} aria-label={`Preview sharing ${option.label}`} />
                 </div>
               ))}
               <div className="mt-5 flex gap-3 rounded-lg border border-border/70 bg-muted/30 p-4">
                 <LockKeyhole className="mt-0.5 size-4 shrink-0 text-primary" />
-                <p className="text-xs leading-5 text-muted-foreground">You can change these choices or disconnect a professional at any time. This presentation flow does not send real data yet.</p>
+                <p className="text-xs leading-5 text-muted-foreground">
+                  A real professional-sharing feature would need verified professional accounts, explicit consent, revocable permissions and access logging before it could be used with health information.
+                </p>
               </div>
             </CardContent>
           </Card>
