@@ -11,37 +11,29 @@ interface CommunityChatsPageProps {
 }
 
 export default async function CommunityChatPage(props: CommunityChatsPageProps) {
-  const params = await props.params
-  const groupId = params.groupId
-  
-  const session = await getSession()
-  if (!session) {
-    redirect("/auth/signin")
-  }
+  const { groupId } = await props.params
 
-  // Verify user is a member of this group
+  const session = await getSession()
+  if (!session) redirect("/auth/signin")
+
   const membership = await sql`
-    SELECT gm.id, cp.alias_name, cg.journey_type
+    SELECT cp.alias_name, cg.journey_type
     FROM group_memberships gm
     JOIN community_profiles cp ON gm.community_profile_id = cp.id
     JOIN community_groups cg ON gm.group_id = cg.id
     WHERE gm.user_id = ${session.id}::uuid AND gm.group_id = ${groupId}::uuid
+    LIMIT 1
   `
 
-  if (!membership || membership.length === 0) {
-    redirect("/community/join")
-  }
-
-  const userMembership = membership[0]
+  if (membership.length === 0) redirect("/community/join")
 
   return (
     <div className="flex flex-col h-screen bg-background overflow-hidden">
       <ChatPageHeader />
       <CommunityChatClient
-        userId={session.id}
         groupId={groupId}
-        userAlias={userMembership.alias_name}
-        journeyType={userMembership.journey_type}
+        userAlias={membership[0].alias_name}
+        journeyType={membership[0].journey_type}
       />
     </div>
   )
