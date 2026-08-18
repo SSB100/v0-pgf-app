@@ -13,8 +13,6 @@ interface GrowthAvatarCardProps {
   levelCredits: number
   streak: number
   longestStreak: number
-  recentSkills: Array<{ skill_name: string; practiced_at: Date }>
-  userId: string
 }
 
 const avatarConfig = {
