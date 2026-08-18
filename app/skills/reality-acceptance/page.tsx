@@ -27,86 +27,57 @@ export default async function RealityAcceptancePage() {
               <div>
                 <CardTitle className="text-2xl sm:text-3xl">Reality Acceptance</CardTitle>
                 <p className="text-muted-foreground text-sm sm:text-base">
-                  Moving From Suffering to Psychological Agility
+                  A DBT-informed way to notice what is true right now and choose what you can do next
                 </p>
               </div>
             </div>
           </CardHeader>
+
           <CardContent className="space-y-6">
-            <div>
-              <h3 className="font-semibold text-lg mb-3">What is Reality Acceptance?</h3>
-              <p className="text-foreground leading-relaxed mb-4">
-                Acceptance of Reality means all the way, fully and whole heartedly 'Observing' then 'Describing' reality
-                'As It Is'. The fighting stops: it's when the all-consuming effort to alter the facts of reality because
-                of discomfort or dislike stops. We let go of resentment and practice gratitude. Total and complete
-                acceptance with commitment.
+            <div className="space-y-3">
+              <h3 className="font-semibold text-lg">What does acceptance mean here?</h3>
+              <p className="text-foreground leading-relaxed">
+                Reality acceptance means acknowledging facts that are already true or cannot be changed in this moment.
+                The aim is not to force yourself to feel okay about what happened. It is to spend less energy arguing with
+                an unchangeable fact so you have more room to decide what matters now.
+              </p>
+              <p className="text-sm text-muted-foreground">
+                You can practise this with a neutral or hypothetical example. You do not need to revisit a traumatic or unsafe situation to use this skill.
               </p>
             </div>
 
-            <div className="space-y-4">
-              <div className="bg-secondary/50 rounded-lg p-4">
-                <h4 className="font-semibold mb-3">Why Accept Reality?</h4>
-                <p className="text-lg font-medium text-primary mb-2">The Answer is Simple, Because 'It Is'.</p>
-                <p className="text-sm text-foreground mb-3">
-                  No matter how much we may dislike 'What Is', our rejection of it does not change it.
-                </p>
-                <p className="text-sm text-foreground">
-                  Our rejection of 'What Is' can cause pain to escalate into suffering, not allowing for effective
-                  problem-solving if it is possible. This prevents us from moving forward in the face of life's
-                  challenges.
-                </p>
-              </div>
+            <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-4">
+              <h4 className="font-semibold mb-2 text-destructive">Acceptance does not mean...</h4>
+              <ul className="text-sm space-y-2 list-disc pl-5 text-foreground">
+                <li>approving of harm, abuse, injustice or another person's behaviour;</li>
+                <li>forgiving someone, dropping boundaries or giving up your right to seek help or accountability;</li>
+                <li>blaming yourself for something that happened to you;</li>
+                <li>remaining in a situation that is unsafe;</li>
+                <li>giving up on changes that are still possible.</li>
+              </ul>
+            </div>
 
-              <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-4">
-                <h4 className="font-semibold mb-2 text-destructive">Acceptance of Reality is 'Not'...</h4>
-                <ul className="text-sm space-y-2 list-disc list-inside text-foreground">
-                  <li>Approval, compassion, being passive, being weak, against change or not problem-solving</li>
-                  <li>
-                    Thinking that if you accept painful events or situations you then approve of them, and that nothing
-                    can or will change the present or future
-                  </li>
-                  <li>Being stuck in the 'Emotional Mind'</li>
-                  <li>Demanding that life should or shouldn't be 'As It Is'</li>
-                  <li>Believing generally that it's all unfair or a personal injustice</li>
-                </ul>
-              </div>
+            <div className="bg-primary/10 border border-primary/30 rounded-lg p-4 space-y-3">
+              <h4 className="font-semibold">A simple way to practise</h4>
+              <ol className="text-sm space-y-2 list-decimal pl-5 text-foreground">
+                <li><strong>Name the facts.</strong> Describe what is known without adding blame or judgement.</li>
+                <li><strong>Notice the reaction.</strong> What thoughts, feelings or body sensations show up?</li>
+                <li><strong>Separate what is fixed from what is changeable.</strong> Some parts may be in the past while other choices remain open now.</li>
+                <li><strong>Choose the next useful action.</strong> That might be asking for support, setting a boundary, solving a practical problem, resting, or doing nothing immediately.</li>
+              </ol>
+            </div>
 
-              <div className="bg-primary/10 border border-primary/30 rounded-lg p-4">
-                <h4 className="font-semibold mb-2">What Needs to Be Accepted?</h4>
-                <ul className="text-sm space-y-2 list-disc list-inside text-foreground">
-                  <li>Reality 'Is What It Is'</li>
-                  <li>The facts about the past and present 'are' whether we like them or not</li>
-                  <li>Everything has a cause, including situations that cause us pain</li>
-                  <li>Life is worth living with painful events in it</li>
-                </ul>
-              </div>
+            <div className="bg-secondary/50 rounded-lg p-4 space-y-2">
+              <h4 className="font-semibold">Example</h4>
+              <p className="text-sm text-foreground">
+                “I cannot change that this happened. I do not have to approve of it. I can decide what support, boundary or action is useful for me now.”
+              </p>
+            </div>
 
-              <div className="bg-secondary/50 rounded-lg p-4">
-                <h4 className="font-semibold mb-3">Barriers to Acceptance</h4>
-                <p className="text-sm text-foreground mb-2">
-                  It is easy to accept things that happen in life that we enjoy, or which benefit us. However, it can be
-                  very difficult to accept the not so good things, either those things that happened to us, aspects of
-                  ourselves, or those that we care for.
-                </p>
-                <p className="text-sm text-foreground">
-                  Not fully accepting something, with understanding that everything has a cause, can be a significant
-                  barrier to change.
-                </p>
-              </div>
-
-              <div className="bg-accent/50 rounded-lg p-4">
-                <p className="text-sm font-medium text-foreground italic mb-2">
-                  "The Curious Paradox is That When I Accept Myself Just 'As I Am', Then I Can Change"
-                </p>
-                <p className="text-xs text-muted-foreground text-right">- Carl Rogers</p>
-              </div>
-
-              <div className="bg-accent/50 rounded-lg p-4">
-                <p className="text-sm font-medium text-foreground italic mb-2">
-                  "Our Greatest Freedom is the Freedom to Choose Our Attitude."
-                </p>
-                <p className="text-xs text-muted-foreground text-right">- Viktor Frankl</p>
-              </div>
+            <div className="border border-amber-500/30 bg-amber-500/5 rounded-lg p-4">
+              <p className="text-sm text-foreground">
+                <strong>Safety comes first.</strong> If a situation involves violence, coercion, abuse, exploitation or immediate danger, acceptance is not a reason to stay in it or confront someone. Use appropriate support or emergency services instead.
+              </p>
             </div>
 
             <div className="flex gap-3 flex-col sm:flex-row">
