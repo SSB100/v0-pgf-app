@@ -4,7 +4,7 @@ import { neon } from "@neondatabase/serverless"
 import { communityGroupDescription, communityGroupName, isCommunityJourneyType } from "@/lib/community"
 
 const sql = neon(process.env.NEON_DATABASE_URL!)
-const MAX_REASON_LENGTH = 500
+const MAX_REASON_LENGTH = 100
 
 export async function POST(request: NextRequest) {
   try {
