@@ -60,6 +60,10 @@ function uniqueStrings(values: string[]) {
   })
 }
 
+function latestDate(...values: Array<string | null>) {
+  return values.filter((value): value is string => Boolean(value)).sort().at(-1) || null
+}
+
 function isIntegerInRange(value: unknown, min: number, max: number): value is number {
   return Number.isInteger(value) && Number(value) >= min && Number(value) <= max
 }
@@ -118,6 +122,9 @@ function normaliseInitialDailyCheckIn(value: unknown) {
   }
 
   const record = value as Record<string, unknown>
+  const dateKey = cleanOptionalDate(record.dateKey, "First check-in date")
+  if (!dateKey) throw new InputError("Please complete your first daily check-in")
+
   const moodRating = record.moodRating
   const overallRating = record.overallRating
   const urgeStrength = record.urgeStrength
@@ -140,8 +147,12 @@ function normaliseInitialDailyCheckIn(value: unknown) {
   const usedSkills = record.usedSkills
 
   if (
-    [gamblingOccurred, alcoholOccurred, substanceOccurred, selfHarmThoughts, selfHarmActions, usedSkills]
-      .some((item) => typeof item !== "boolean")
+    typeof gamblingOccurred !== "boolean" ||
+    typeof alcoholOccurred !== "boolean" ||
+    typeof substanceOccurred !== "boolean" ||
+    typeof selfHarmThoughts !== "boolean" ||
+    typeof selfHarmActions !== "boolean" ||
+    typeof usedSkills !== "boolean"
   ) {
     throw new InputError("First check-in contains an invalid yes/no response")
   }
@@ -155,6 +166,7 @@ function normaliseInitialDailyCheckIn(value: unknown) {
   const skillsUsed = usedSkills ? uniqueStrings(cleanStringList(record.skillsUsed, 30, 100)) : []
 
   return {
+    dateKey,
     moodRating,
     overallRating,
     urgeStrength,
@@ -225,6 +237,7 @@ export async function POST(request: NextRequest) {
 
     const initialDailyCheckIn = normaliseInitialDailyCheckIn(data.initialDailyCheckIn)
     const today = getAotearoaDateKey()
+    const checkInDate = initialDailyCheckIn.dateKey
 
     const currentEmotions = cleanStringList(data.currentEmotions, 30, 100)
     const strongestEmotion = cleanText(data.strongestEmotion, 100)
@@ -259,9 +272,9 @@ export async function POST(request: NextRequest) {
     const lastDrinkDate = cleanOptionalDate(data.lastDrinkDate, "Last alcohol-use date")
     const lastSubstanceDate = cleanOptionalDate(data.lastSubstanceDate, "Last substance-use date")
 
-    const effectiveLastBetDate = initialDailyCheckIn.gamblingOccurred ? today : lastBetDate
-    const effectiveLastDrinkDate = initialDailyCheckIn.alcoholOccurred ? today : lastDrinkDate
-    const effectiveLastSubstanceDate = initialDailyCheckIn.substanceOccurred ? today : lastSubstanceDate
+    const effectiveLastBetDate = latestDate(lastBetDate, initialDailyCheckIn.gamblingOccurred ? checkInDate : null)
+    const effectiveLastDrinkDate = latestDate(lastDrinkDate, initialDailyCheckIn.alcoholOccurred ? checkInDate : null)
+    const effectiveLastSubstanceDate = latestDate(lastSubstanceDate, initialDailyCheckIn.substanceOccurred ? checkInDate : null)
 
     const growthAvatar = ALLOWED_AVATARS.has(data.growthAvatar) ? data.growthAvatar : "growth_tree"
     const stillExperiencing = typeof data.stillExperiencing === "boolean" ? data.stillExperiencing : null
@@ -397,7 +410,7 @@ export async function POST(request: NextRequest) {
           ${JSON.stringify(copingMethods)}::jsonb,
           ${`Frequency: ${mentalHealthFrequency || "Not specified"}. Treatment: ${cleanText(data.receivingMentalHealthTreatment, 100) || "Not specified"}`},
           ${mentalHealthFrequency},
-          ${initialDailyCheckIn.selfHarmActions ? today : null},
+          ${initialDailyCheckIn.selfHarmActions ? checkInDate : null},
           ${JSON.stringify(mentalHealthAreas)}::jsonb,
           ${JSON.stringify(mentalHealthSupportNeeds)}::jsonb
         )
@@ -450,7 +463,7 @@ export async function POST(request: NextRequest) {
       )
       VALUES (
         ${user.id}::uuid,
-        ${today}::date,
+        ${checkInDate}::date,
         ${initialDailyCheckIn.moodRating},
         ${initialDailyCheckIn.overallRating},
         ${initialDailyCheckIn.urgeStrength},
@@ -473,13 +486,13 @@ export async function POST(request: NextRequest) {
     initialDailyCheckIn.skillsUsed.forEach((skill) => {
       queries.push(db`
         INSERT INTO skills_practice (user_id, skill_name, skill_category, practiced_at)
-        SELECT ${user.id}::uuid, ${skill}, 'self-reported', CURRENT_TIMESTAMP
+        SELECT ${user.id}::uuid, ${skill}, 'self-reported', ${checkInDate}::date
         WHERE NOT EXISTS (
           SELECT 1
           FROM skills_practice
           WHERE user_id = ${user.id}::uuid
             AND skill_name = ${skill}
-            AND practiced_at::date = ${today}::date
+            AND practiced_at::date = ${checkInDate}::date
         )
       `)
     })
@@ -524,11 +537,14 @@ export async function POST(request: NextRequest) {
         gaming_impact = ${cleanText(data.gamingImpact, 100)},
         loot_box_exposure = ${cleanText(data.lootBoxExposure, 100)},
         in_game_purchases = ${cleanText(data.inGamePurchases, 100)},
-        check_in_streak = GREATEST(COALESCE(check_in_streak, 0), 1),
+        check_in_streak = CASE
+          WHEN ${checkInDate}::date = ${today}::date THEN GREATEST(COALESCE(check_in_streak, 0), 1)
+          ELSE 0
+        END,
         longest_streak = GREATEST(COALESCE(longest_streak, 0), 1),
         level_credits = GREATEST(COALESCE(level_credits, 0), 1),
         total_points_earned = GREATEST(COALESCE(total_points_earned, 0), 1),
-        last_check_in_date = CURRENT_TIMESTAMP,
+        last_check_in_date = ${checkInDate}::date,
         onboarding_current_step = NULL,
         onboarding_data = NULL,
         updated_at = NOW()
