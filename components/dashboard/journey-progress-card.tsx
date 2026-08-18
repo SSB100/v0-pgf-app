@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Wine, Pill, Gamepad2, Brain, Sparkles, Dice1 as Dice, Calendar, Map } from "lucide-react"
+import { differenceInCalendarDays, formatDateKeyEnNz, getAotearoaDateKey, normaliseDateKey } from "@/lib/aotearoa-date"
 
 interface JourneyProgressCardProps {
   journeyTypes: string[]
@@ -22,11 +23,10 @@ const JOURNEY_CONFIG: Record<string, { label: string; icon: any; color: string; 
   personal_growth: { label: "Personal Growth", icon: Sparkles, color: "text-green-600", bgColor: "bg-green-500/10", borderColor: "border-green-500/20" },
 }
 
-function calculateDaysSince(dateString: string | null): number | null {
-  if (!dateString) return null
-  const date = new Date(dateString)
-  const now = new Date()
-  return Math.max(0, Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24)))
+function calculateDaysSince(value: unknown): number | null {
+  const dateKey = normaliseDateKey(value)
+  if (!dateKey) return null
+  return Math.max(0, differenceInCalendarDays(getAotearoaDateKey(), dateKey))
 }
 
 export default function JourneyProgressCard({
@@ -77,6 +77,7 @@ export default function JourneyProgressCard({
               {datedTypes.map((type) => {
                 const config = JOURNEY_CONFIG[type]
                 const data = getJourneyData(type)
+                const dateKey = normaliseDateKey(data.lastDate)
                 const daysSince = calculateDaysSince(data.lastDate)
                 const Icon = config.icon
 
@@ -87,13 +88,13 @@ export default function JourneyProgressCard({
                       <span className={`font-semibold ${config.color}`}>{config.label}</span>
                     </div>
 
-                    {data.lastDate ? (
+                    {dateKey && daysSince !== null ? (
                       <>
                         <div className="flex items-baseline gap-1"><span className={`text-3xl font-bold ${config.color}`}>{daysSince}</span><span className="text-sm text-muted-foreground">days</span></div>
                         <p className="text-xs text-muted-foreground">Since the last date you recorded for this behaviour.</p>
                         <div className="flex items-center gap-1 text-xs text-muted-foreground pt-1 border-t border-border/20">
                           <Calendar className="w-3 h-3" />
-                          <span>{data.dateLabel}: {new Date(data.lastDate).toLocaleDateString("en-NZ")}</span>
+                          <span>{data.dateLabel}: {formatDateKeyEnNz(dateKey)}</span>
                         </div>
                       </>
                     ) : (
