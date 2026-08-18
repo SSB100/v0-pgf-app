@@ -5,6 +5,8 @@ const nextConfig = {
     unoptimized: true,
   },
   async headers() {
+    const noStore = [{ key: "Cache-Control", value: "private, no-store, max-age=0" }]
+
     return [
       {
         source: "/:path*",
@@ -18,6 +20,18 @@ const nextConfig = {
           },
         ],
       },
+      { source: "/api/:path*", headers: noStore },
+      { source: "/dashboard/:path*", headers: noStore },
+      { source: "/onboarding/:path*", headers: noStore },
+      { source: "/check-in/:path*", headers: noStore },
+      { source: "/community/:path*", headers: noStore },
+      { source: "/journey/:path*", headers: noStore },
+      { source: "/skills/:path*", headers: noStore },
+      { source: "/training/:path*", headers: noStore },
+      { source: "/safeguards/:path*", headers: noStore },
+      { source: "/profile/:path*", headers: noStore },
+      { source: "/settings/:path*", headers: noStore },
+      { source: "/share-journey/:path*", headers: noStore },
     ]
   },
 }
