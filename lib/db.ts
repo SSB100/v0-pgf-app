@@ -1,5 +1,8 @@
 import { neon } from "@neondatabase/serverless"
 
+export type SqlRow = Record<string, any>
+type SqlTag = (strings: TemplateStringsArray, ...values: any[]) => Promise<SqlRow[]>
+
 let _sql: ReturnType<typeof neon> | null = null
 
 function getDb() {
@@ -13,7 +16,9 @@ function getDb() {
   return _sql
 }
 
-// This works with tagged template literals: sql`SELECT...`
-export const sql = (...args: Parameters<ReturnType<typeof neon>>) => {
-  return getDb()(...args)
+// Waypoint currently uses Neon through tagged template literals only. Narrow the
+// return type to row arrays so callers do not inherit Neon's transaction/query
+// option union when they are executing a normal SELECT/INSERT/UPDATE statement.
+export const sql: SqlTag = (strings, ...values) => {
+  return getDb()(strings, ...values) as Promise<SqlRow[]>
 }
