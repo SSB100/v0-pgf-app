@@ -31,13 +31,14 @@ export default async function Home() {
 
         <div className="relative z-10 container mx-auto px-6 py-20 md:py-28">
           <div className="max-w-2xl space-y-6">
-            <p className="text-sm font-semibold uppercase tracking-widest text-primary">Your recovery. Your terms.</p>
+            <p className="text-sm font-semibold uppercase tracking-widest text-primary">Your wellbeing. Your goals. Your pace.</p>
             <h1 className="text-4xl md:text-6xl font-bold text-foreground leading-tight text-balance">
-              A new chapter{" "}
-              <span className="text-primary">starts today</span>
+              A place to reflect, practise and{" "}
+              <span className="text-primary">keep moving forward</span>
             </h1>
             <p className="text-lg md:text-xl text-foreground/80 leading-relaxed max-w-xl text-pretty">
-              Waypoint gives you the evidence-based tools, daily structure, and peer support to break free from addiction and build the life you want — for yourself and the people you love.
+              Waypoint is a self-guided recovery and wellbeing companion for adults. It helps you notice patterns, practise useful skills,
+              check in with yourself and stay connected to the goals and values that matter to you.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 pt-2">
               <Link href="/auth/signup">
@@ -55,17 +56,11 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* ── TRUST TICKER ── */}
-      <section className="border-y border-border bg-card/60 overflow-hidden">
-        <div className="container mx-auto px-6 py-6">
-          <p className="text-center text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-5">Supported by</p>
-          <div className="relative flex">
-            <div className="flex animate-scroll whitespace-nowrap gap-16">
-              {Array(2).fill(0).map((_, i) => (
-                <span key={i} className="text-sm font-semibold text-foreground/50 flex-shrink-0">Insert supporting service names here</span>
-              ))}
-            </div>
-          </div>
+      <section className="border-y border-border bg-card/60">
+        <div className="container mx-auto px-6 py-5 text-center">
+          <p className="text-sm text-muted-foreground">
+            A developing recovery-support platform for adults in Aotearoa New Zealand. Waypoint complements professional care; it does not replace it.
+          </p>
         </div>
       </section>
 
@@ -81,18 +76,19 @@ export default async function Home() {
             />
           </div>
           <div className="space-y-5">
-            <p className="text-xs font-semibold uppercase tracking-widest text-primary">Grow every day</p>
+            <p className="text-xs font-semibold uppercase tracking-widest text-primary">Build skills over time</p>
             <h2 className="text-3xl md:text-4xl font-bold text-foreground leading-tight text-balance">
-              Real tools. Real progress. Real change.
+              Practical tools for everyday moments.
             </h2>
             <p className="text-foreground/75 leading-relaxed text-pretty">
-              Waypoint's 11 journey modules are built on evidence-based therapy — covering urge management, emotional regulation, values alignment, and relapse prevention. Work through them at your own pace, and watch your growth compound over time.
+              Waypoint's 11 journey modules are informed by established ideas used in CBT, DBT, ACT and mindfulness.
+              They cover awareness, urges, emotional regulation, values, communication and coping skills. Work through them at your own pace.
             </p>
             <ul className="space-y-3">
               {[
-                "11 skill-building modules grounded in CBT and ACT",
-                "Daily check-ins that track mood, urges and patterns",
-                "A Growth Companion that evolves as you do",
+                "11 interactive learning and skills modules",
+                "Daily check-ins for mood, urges and patterns you choose to track",
+                "A Growth Companion that reflects your engagement with Waypoint",
               ].map((item) => (
                 <li key={item} className="flex items-start gap-3">
                   <CheckCircle className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
@@ -101,7 +97,7 @@ export default async function Home() {
               ))}
             </ul>
             <Link href="/auth/signup">
-              <Button className="mt-2 font-semibold">Begin your journey <ArrowRight className="ml-2 h-4 w-4" /></Button>
+              <Button className="mt-2 font-semibold">Explore Waypoint <ArrowRight className="ml-2 h-4 w-4" /></Button>
             </Link>
           </div>
         </div>
@@ -112,18 +108,19 @@ export default async function Home() {
         <div className="container mx-auto px-6 py-20 md:py-28">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div className="space-y-5 order-2 md:order-1">
-              <p className="text-xs font-semibold uppercase tracking-widest text-primary">For those you love</p>
+              <p className="text-xs font-semibold uppercase tracking-widest text-primary">What matters to you</p>
               <h2 className="text-3xl md:text-4xl font-bold text-foreground leading-tight text-balance">
-                Recovery isn't just about you — it's about coming home.
+                Keep your values and whānau in view.
               </h2>
               <p className="text-foreground/75 leading-relaxed text-pretty">
-                The impact of addiction reaches everyone around you. Waypoint helps you rebuild trust, reconnect with the people who matter, and show up as the person you want to be — day after day.
+                Recovery and behaviour change can affect relationships, routines and everyday life. Waypoint helps you reflect on what matters to you,
+                notice the choices you are making, and recognise progress without expecting every day to look the same.
               </p>
               <ul className="space-y-3">
                 {[
-                  "Values-based goals tied to what matters most",
-                  "Track your streak and celebrate milestones",
-                  "Community support from people who understand",
+                  "Values-based goals connected to what matters most",
+                  "Track engagement and acknowledge milestones without treating a missed day as failure",
+                  "Optional peer community for shared experience and encouragement",
                 ].map((item) => (
                   <li key={item} className="flex items-start gap-3">
                     <CheckCircle className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
@@ -135,7 +132,7 @@ export default async function Home() {
             <div className="relative rounded-2xl overflow-hidden aspect-[4/3] shadow-2xl order-1 md:order-2">
               <Image
                 src="/images/family-reconnection.jpg"
-                alt="Family embracing in a sunny park, representing reconnection"
+                alt="Family embracing in a sunny park, representing connection"
                 fill
                 className="object-cover"
               />
@@ -147,10 +144,10 @@ export default async function Home() {
       {/* ── FEATURES GRID ── */}
       <section className="container mx-auto px-6 py-20 md:py-28">
         <div className="text-center mb-14 space-y-3">
-          <p className="text-xs font-semibold uppercase tracking-widest text-primary">Everything you need</p>
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground text-balance">Built for every stage of recovery</h2>
+          <p className="text-xs font-semibold uppercase tracking-widest text-primary">Tools you can use</p>
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground text-balance">Choose what is useful for you</h2>
           <p className="text-foreground/70 max-w-2xl mx-auto text-pretty">
-            Whether you're on day one or year three, Waypoint meets you where you are.
+            You can use Waypoint as a fuller guided journey or focus on the parts that fit where you are right now.
           </p>
         </div>
 
@@ -159,35 +156,35 @@ export default async function Home() {
             {
               icon: Target,
               title: "Guided Journey Modules",
-              desc: "11 interactive modules covering awareness, coping strategies, emotional regulation, and healthy habits. Built on CBT and ACT frameworks.",
+              desc: "11 interactive modules covering awareness, coping skills, emotional regulation, values and communication, informed by established therapeutic approaches.",
               img: "/images/building-skills.jpg",
             },
             {
               icon: Calendar,
               title: "Daily Check-Ins",
-              desc: "Track your mood, urges and emotional patterns every day. Spot your triggers and celebrate the wins — big and small.",
+              desc: "Record your self-reported mood, urges, emotions and relevant behaviours so you can look back at patterns over time.",
               img: "/images/daily-reflection.jpg",
             },
             {
               icon: Users,
               title: "Community Connection",
-              desc: "Connect with others who truly understand. Share experiences, find encouragement, and build the support network recovery requires.",
+              desc: "An optional peer space for sharing experiences and encouragement. Community discussion is not professional counselling or emergency support.",
               img: "/images/community-connection.jpg",
             },
             {
               icon: TrendingUp,
               title: "Visual Progress",
-              desc: "Watch your Growth Companion evolve and see weekly trends that show exactly how far you've come.",
+              desc: "See trends in your own check-ins and Waypoint activity without treating engagement scores as a clinical measure of recovery.",
             },
             {
               icon: CheckCircle,
               title: "Values Alignment",
-              desc: "Identify your core values and ensure daily actions point toward the life you actually want.",
+              desc: "Identify what matters to you and reflect on whether your everyday choices are moving in that direction.",
             },
             {
               icon: Shield,
-              title: "24/7 Crisis Support",
-              desc: "Immediate access to crisis resources, helplines, and personalised safety plans whenever you need them.",
+              title: "Support Resources",
+              desc: "Quick access to verified New Zealand helplines and emergency information. Waypoint itself is not a monitored crisis service.",
             },
           ].map((feature) => (
             <div
@@ -229,23 +226,23 @@ export default async function Home() {
             {[
               {
                 n: "01",
-                title: "Complete your assessment",
-                desc: "A guided onboarding identifies your values, strengths, triggers, and goals. Takes about 10 minutes.",
+                title: "Set up your Waypoint",
+                desc: "Guided onboarding asks about your goals, values, strengths and the areas you want to work on so the experience can be personalised.",
               },
               {
                 n: "02",
-                title: "Work through the modules",
-                desc: "11 skill-building modules at your own pace. Each builds on the last.",
+                title: "Explore the modules",
+                desc: "Work through 11 learning and skills modules at your own pace, in the order that is useful for you.",
               },
               {
                 n: "03",
-                title: "Check in daily",
-                desc: "A 3-minute daily reflection tracks your mood, urges, and progress. Earns XP for your companion.",
+                title: "Check in when it helps",
+                desc: "Record your mood, urges, emotions and reflections. Your entries are self-reported and appear in your personal dashboard.",
               },
               {
                 n: "04",
-                title: "Grow and connect",
-                desc: "Join your community group, celebrate milestones, and support others on the same path.",
+                title: "Reflect and connect",
+                desc: "Review your patterns, use practical skills and choose whether to take part in the peer community.",
               },
             ].map((step) => (
               <div key={step.n} className="flex gap-5 items-start">
@@ -272,10 +269,10 @@ export default async function Home() {
         <div className="relative z-10 container mx-auto px-6 py-24 md:py-32">
           <div className="max-w-xl space-y-6">
             <h2 className="text-3xl md:text-5xl font-bold text-foreground text-balance leading-tight">
-              Ready to take the first step?
+              Ready to explore Waypoint?
             </h2>
             <p className="text-lg text-foreground/75 leading-relaxed text-pretty">
-              Join Waypoint today. Build the skills, find your community, and start living in line with your values — whatever you're recovering from.
+              Start with the parts that feel useful to you. Reflect on your patterns, practise skills and keep your values in view as you work toward change.
             </p>
             <div className="flex flex-col sm:flex-row gap-3">
               <Link href="/auth/signup">
