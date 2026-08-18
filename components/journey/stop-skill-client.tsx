@@ -1,4 +1,5 @@
 "use client"
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { useState } from "react"
@@ -6,10 +7,7 @@ import { getAddictionTerms } from "@/lib/journey-personalization"
 
 export default function StopSkillClient({ journeyTypes }: { journeyTypes: string[] }) {
   const { addictionTerm, verb } = getAddictionTerms(journeyTypes)
-
-  // Declare variables
   const [scenario, setScenario] = useState("")
-  const [errors, setErrors] = useState({ scenario: false })
 
   return (
     <div className="pb-24 lg:pb-6">
@@ -23,32 +21,30 @@ export default function StopSkillClient({ journeyTypes }: { journeyTypes: string
               </svg>
             </div>
             <div>
-              <p className="text-xs font-semibold text-primary uppercase tracking-wide">Module 7 of 11</p>
+              <p className="text-xs font-semibold text-primary uppercase tracking-wide">Journey module</p>
               <CardTitle className="text-xl font-bold text-foreground">STOP Skill</CardTitle>
             </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="bg-primary/10 p-4 rounded-lg">
-            <p className="text-lg leading-relaxed">
-              STOP is your emergency brake. When urges to {verb} hit hard, this four-step skill creates the pause you
-              need to make a values-based choice.
+          <div className="bg-primary/10 p-4 rounded-lg space-y-2">
+            <p className="text-base leading-relaxed">
+              STOP is a DBT-informed pause skill: Stop, Take a step back, Observe and Proceed mindfully. It can be used when an urge or emotion feels strong and you want a little more time before deciding what to do next.
+            </p>
+            <p className="text-xs text-muted-foreground">
+              It does not guarantee that an urge will disappear, and it is not an emergency-response tool. If you are in immediate danger, use Waypoint's Support page or emergency services.
             </p>
           </div>
 
           <div>
-            <label className="text-sm font-semibold block mb-2">Describe your scenario (recent or hypothetical):</label>
+            <label className="text-sm font-semibold block mb-2">Think of a recent or hypothetical situation where a pause might be useful:</label>
             <Textarea
-              placeholder={`Example: Got a notification/trigger while feeling stressed, saw ${addictionTerm} cues...`}
+              placeholder={`For example: I noticed an urge to ${verb || "act"} after a stressful moment or seeing ${addictionTerm || "a familiar"} cue...`}
               value={scenario}
-              onChange={(e) => {
-                setScenario(e.target.value)
-                if (errors.scenario) setErrors({ ...errors, scenario: false })
-              }}
-              className={errors.scenario ? "border-red-500 border-2" : ""}
+              onChange={(event) => setScenario(event.target.value)}
               rows={3}
             />
-            {errors.scenario && <p className="text-sm text-red-600 mt-1">This field is required</p>}
+            <p className="mt-2 text-xs text-muted-foreground">This reflection is optional. You can use a hypothetical example if you do not want to revisit a recent experience.</p>
           </div>
         </CardContent>
       </Card>
