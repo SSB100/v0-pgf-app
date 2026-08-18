@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Cell } from "recharts"
-import { AlertCircle, BarChart3, Heart, TrendingDown, TrendingUp } from "lucide-react"
+import { AlertCircle, BarChart3, TrendingDown, TrendingUp } from "lucide-react"
 
 interface CheckinData {
   date: string
@@ -52,13 +52,6 @@ export default function WeeklyOverviewCard({ checkins, journeyTypes = [], accoun
         ? "substance use"
         : "gambling"
 
-  const noBehaviourLabel =
-    primaryJourney === "alcohol"
-      ? "Recorded days without alcohol use reported"
-      : primaryJourney === "substances"
-        ? "Recorded days without substance use reported"
-        : "Recorded days without gambling reported"
-
   const didRecordPrimaryBehaviour = (checkin: CheckinData) => {
     if (primaryJourney === "gambling") return checkin.gambling_occurred === true
     if (primaryJourney === "alcohol") return checkin.alcohol_occurred === true
@@ -94,7 +87,7 @@ export default function WeeklyOverviewCard({ checkins, journeyTypes = [], accoun
     const previousRating = previous?.overall_rating ?? previous?.mood_rating ?? null
     const currentRating = overall ?? mood
     const delta = currentRating !== null && previousRating !== null ? currentRating - previousRating : null
-    const behaviourRecorded = checkin && tracksSpecificBehaviour ? didRecordPrimaryBehaviour(checkin) : false
+    const behaviourRecorded = Boolean(checkin && tracksSpecificBehaviour && didRecordPrimaryBehaviour(checkin))
 
     const beforeAccount = accountCreatedDate ? date < accountCreatedDate : false
     const missed = !checkin && !beforeAccount
@@ -166,7 +159,6 @@ export default function WeeklyOverviewCard({ checkins, journeyTypes = [], accoun
           <span className="flex items-center gap-1"><i className="size-2 rounded-sm bg-[var(--chart-1)]" />Mood</span>
           <span className="flex items-center gap-1"><i className="size-2 rounded-sm bg-[var(--chart-2)]" />Overall</span>
           <span className="flex items-center gap-1"><i className="size-2 rounded-sm bg-[var(--chart-3)]" />Urges</span>
-          {tracksSpecificBehaviour && <span className="flex items-center gap-1"><i className="size-2 rounded-full bg-destructive" />{behaviourLabel} reported</span>}
         </div>
 
         <ChartContainer config={chartConfig} className="h-[220px] w-full">
@@ -184,8 +176,8 @@ export default function WeeklyOverviewCard({ checkins, journeyTypes = [], accoun
         <div className="grid grid-cols-7 gap-1" aria-label="Daily check-in status">
           {chartData.map((day) => (
             <div key={day.dateLabel} className="flex min-w-0 flex-col items-center gap-1 text-center" title={day.feedback}>
-              <div className={`flex size-5 items-center justify-center rounded-full text-[10px] font-bold ${day.beforeAccount ? "bg-muted/40 text-muted-foreground/50" : !day.hasData ? "bg-muted text-muted-foreground" : day.behaviourRecorded ? "bg-destructive/15 text-destructive" : "bg-primary/15 text-primary"}`}>
-                {day.beforeAccount ? "" : day.hasData ? (day.behaviourRecorded ? "•" : "✓") : "–"}
+              <div className={`flex size-5 items-center justify-center rounded-full text-[10px] font-bold ${day.beforeAccount ? "bg-muted/40 text-muted-foreground/50" : !day.hasData ? "bg-muted text-muted-foreground" : "bg-primary/15 text-primary"}`}>
+                {day.beforeAccount ? "" : day.hasData ? "•" : "–"}
               </div>
               {day.delta !== null && day.delta >= 2 && <TrendingUp className="size-3 text-emerald-500" />}
               {day.delta !== null && day.delta <= -2 && <TrendingDown className="size-3 text-amber-500" />}
@@ -195,25 +187,22 @@ export default function WeeklyOverviewCard({ checkins, journeyTypes = [], accoun
 
         {(increasedDays.length > 0 || decreasedDays.length > 0) && (
           <div className="grid gap-2 sm:grid-cols-2">
-            {increasedDays.length > 0 && <div className="rounded-lg bg-emerald-500/10 p-2 text-xs text-emerald-700">Your self-reported overall or mood rating increased by 2 or more points on {increasedDays.length} recorded day{increasedDays.length === 1 ? "" : "s"} compared with the previous recorded day.</div>}
-            {decreasedDays.length > 0 && <div className="rounded-lg bg-amber-500/10 p-2 text-xs text-amber-700">Your self-reported overall or mood rating decreased by 2 or more points on {decreasedDays.length} recorded day{decreasedDays.length === 1 ? "" : "s"} compared with the previous recorded day.</div>}
+            {increasedDays.length > 0 && <div className="rounded-lg border border-border bg-muted/30 p-2 text-xs text-muted-foreground">Your self-reported overall or mood rating increased by 2 or more points on {increasedDays.length} recorded day{increasedDays.length === 1 ? "" : "s"} compared with the previous recorded day.</div>}
+            {decreasedDays.length > 0 && <div className="rounded-lg border border-border bg-muted/30 p-2 text-xs text-muted-foreground">Your self-reported overall or mood rating decreased by 2 or more points on {decreasedDays.length} recorded day{decreasedDays.length === 1 ? "" : "s"} compared with the previous recorded day.</div>}
           </div>
         )}
 
-        {tracksSpecificBehaviour && noBehaviourDays > 0 && (
-          <div className="flex items-center justify-between rounded-lg border border-emerald-500/20 bg-emerald-500/10 p-2.5">
-            <div>
-              <div className="text-xs font-medium text-emerald-700">{noBehaviourLabel}</div>
-              <div className="text-2xl font-bold text-emerald-600">{noBehaviourDays}</div>
+        {tracksSpecificBehaviour && validCheckins.length > 0 && (
+          <div className="grid gap-2 sm:grid-cols-2">
+            <div className="rounded-lg border border-border bg-muted/30 p-2.5">
+              <div className="text-xs font-medium text-muted-foreground">Recorded days with {behaviourLabel} reported</div>
+              <div className="text-2xl font-bold text-foreground">{behaviourDays}</div>
             </div>
-            <Heart className="size-7 text-emerald-500" />
-          </div>
-        )}
-
-        {tracksSpecificBehaviour && behaviourDays > 0 && (
-          <div className="rounded-lg border border-primary/20 bg-primary/10 p-2.5 text-xs text-muted-foreground">
-            <span className="font-semibold text-foreground">You reported {behaviourLabel} on {behaviourDays} recorded day{behaviourDays === 1 ? "" : "s"}.</span>{" "}
-            This is a record of what you entered, not a judgement about your progress.
+            <div className="rounded-lg border border-border bg-muted/30 p-2.5">
+              <div className="text-xs font-medium text-muted-foreground">Recorded days without {behaviourLabel} reported</div>
+              <div className="text-2xl font-bold text-foreground">{noBehaviourDays}</div>
+            </div>
+            <p className="text-xs text-muted-foreground sm:col-span-2">These counts describe what you entered. Waypoint does not assume that one pattern defines your goals, recovery status or progress.</p>
           </div>
         )}
 
@@ -221,7 +210,7 @@ export default function WeeklyOverviewCard({ checkins, journeyTypes = [], accoun
           <div className="flex flex-wrap gap-2 text-[11px] text-muted-foreground">
             <span>Average self-reported mood {avgMood.toFixed(1)}/10</span>
             <span>Average self-reported urges {avgUrges.toFixed(1)}/10</span>
-            {avgUrges > 7 && <span className="font-medium text-amber-600">Average urge rating is above 7/10</span>}
+            {avgUrges > 7 && <span className="font-medium">Average urge rating is above 7/10</span>}
           </div>
         )}
       </CardContent>
