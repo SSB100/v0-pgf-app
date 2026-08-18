@@ -150,7 +150,7 @@ export default function ValuesSelectionStep({ data, updateData, onNext, onBack }
               <ul className="text-sm text-foreground/90 space-y-1">
                 <li>• How you want to show up in your relationships and whānau</li>
                 <li>• The qualities you want to bring to difficult moments</li>
-                <li>• What supports your hauora and sense of balance</li>
+                <li>• What supports your wellbeing and sense of balance</li>
                 <li>• What gives your life meaning, curiosity or direction</li>
               </ul>
             </div>
