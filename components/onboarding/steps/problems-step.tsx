@@ -18,13 +18,13 @@ const FREQUENCY_OPTIONS = ["Daily", "Several times a week", "Weekly", "Occasiona
 
 const GAMBLING_FORMS = [
   "Lotto",
-  "Sports Betting",
-  "Online Casinos",
-  "Pokies (bars)",
-  "Pokies (Casino)",
-  "Casino Table Games",
+  "Sports betting",
+  "Online casinos",
+  "Pokies (bars or clubs)",
+  "Pokies (casino)",
+  "Casino table games",
   "Poker",
-  "Horse Racing",
+  "Horse racing",
 ]
 
 const TRIGGER_OPTIONS = [
@@ -41,14 +41,14 @@ const TRIGGER_OPTIONS = [
 ]
 
 const IMPACT_AREAS = [
-  "Financial",
+  "Finances",
   "Relationships",
-  "Work/School",
-  "Mental health",
+  "Work or study",
+  "Mental wellbeing",
   "Physical health",
-  "Self-esteem",
+  "How I feel about myself",
   "Sleep",
-  "Trust from others",
+  "Trust in relationships",
 ]
 
 export default function ProblemsStep({ data, updateData, onNext, onBack }: ProblemsStepProps) {
@@ -95,28 +95,18 @@ export default function ProblemsStep({ data, updateData, onNext, onBack }: Probl
   return (
     <Card className="soft-shadow-lg border-border/50">
       <CardHeader>
-        <CardTitle className="text-2xl text-foreground">Understanding Your Gambling Behaviours</CardTitle>
+        <CardTitle className="text-2xl text-foreground">Understanding Your Gambling</CardTitle>
         <p className="text-muted-foreground text-pretty">
-          Help us understand your gambling so we can support you better. This stays private.
+          These questions help personalise Waypoint around the patterns and impacts you choose to share. Your answers are stored with your Waypoint account.
         </p>
       </CardHeader>
 
       <CardContent className="space-y-4">
-        {/* Frequency */}
         <div className="space-y-2">
-          <Label className="text-lg font-semibold text-foreground">How often do you gamble?</Label>
+          <Label className="text-lg font-semibold text-foreground">How often do you currently gamble?</Label>
           <div className="space-y-1.5">
             {FREQUENCY_OPTIONS.map((option) => (
-              <button
-                key={option}
-                type="button"
-                onClick={() => setFrequency(option)}
-                className={`w-full px-3 py-2 rounded-lg border-2 text-left text-sm font-medium transition-all ${
-                  frequency === option
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "border-border bg-card text-foreground hover:border-primary/50"
-                }`}
-              >
+              <button key={option} type="button" onClick={() => setFrequency(option)} className={`w-full px-3 py-2 rounded-lg border-2 text-left text-sm font-medium transition-all ${frequency === option ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-foreground hover:border-primary/50"}`}>
                 {option}
               </button>
             ))}
@@ -124,34 +114,17 @@ export default function ProblemsStep({ data, updateData, onNext, onBack }: Probl
         </div>
 
         <div className="space-y-2">
-          <Label             className="text-lg font-semibold text-foreground">
-            If recent, when was your last bet? <span className="text-xs text-muted-foreground">(Optional)</span>
+          <Label className="text-lg font-semibold text-foreground">
+            If recent, when did you last gamble? <span className="text-xs text-muted-foreground">(Optional)</span>
           </Label>
-          <Input
-            type="date"
-            value={lastBetDate}
-            onChange={(e) => setLastBetDate(e.target.value)}
-            max={new Date().toISOString().split("T")[0]}
-            className="w-full"
-          />
+          <Input type="date" value={lastBetDate} onChange={(e) => setLastBetDate(e.target.value)} max={new Date().toISOString().split("T")[0]} className="w-full" />
         </div>
 
         <div className="space-y-2">
-          <Label             className="text-lg font-semibold text-foreground">
-            What forms of gambling have you used? (select all that apply)
-          </Label>
+          <Label className="text-lg font-semibold text-foreground">What forms of gambling have you used? (select all that apply)</Label>
           <div className="grid grid-cols-2 gap-1.5">
             {GAMBLING_FORMS.map((form) => (
-              <button
-                key={form}
-                type="button"
-                onClick={() => toggleGamblingForm(form)}
-                className={`px-3 py-2 rounded-lg border-2 text-sm font-medium transition-all ${
-                  gamblingForms.includes(form)
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "border-border bg-card text-foreground hover:border-primary/50"
-                }`}
-              >
+              <button key={form} type="button" onClick={() => toggleGamblingForm(form)} className={`px-3 py-2 rounded-lg border-2 text-sm font-medium transition-all ${gamblingForms.includes(form) ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-foreground hover:border-primary/50"}`}>
                 {form}
               </button>
             ))}
@@ -160,21 +133,10 @@ export default function ProblemsStep({ data, updateData, onNext, onBack }: Probl
 
         {gamblingForms.length > 0 && (
           <div className="space-y-2">
-            <Label             className="text-lg font-semibold text-foreground">
-              What forms of gambling have you used most often? (select all that apply)
-            </Label>
+            <Label className="text-lg font-semibold text-foreground">Which have you used most often? (select all that apply)</Label>
             <div className="grid grid-cols-2 gap-1.5">
               {gamblingForms.map((form) => (
-                <button
-                  key={form}
-                  type="button"
-                  onClick={() => toggleMostUsedForm(form)}
-                  className={`px-3 py-2 rounded-lg border-2 text-sm font-medium transition-all ${
-                    mostUsedForms.includes(form)
-                      ? "border-primary bg-primary/10 text-primary"
-                      : "border-border bg-card text-foreground hover:border-primary/50"
-                  }`}
-                >
+                <button key={form} type="button" onClick={() => toggleMostUsedForm(form)} className={`px-3 py-2 rounded-lg border-2 text-sm font-medium transition-all ${mostUsedForms.includes(form) ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-foreground hover:border-primary/50"}`}>
                   {form}
                 </button>
               ))}
@@ -183,53 +145,23 @@ export default function ProblemsStep({ data, updateData, onNext, onBack }: Probl
         )}
 
         <div className="space-y-2">
-          <Label             className="text-lg font-semibold text-foreground">
-            Have you ever participated in any illegal gambling?{" "}
-            <span className="text-xs text-muted-foreground">(Optional)</span>
+          <Label className="text-lg font-semibold text-foreground">
+            Have you taken part in gambling that you understand may be illegal or unregulated? <span className="text-xs text-muted-foreground">(Optional)</span>
           </Label>
           <div className="space-y-1.5">
-            <button
-              type="button"
-              onClick={() => setIllegalGambling("yes")}
-              className={`w-full px-3 py-2 rounded-lg border-2 text-left text-sm font-medium transition-all ${
-                illegalGambling === "yes"
-                  ? "border-primary bg-primary/10 text-primary"
-                  : "border-border bg-card text-foreground hover:border-primary/50"
-              }`}
-            >
-              Yes
-            </button>
-            <button
-              type="button"
-              onClick={() => setIllegalGambling("no")}
-              className={`w-full px-3 py-2 rounded-lg border-2 text-left text-sm font-medium transition-all ${
-                illegalGambling === "no"
-                  ? "border-primary bg-primary/10 text-primary"
-                  : "border-border bg-card text-foreground hover:border-primary/50"
-              }`}
-            >
-              No
-            </button>
+            {[{ value: "yes", label: "Yes" }, { value: "no", label: "No" }, { value: "prefer-not-to-say", label: "Prefer not to say" }].map((option) => (
+              <button key={option.value} type="button" onClick={() => setIllegalGambling(option.value)} className={`w-full px-3 py-2 rounded-lg border-2 text-left text-sm font-medium transition-all ${illegalGambling === option.value ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-foreground hover:border-primary/50"}`}>
+                {option.label}
+              </button>
+            ))}
           </div>
         </div>
 
-        {/* Triggers */}
         <div className="space-y-2">
-          <Label             className="text-lg font-semibold text-foreground">
-            What triggers your urge to gamble? (select all that apply)
-          </Label>
+          <Label className="text-lg font-semibold text-foreground">What tends to increase your urge to gamble? (select all that apply)</Label>
           <div className="grid grid-cols-2 gap-1.5">
             {TRIGGER_OPTIONS.map((trigger) => (
-              <button
-                key={trigger}
-                type="button"
-                onClick={() => toggleTrigger(trigger)}
-                className={`px-3 py-2 rounded-lg border-2 text-sm font-medium transition-all ${
-                  triggers.includes(trigger)
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "border-border bg-card text-foreground hover:border-primary/50"
-                }`}
-              >
+              <button key={trigger} type="button" onClick={() => toggleTrigger(trigger)} className={`px-3 py-2 rounded-lg border-2 text-sm font-medium transition-all ${triggers.includes(trigger) ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-foreground hover:border-primary/50"}`}>
                 {trigger}
               </button>
             ))}
@@ -237,21 +169,10 @@ export default function ProblemsStep({ data, updateData, onNext, onBack }: Probl
         </div>
 
         <div className="space-y-2">
-          <Label             className="text-lg font-semibold text-foreground">
-            What areas of life has gambling negatively affected? (select all that apply)
-          </Label>
+          <Label className="text-lg font-semibold text-foreground">Which areas of your life, if any, have been affected by gambling? (select all that apply)</Label>
           <div className="grid grid-cols-2 gap-1.5">
             {IMPACT_AREAS.map((area) => (
-              <button
-                key={area}
-                type="button"
-                onClick={() => toggleImpact(area)}
-                className={`px-3 py-2 rounded-lg border-2 text-sm font-medium transition-all ${
-                  impacts.includes(area)
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "border-border bg-card text-foreground hover:border-primary/50"
-                }`}
-              >
+              <button key={area} type="button" onClick={() => toggleImpact(area)} className={`px-3 py-2 rounded-lg border-2 text-sm font-medium transition-all ${impacts.includes(area) ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-foreground hover:border-primary/50"}`}>
                 {area}
               </button>
             ))}
@@ -260,8 +181,7 @@ export default function ProblemsStep({ data, updateData, onNext, onBack }: Probl
 
         <div className="bg-info/10 border border-info/20 rounded-lg p-3">
           <p className="text-sm text-foreground text-pretty">
-            Recognizing these patterns is a huge step. You're building awareness that will help you make different
-            choices.
+            Noticing patterns can help you decide which changes, skills or supports may be useful. These answers are for personalisation and are not a clinical assessment.
           </p>
         </div>
 
