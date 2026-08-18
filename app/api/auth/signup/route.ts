@@ -3,13 +3,27 @@ import { createUser, getUserByEmail } from "@/lib/auth"
 import { encrypt } from "@/lib/session"
 import { sql } from "@/lib/db"
 
+function calculateAge(dateOfBirth: string) {
+  const dob = new Date(`${dateOfBirth}T00:00:00`)
+  if (Number.isNaN(dob.getTime())) return null
+
+  const today = new Date()
+  let age = today.getFullYear() - dob.getFullYear()
+  const monthDifference = today.getMonth() - dob.getMonth()
+
+  if (monthDifference < 0 || (monthDifference === 0 && today.getDate() < dob.getDate())) {
+    age -= 1
+  }
+
+  return age
+}
+
 export async function POST(request: NextRequest) {
   try {
-    console.log("[v0] Sign up attempt starting")
     const { email, password, fullName, dateOfBirth, country, gender, termsAccepted, dataConsent } = await request.json()
 
-    if (!email || !password) {
-      return NextResponse.json({ error: "Email and password are required" }, { status: 400 })
+    if (!email || !password || !dateOfBirth) {
+      return NextResponse.json({ error: "Email, password and date of birth are required" }, { status: 400 })
     }
 
     if (password.length < 8) {
@@ -20,50 +34,57 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "You must accept the terms and conditions" }, { status: 400 })
     }
 
-    // Check if user already exists
+    const age = calculateAge(dateOfBirth)
+    if (age === null || age < 0) {
+      return NextResponse.json({ error: "Please enter a valid date of birth" }, { status: 400 })
+    }
+
+    if (age < 18) {
+      return NextResponse.json(
+        { error: "The current Waypoint MVP is available to adults aged 18 and over." },
+        { status: 400 },
+      )
+    }
+
     const existingUser = await getUserByEmail(email)
     if (existingUser) {
       return NextResponse.json({ error: "An account with this email already exists" }, { status: 409 })
     }
 
-    console.log("[v0] Creating new user")
     const user = await createUser(email, password, fullName)
 
     if (user.id) {
       const now = new Date().toISOString()
       await sql`
-        UPDATE users 
-        SET 
+        UPDATE users
+        SET
           data_consent = ${dataConsent || false},
           data_consent_date = ${dataConsent ? now : null},
           terms_accepted = ${termsAccepted},
           terms_accepted_date = ${now},
-          date_of_birth = ${dateOfBirth || null},
+          date_of_birth = ${dateOfBirth},
           country = ${country || null},
           gender = ${gender || null}
         WHERE id = ${user.id}
       `
-      console.log("[v0] User consent preferences and demographics saved")
     }
 
     const token = await encrypt({ userId: user.id })
-    console.log("[v0] Token created for new user, setting cookie")
 
     const response = NextResponse.json({
       success: true,
       user: { id: user.id, email: user.email, full_name: user.full_name },
-      onboardingComplete: false, // New users always need onboarding
+      onboardingComplete: false,
     })
 
     response.cookies.set("session", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 7, // 7 days
+      maxAge: 60 * 60 * 24 * 7,
       path: "/",
     })
 
-    console.log("[v0] Sign up successful, cookie set")
     return response
   } catch (error) {
     console.error("[v0] Sign up error:", error)

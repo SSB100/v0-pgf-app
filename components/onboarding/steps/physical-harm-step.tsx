@@ -34,18 +34,17 @@ export default function PhysicalHarmStep({ data, updateData, onNext, onBack }: P
       <CardHeader>
         <CardTitle className="text-2xl text-foreground">Your Wellbeing Matters</CardTitle>
         <p className="text-muted-foreground text-pretty">
-          These questions help us understand how to support you better. Your answers are private and confidential.
+          These questions help personalise your experience. Your answers are sensitive wellbeing information and are not monitored in real time.
         </p>
       </CardHeader>
 
       <CardContent className="space-y-6">
         <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
           <p className="text-sm text-amber-900 dark:text-amber-100 text-pretty">
-            If you're in crisis or experiencing thoughts of harming yourself, please reach out to a crisis service
-            immediately. Help is available 24/7.
+            If you or someone else is in immediate danger, call 111 or go to the nearest hospital emergency department. For free, confidential emotional support in New Zealand, call or text 1737 any time.
           </p>
           <p className="text-xs text-amber-800 dark:text-amber-200 mt-2 font-medium">
-            Lifeline: 13 11 14 | Beyond Blue: 1300 22 4636
+            Waypoint is not an emergency-response service and does not notify a clinician or support worker when you answer these questions.
           </p>
         </div>
 
@@ -73,7 +72,7 @@ export default function PhysicalHarmStep({ data, updateData, onNext, onBack }: P
 
         <div className="space-y-3">
           <Label className="text-base font-semibold text-foreground">
-            Have you engaged in self-harm behaviors in the past 6 months?
+            Have you engaged in self-harm behaviours in the past 6 months?
           </Label>
           <div className="space-y-2">
             {["No", "Yes, in the past", "Yes, recently", "Prefer not to say"].map((option) => (
@@ -117,8 +116,7 @@ export default function PhysicalHarmStep({ data, updateData, onNext, onBack }: P
 
         <div className="bg-info/10 border border-info/20 rounded-lg p-4">
           <p className="text-sm text-foreground text-pretty">
-            Thank you for sharing this with us. Your courage in being honest is an important step toward healing. The
-            tools and support in this app can help, but please reach out to professional support if you're struggling.
+            Thank you for answering these questions. Waypoint can provide self-guided tools and support information, but it does not replace professional care. If you are struggling, consider contacting your healthcare professional, a trusted support person, 1737, or emergency services when needed.
           </p>
         </div>
 

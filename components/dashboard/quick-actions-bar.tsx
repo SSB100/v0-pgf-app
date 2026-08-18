@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
 import CommunityButton from "./community-button"
-import { Share2 } from "lucide-react"
+import { HeartHandshake, Share2 } from "lucide-react"
 
 interface QuickActionsBarProps {
   userId: string
@@ -12,12 +12,10 @@ interface QuickActionsBarProps {
 
 export default function QuickActionsBar({ userId }: QuickActionsBarProps) {
   const router = useRouter()
-  const [sosLoading, setSosLoading] = useState(false)
   const [checkInCompleted, setCheckInCompleted] = useState(false)
   const [isCheckingCheckIn, setIsCheckingCheckIn] = useState(true)
 
   useEffect(() => {
-    // Check if user already completed a check-in today
     async function checkDailyCheckIn() {
       try {
         const response = await fetch(`/api/check-in/check-today?userId=${userId}`)
@@ -33,32 +31,6 @@ export default function QuickActionsBar({ userId }: QuickActionsBarProps) {
     checkDailyCheckIn()
   }, [userId])
 
-  async function handleSOS() {
-    setSosLoading(true)
-    try {
-      const response = await fetch("/api/sos/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId }),
-      })
-
-      const data = await response.json()
-
-      if (data.needsSetup) {
-        // Redirect to setup page if not configured
-        router.push("/sos-setup")
-      } else if (response.ok) {
-        alert(data.message || "SOS sent. Support will reach out soon.")
-      } else {
-        alert("Failed to send SOS. Please try again.")
-      }
-    } catch (error) {
-      alert("Failed to send SOS. Please try again.")
-    } finally {
-      setSosLoading(false)
-    }
-  }
-
   function handleCheckIn() {
     if (checkInCompleted) {
       alert("You've already completed your daily check-in today. You can complete another one tomorrow!")
@@ -70,19 +42,11 @@ export default function QuickActionsBar({ userId }: QuickActionsBarProps) {
   return (
     <div className="hidden lg:flex flex-col sm:flex-row gap-3">
       <Button
-        onClick={handleSOS}
-        disabled={sosLoading}
+        onClick={() => router.push("/support")}
         className="bg-destructive hover:bg-destructive/90 text-white font-semibold shadow-sm w-full sm:w-auto"
       >
-        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-          />
-        </svg>
-        {sosLoading ? "Sending..." : "SOS - I Need Help"}
+        <HeartHandshake className="w-4 h-4 mr-2" />
+        I Need Support
       </Button>
 
       <div>
