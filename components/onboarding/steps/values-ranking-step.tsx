@@ -16,7 +16,9 @@ interface ValuesRankingStepProps {
 function getNextTarget(currentCount: number) {
   if (currentCount <= 3) return 3
 
-  const targets = [15, 10, 6, 3]
+  // Keep the pruning gradual so the exercise feels reflective rather than like
+  // another ranking task. With all 24 values selected the path is 24 → 18 → 13 → 9 → 6 → 3.
+  const targets = [18, 13, 9, 6, 3]
   return targets.find((target) => target < currentCount) || 3
 }
 
