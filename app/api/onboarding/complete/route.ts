@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { neon } from "@neondatabase/serverless"
 import { getSession } from "@/lib/session"
 import { getAotearoaDateKey } from "@/lib/aotearoa-date"
+import { VALUE_DOMAINS } from "@/lib/onboarding-data"
 
 const db = neon(process.env.NEON_DATABASE_URL!)
 
@@ -21,6 +22,10 @@ const ALLOWED_AVATARS = new Set([
   "crystal_sentinel",
   "spirit_fox",
 ])
+
+const VALUE_CATEGORY_BY_NAME = new Map(
+  VALUE_DOMAINS.flatMap((domain) => domain.values.map((value) => [value, domain.domain] as const)),
+)
 
 const MAX_PAYLOAD_BYTES = 100_000
 const MAX_TEXT_LENGTH = 4_000
@@ -43,6 +48,16 @@ function cleanStringList(value: unknown, maxItems = MAX_LIST_ITEMS, maxLength = 
     .map((item) => item.trim().slice(0, maxLength))
     .filter(Boolean)
     .slice(0, maxItems)
+}
+
+function uniqueStrings(values: string[]) {
+  const seen = new Set<string>()
+  return values.filter((value) => {
+    const key = value.toLowerCase()
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
 }
 
 function cleanOptionalDate(value: unknown, fieldName: string): string | null {
@@ -126,6 +141,24 @@ export async function POST(request: NextRequest) {
     }
 
     const selectedValues = normaliseSelectedValues(data.selectedValues)
+      .filter((value) => VALUE_CATEGORY_BY_NAME.has(value.name))
+      .slice(0, 3)
+
+    if (selectedValues.length !== 3) {
+      throw new InputError("Please complete the Life Garden and identify three core values")
+    }
+
+    const initialValueNames = uniqueStrings(
+      cleanStringList(data.initialValuesShortlist, 30, 100).filter((value) => VALUE_CATEGORY_BY_NAME.has(value)),
+    )
+    const allValueNames = initialValueNames.length > 0 ? [...initialValueNames] : selectedValues.map((value) => value.name)
+
+    selectedValues.forEach((value) => {
+      if (!allValueNames.includes(value.name)) allValueNames.push(value.name)
+    })
+
+    const coreRankByName = new Map(selectedValues.map((value, index) => [value.name, index + 1] as const))
+
     const currentEmotions = cleanStringList(data.currentEmotions, 30, 100)
     const strongestEmotion = cleanText(data.strongestEmotion, 100)
     if (strongestEmotion && currentEmotions.length > 0 && !currentEmotions.includes(strongestEmotion)) {
@@ -204,10 +237,14 @@ export async function POST(request: NextRequest) {
       `)
     }
 
-    selectedValues.forEach((value, index) => {
+    allValueNames.forEach((name) => {
+      const coreRank = coreRankByName.get(name) ?? null
+      const isCoreValue = coreRank !== null
+      const category = VALUE_CATEGORY_BY_NAME.get(name) || "other"
+
       queries.push(db`
         INSERT INTO user_values (user_id, value_name, category, is_core_value, rank)
-        VALUES (${user.id}, ${value.name}, ${value.category}, true, ${index + 1})
+        VALUES (${user.id}, ${name}, ${category}, ${isCoreValue}, ${coreRank})
       `)
     })
 
