@@ -8,154 +8,101 @@ export default function FAQPage() {
     <div className="min-h-screen bg-background">
       <PublicHeader />
 
-      {/* Hero Section */}
       <section className="py-20 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/10 pointer-events-none" />
         <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-3xl mx-auto text-center space-y-6">
             <h1 className="text-4xl md:text-5xl font-bold text-primary">Frequently Asked Questions</h1>
-            <p className="text-xl text-primary/70">
-              Find answers to common questions about Waypoint and your recovery journey.
-            </p>
+            <p className="text-xl text-primary/70">Clear information about what Waypoint does, and what it does not do.</p>
           </div>
         </div>
       </section>
 
-      {/* FAQ Content */}
       <section className="py-16">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto">
             <Accordion type="single" collapsible className="space-y-4">
               <AccordionItem value="item-1" className="border rounded-lg px-6 bg-card">
-                <AccordionTrigger className="text-lg font-semibold text-primary hover:no-underline">
-                  What is Waypoint?
-                </AccordionTrigger>
+                <AccordionTrigger className="text-lg font-semibold text-primary hover:no-underline">What is Waypoint?</AccordionTrigger>
                 <AccordionContent className="text-primary/70">
-                  Waypoint is a comprehensive recovery companion app designed to support individuals recovering from
-                  addiction and managing mental health challenges. We provide evidence-based tools, daily reflections,
-                  skill-building modules, and a supportive community to help you navigate your recovery journey.
+                  Waypoint is a developing self-guided recovery and wellbeing platform for adults. It includes onboarding, daily check-ins, learning and skills modules, values work, progress views, support information and an optional peer community. It is a support tool, not a health service or clinical treatment programme.
                 </AccordionContent>
               </AccordionItem>
 
               <AccordionItem value="item-2" className="border rounded-lg px-6 bg-card">
-                <AccordionTrigger className="text-lg font-semibold text-primary hover:no-underline">
-                  Is Waypoint free to use?
-                </AccordionTrigger>
+                <AccordionTrigger className="text-lg font-semibold text-primary hover:no-underline">Is Waypoint free to use?</AccordionTrigger>
                 <AccordionContent className="text-primary/70">
-                  Yes! Waypoint offers free access to all core features including journey modules, daily check-ins,
-                  progress tracking, and community support. Our mission is to make recovery support accessible to
-                  everyone who needs it.
+                  The current MVP provides its core user features without a charge. Waypoint is still under development, so future organisational or professional features may use a different funding model.
                 </AccordionContent>
               </AccordionItem>
 
               <AccordionItem value="item-3" className="border rounded-lg px-6 bg-card">
-                <AccordionTrigger className="text-lg font-semibold text-primary hover:no-underline">
-                  What types of addiction does Waypoint support?
-                </AccordionTrigger>
+                <AccordionTrigger className="text-lg font-semibold text-primary hover:no-underline">What areas can I use Waypoint for?</AccordionTrigger>
                 <AccordionContent className="text-primary/70">
-                  Waypoint supports recovery from all types of addictions including substance use (alcohol, drugs),
-                  gambling, behavioral addictions, and other compulsive behaviors. Our tools are designed to be
-                  applicable across different recovery paths, with customizable modules to fit your specific needs.
+                  Current onboarding can be personalised around gambling, alcohol, other substance use, mental wellbeing, gaming-related concerns and personal growth. Waypoint is not designed to diagnose any condition, and its tools may not be suitable for every person or situation.
                 </AccordionContent>
               </AccordionItem>
 
               <AccordionItem value="item-4" className="border rounded-lg px-6 bg-card">
-                <AccordionTrigger className="text-lg font-semibold text-primary hover:no-underline">
-                  Can Waypoint help with mental health challenges?
-                </AccordionTrigger>
+                <AccordionTrigger className="text-lg font-semibold text-primary hover:no-underline">Is the content clinically validated?</AccordionTrigger>
                 <AccordionContent className="text-primary/70">
-                  Absolutely. Our modules incorporate evidence-based therapeutic approaches like DBT and CBT that are
-                  effective for managing anxiety, depression, emotional regulation, and other mental health challenges.
-                  Many users find Waypoint helpful for both addiction recovery and mental wellness.
+                  Waypoint's learning content is informed by established concepts used in approaches such as CBT, DBT, ACT and mindfulness. The Waypoint intervention as a whole has not yet been clinically validated, and the content is undergoing further professional, cultural and research review.
                 </AccordionContent>
               </AccordionItem>
 
               <AccordionItem value="item-5" className="border rounded-lg px-6 bg-card">
-                <AccordionTrigger className="text-lg font-semibold text-primary hover:no-underline">
-                  How do Journey Modules work?
-                </AccordionTrigger>
+                <AccordionTrigger className="text-lg font-semibold text-primary hover:no-underline">How do Journey Modules work?</AccordionTrigger>
                 <AccordionContent className="text-primary/70">
-                  Journey modules are structured learning experiences that teach specific skills and concepts. Each
-                  module includes educational content, interactive exercises, and reflection prompts. You earn credits
-                  for completing modules, which help your growth tree level up. You can complete modules at your own
-                  pace and in any order that makes sense for your journey.
+                  Journey modules are self-guided learning experiences with practical exercises and reflection prompts. Completing a module adds to your Waypoint engagement progress and Growth Companion. That progress reflects activity in the app; it is not a clinical measure of recovery or wellbeing.
                 </AccordionContent>
               </AccordionItem>
 
               <AccordionItem value="item-6" className="border rounded-lg px-6 bg-card">
-                <AccordionTrigger className="text-lg font-semibold text-primary hover:no-underline">
-                  What are daily check-ins?
-                </AccordionTrigger>
+                <AccordionTrigger className="text-lg font-semibold text-primary hover:no-underline">What are daily check-ins?</AccordionTrigger>
                 <AccordionContent className="text-primary/70">
-                  Daily check-ins are brief reflections where you track your mood, urge strength, emotions, and skills
-                  used. This helps you build self-awareness, identify patterns, and monitor your progress over time.
-                  Your check-in data is visualized in your dashboard so you can see trends and celebrate improvements.
+                  Daily check-ins let you record self-reported information such as mood, urges, emotions, skills used and relevant behaviours. Your dashboard can show patterns in what you have entered over time. Waypoint does not interpret those entries as a diagnosis or clinical assessment.
                 </AccordionContent>
               </AccordionItem>
 
               <AccordionItem value="item-7" className="border rounded-lg px-6 bg-card">
-                <AccordionTrigger className="text-lg font-semibold text-primary hover:no-underline">
-                  What is the Growth Tree?
-                </AccordionTrigger>
+                <AccordionTrigger className="text-lg font-semibold text-primary hover:no-underline">What is the Growth Companion?</AccordionTrigger>
                 <AccordionContent className="text-primary/70">
-                  The growth tree is a visual representation of your recovery progress. As you complete journey modules
-                  and maintain your practice, you earn credits that help your tree grow and level up. It's a meaningful
-                  way to see how far you've come and stay motivated on your journey.
+                  The Growth Companion is a visual way to recognise your engagement with Waypoint. It can grow as you complete activities and practise skills. A higher level does not mean that you are "more recovered" or clinically healthier than someone at a different level.
                 </AccordionContent>
               </AccordionItem>
 
               <AccordionItem value="item-8" className="border rounded-lg px-6 bg-card">
-                <AccordionTrigger className="text-lg font-semibold text-primary hover:no-underline">
-                  How does the SOS feature work?
-                </AccordionTrigger>
+                <AccordionTrigger className="text-lg font-semibold text-primary hover:no-underline">What happens if I need urgent support?</AccordionTrigger>
                 <AccordionContent className="text-primary/70">
-                  The SOS feature provides instant access to your personalized crisis support resources. You can set up
-                  emergency contacts, helpline numbers, and grounding techniques that work for you. When you're in
-                  distress, simply click the SOS button to access these resources immediately.
+                  Waypoint provides a support page with verified New Zealand emergency and helpline information. Waypoint itself is not monitored for emergencies and opening a support page does not notify a clinician or support worker. If you or someone else is in immediate danger, call 111 or go to the nearest hospital emergency department.
                 </AccordionContent>
               </AccordionItem>
 
               <AccordionItem value="item-9" className="border rounded-lg px-6 bg-card">
-                <AccordionTrigger className="text-lg font-semibold text-primary hover:no-underline">
-                  Is my data private and secure?
-                </AccordionTrigger>
+                <AccordionTrigger className="text-lg font-semibold text-primary hover:no-underline">How is my information handled?</AccordionTrigger>
                 <AccordionContent className="text-primary/70">
-                  Yes. We take your privacy seriously. All your personal information, reflections, and progress data are
-                  encrypted and stored securely. We never share your data with third parties. You have full control over
-                  your account and can delete your data at any time.
+                  Waypoint stores account and wellbeing information needed to provide its features. The platform is still undergoing privacy and security hardening before any formal health-service or research deployment. We will not describe data as anonymous, encrypted or shared in a particular way unless the implemented system supports that claim. Formal privacy information will be maintained in Waypoint's Privacy Policy as it is developed.
                 </AccordionContent>
               </AccordionItem>
 
               <AccordionItem value="item-10" className="border rounded-lg px-6 bg-card">
-                <AccordionTrigger className="text-lg font-semibold text-primary hover:no-underline">
-                  Can Waypoint replace therapy or treatment?
-                </AccordionTrigger>
+                <AccordionTrigger className="text-lg font-semibold text-primary hover:no-underline">Can Waypoint replace therapy, counselling or treatment?</AccordionTrigger>
                 <AccordionContent className="text-primary/70">
-                  No. Waypoint is a supportive tool designed to complement professional treatment, not replace it. We
-                  strongly encourage users to work with qualified therapists, counselors, or treatment programs.
-                  Waypoint can enhance your recovery by providing daily support and skill practice between sessions.
+                  No. Waypoint is intended to complement professional support and give you a structured place to reflect and practise skills between appointments or in everyday life. Decisions about medical or clinical care should be made with appropriately qualified professionals.
                 </AccordionContent>
               </AccordionItem>
 
               <AccordionItem value="item-11" className="border rounded-lg px-6 bg-card">
-                <AccordionTrigger className="text-lg font-semibold text-primary hover:no-underline">
-                  How do I get started?
-                </AccordionTrigger>
+                <AccordionTrigger className="text-lg font-semibold text-primary hover:no-underline">How do I get started?</AccordionTrigger>
                 <AccordionContent className="text-primary/70">
-                  Getting started is easy! Click "Get Started" to create your free account. You'll complete a brief
-                  onboarding process that helps us understand your goals and customize your experience. Then you can
-                  immediately start exploring journey modules, completing daily check-ins, and tracking your progress.
+                  Create an account and complete guided onboarding. You can then explore journey modules, use daily check-ins, review your dashboard and choose whether to use the peer community. The current MVP is intended for people aged 18 and over.
                 </AccordionContent>
               </AccordionItem>
 
               <AccordionItem value="item-12" className="border rounded-lg px-6 bg-card">
-                <AccordionTrigger className="text-lg font-semibold text-primary hover:no-underline">
-                  What if I relapse or have a setback?
-                </AccordionTrigger>
+                <AccordionTrigger className="text-lg font-semibold text-primary hover:no-underline">What if I return to a behaviour I am trying to change?</AccordionTrigger>
                 <AccordionContent className="text-primary/70">
-                  Setbacks are a normal part of recovery. Waypoint helps you track these moments without judgment, learn
-                  from them, and keep moving forward. Your progress isn't erased by a setback. Use the tools, reach out
-                  to the community, and remember that recovery is about progress, not perfection.
+                  One difficult day does not erase the work you have already done. Waypoint is designed to let you record what happened without judgement, notice patterns and decide what support or skills may be useful next. If you are concerned about your safety or wellbeing, professional support may be appropriate.
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
@@ -163,42 +110,26 @@ export default function FAQPage() {
         </div>
       </section>
 
-      {/* Still Have Questions */}
       <section className="py-20 bg-muted/30">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center space-y-6">
-            <h2 className="text-3xl font-bold text-primary">Still Have Questions?</h2>
-            <p className="text-lg text-primary/70">
-              We're here to help. Start your journey today and discover how Waypoint can support your recovery.
-            </p>
+            <h2 className="text-3xl font-bold text-primary">Want to see how it works?</h2>
+            <p className="text-lg text-primary/70">Explore Waypoint and use the parts that feel useful for where you are right now.</p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-              <Link href="/auth/signup">
-                <Button size="lg" className="bg-gradient-to-r from-primary to-primary/80 text-lg px-8">
-                  Get Started Free
-                </Button>
-              </Link>
-              <Link href="/about">
-                <Button size="lg" variant="outline" className="text-lg px-8 bg-transparent">
-                  Learn More About Us
-                </Button>
-              </Link>
+              <Link href="/auth/signup"><Button size="lg" className="bg-gradient-to-r from-primary to-primary/80 text-lg px-8">Get Started Free</Button></Link>
+              <Link href="/about"><Button size="lg" variant="outline" className="text-lg px-8 bg-transparent">Learn More About Waypoint</Button></Link>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Footer */}
       <footer className="border-t py-8">
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-sm text-primary/60">© 2025 Waypoint. Supporting recovery journeys.</p>
+            <p className="text-sm text-primary/60">© 2026 Waypoint. Supporting reflection, recovery and wellbeing.</p>
             <div className="flex gap-6">
-              <Link href="/about" className="text-sm text-primary/60 hover:text-primary transition-colors">
-                About
-              </Link>
-              <Link href="/faq" className="text-sm text-primary/60 hover:text-primary transition-colors">
-                FAQ
-              </Link>
+              <Link href="/about" className="text-sm text-primary/60 hover:text-primary transition-colors">About</Link>
+              <Link href="/faq" className="text-sm text-primary/60 hover:text-primary transition-colors">FAQ</Link>
             </div>
           </div>
         </div>
