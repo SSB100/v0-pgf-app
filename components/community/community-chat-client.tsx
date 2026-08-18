@@ -36,12 +36,7 @@ interface CommunityChatClientProps {
   journeyType: string
 }
 
-export default function CommunityChatClient({
-  userId,
-  groupId,
-  userAlias,
-  journeyType,
-}: CommunityChatClientProps) {
+export default function CommunityChatClient({ userId, groupId, userAlias, journeyType }: CommunityChatClientProps) {
   const router = useRouter()
   const [messages, setMessages] = useState<Message[]>([])
   const [members, setMembers] = useState<Member[]>([])
@@ -49,7 +44,7 @@ export default function CommunityChatClient({
   const [isLoading, setIsLoading] = useState(true)
   const [isSending, setIsSending] = useState(false)
   const [reportDialogOpen, setReportDialogOpen] = useState(false)
-  const [reportedUser, setReportedUser] = useState<{ alias: string; userId: string; messageId?: string } | null>(null)
+  const [reportedMessage, setReportedMessage] = useState<{ alias: string; messageId: string } | null>(null)
   const [switchGroupDialogOpen, setSwitchGroupDialogOpen] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
@@ -114,18 +109,18 @@ export default function CommunityChatClient({
 
       if (!response.ok) {
         console.error("Failed to send message")
-        setMessages((prev) => prev.filter((m) => m.id !== tempMessage.id))
+        setMessages((prev) => prev.filter((message) => message.id !== tempMessage.id))
       }
     } catch (err) {
       console.error("Error sending message:", err)
-      setMessages((prev) => prev.filter((m) => m.id !== tempMessage.id))
+      setMessages((prev) => prev.filter((message) => message.id !== tempMessage.id))
     } finally {
       setIsSending(false)
     }
   }
 
-  function handleReportClick(alias: string, reportedUserId: string, messageId?: string) {
-    setReportedUser({ alias, userId: reportedUserId, messageId })
+  function handleReportClick(alias: string, messageId: string) {
+    setReportedMessage({ alias, messageId })
     setReportDialogOpen(true)
   }
 
@@ -141,7 +136,7 @@ export default function CommunityChatClient({
             <div className="flex items-center gap-2">
               <div className="w-2.5 h-2.5 rounded-full bg-green-500 flex-shrink-0" />
               <h2 className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent truncate">
-                {journeyType.split("_").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")}
+                {journeyType.split("_").map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(" ")}
               </h2>
             </div>
             <p className="text-xs sm:text-sm text-muted-foreground truncate">
@@ -174,18 +169,18 @@ export default function CommunityChatClient({
               </div>
             </div>
           ) : (
-            messages.map((msg) => (
+            messages.map((message) => (
               <ChatMessage
-                key={msg.id}
-                id={msg.id}
-                alias={msg.alias}
-                content={msg.content}
-                timestamp={new Date(msg.timestamp)}
-                profileImage={msg.profileImage}
-                growthLevel={msg.growthLevel}
-                growthType={msg.growthType}
-                isCurrentUser={msg.alias === userAlias}
-                onReport={() => handleReportClick(msg.alias, msg.id, msg.id)}
+                key={message.id}
+                id={message.id}
+                alias={message.alias}
+                content={message.content}
+                timestamp={new Date(message.timestamp)}
+                profileImage={message.profileImage}
+                growthLevel={message.growthLevel}
+                growthType={message.growthType}
+                isCurrentUser={message.alias === userAlias}
+                onReport={() => handleReportClick(message.alias, message.id)}
               />
             ))
           )}
@@ -197,10 +192,10 @@ export default function CommunityChatClient({
             <Input
               placeholder="Write a peer message..."
               value={messageInput}
-              onChange={(e) => setMessageInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault()
+              onChange={(event) => setMessageInput(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" && !event.shiftKey) {
+                  event.preventDefault()
                   handleSendMessage()
                 }
               }}
@@ -211,26 +206,21 @@ export default function CommunityChatClient({
               <Send className="w-4 h-4" />
             </Button>
           </div>
-          <p className="text-xs text-muted-foreground/80 leading-relaxed hidden sm:block">
-            Keep messages respectful. Avoid sharing information that you would not want other group members to see.
-          </p>
+          <p className="text-xs text-muted-foreground/80 leading-relaxed hidden sm:block">Keep messages respectful. Avoid sharing information that you would not want other group members to see.</p>
         </div>
       </div>
 
-      <div className="hidden lg:flex lg:w-72 flex-col">
-        <GroupMembersList members={members} />
-      </div>
+      <div className="hidden lg:flex lg:w-72 flex-col"><GroupMembersList members={members} /></div>
 
-      {reportedUser && (
+      {reportedMessage && (
         <ReportUserDialog
           isOpen={reportDialogOpen}
           onClose={() => {
             setReportDialogOpen(false)
-            setReportedUser(null)
+            setReportedMessage(null)
           }}
-          reportedAlias={reportedUser.alias}
-          reportedUserId={reportedUser.userId}
-          messageId={reportedUser.messageId}
+          reportedAlias={reportedMessage.alias}
+          messageId={reportedMessage.messageId}
           groupId={groupId}
         />
       )}
