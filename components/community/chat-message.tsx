@@ -12,13 +12,10 @@ import {
 } from "@/components/ui/dropdown-menu"
 
 interface ChatMessageProps {
-  id: string
   alias: string
   content: string
   timestamp: Date
   profileImage?: string
-  growthLevel?: number
-  growthType?: string
   isCurrentUser: boolean
   onReport: () => void
 }
