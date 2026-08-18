@@ -2,16 +2,27 @@ import { cookies } from "next/headers"
 import { SignJWT, jwtVerify } from "jose"
 import { getUserById, type User } from "./auth"
 
-const SECRET_KEY = process.env.JWT_SECRET || "your-secret-key-change-in-production"
-const key = new TextEncoder().encode(SECRET_KEY)
+function getJwtKey() {
+  const secret = process.env.JWT_SECRET
+
+  if (!secret) {
+    throw new Error("JWT_SECRET is not configured")
+  }
+
+  return new TextEncoder().encode(secret)
+}
 
 export async function encrypt(payload: { userId: string }) {
-  return new SignJWT(payload).setProtectedHeader({ alg: "HS256" }).setIssuedAt().setExpirationTime("7d").sign(key)
+  return new SignJWT(payload)
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime("7d")
+    .sign(getJwtKey())
 }
 
 export async function decrypt(token: string) {
   try {
-    const { payload } = await jwtVerify(token, key, {
+    const { payload } = await jwtVerify(token, getJwtKey(), {
       algorithms: ["HS256"],
     })
     return payload
@@ -28,7 +39,7 @@ export async function createSession(userId: string) {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
-    maxAge: 60 * 60 * 24 * 7, // 7 days
+    maxAge: 60 * 60 * 24 * 7,
     path: "/",
   })
 }
@@ -45,7 +56,6 @@ export async function getSession(): Promise<User | null> {
   const user = await getUserById(payload.userId)
 
   if (!user) {
-    // User was deleted but session still exists - clear it
     await deleteSession()
     return null
   }
