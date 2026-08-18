@@ -99,14 +99,6 @@ export default async function DashboardPage() {
     ORDER BY identified_at DESC
   `
 
-  const skillsResult = await sql`
-    SELECT skill_name, effectiveness_rating, practiced_at
-    FROM skills_practice
-    WHERE user_id = ${user.id}
-    ORDER BY practiced_at DESC
-    LIMIT 5
-  `
-
   const weeklyCheckinsResult = await sql`
     SELECT
       date,
@@ -155,7 +147,6 @@ export default async function DashboardPage() {
   const latestAwareness = awarenessResult[0] || null
   const values = valuesResult || []
   const allProblems = problemsResult || []
-  const recentSkills = skillsResult || []
   const weeklyCheckins = (weeklyCheckinsResult || []).map((checkin: any) => ({
     ...checkin,
     date: toDateKey(checkin.date) || String(checkin.date).slice(0, 10),
@@ -281,7 +272,7 @@ export default async function DashboardPage() {
           />
         )}
 
-        <QuickActionsBar userId={user.id} />
+        <QuickActionsBar />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           <div className="lg:col-span-1">
@@ -291,13 +282,11 @@ export default async function DashboardPage() {
               levelCredits={profile.level_credits || 0}
               streak={profile.check_in_streak || 0}
               longestStreak={profile.longest_streak || 0}
-              recentSkills={recentSkills}
-              userId={user.id}
             />
           </div>
 
           <div className="lg:col-span-2">
-            <CurrentStateCard awareness={latestAwareness} problems={primaryProblem} userId={user.id} todayCheckIn={todayCheckIn} />
+            <CurrentStateCard awareness={latestAwareness} problems={primaryProblem} todayCheckIn={todayCheckIn} />
           </div>
         </div>
 
