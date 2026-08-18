@@ -23,23 +23,19 @@ export async function GET(_request: NextRequest, props: { params: Promise<{ grou
 
     const members = await sql`
       SELECT
-        gm.user_id,
         cp.alias_name,
-        gm.joined_at,
         gm.last_active_at
       FROM group_memberships gm
       JOIN community_profiles cp ON gm.community_profile_id = cp.id
       WHERE gm.group_id = ${groupId}::uuid
-      ORDER BY gm.last_active_at DESC
+      ORDER BY gm.last_active_at DESC NULLS LAST
       LIMIT 100
     `
 
     return NextResponse.json({
       members: members.map((member: any) => ({
-        userId: member.user_id,
         alias: member.alias_name,
         profileImage: null,
-        joinedAt: member.joined_at,
         lastActive: member.last_active_at,
       })),
     })
