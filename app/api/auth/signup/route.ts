@@ -2,16 +2,28 @@ import { type NextRequest, NextResponse } from "next/server"
 import { createUser, getUserByEmail } from "@/lib/auth"
 import { encrypt } from "@/lib/session"
 import { sql } from "@/lib/db"
+import { getAotearoaDateKey } from "@/lib/aotearoa-date"
 
 function calculateAge(dateOfBirth: string) {
-  const dob = new Date(`${dateOfBirth}T00:00:00`)
-  if (Number.isNaN(dob.getTime())) return null
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateOfBirth)) return null
 
-  const today = new Date()
-  let age = today.getFullYear() - dob.getFullYear()
-  const monthDifference = today.getMonth() - dob.getMonth()
+  const [birthYear, birthMonth, birthDay] = dateOfBirth.split("-").map(Number)
+  const parsedBirthDate = new Date(Date.UTC(birthYear, birthMonth - 1, birthDay))
+  if (
+    parsedBirthDate.getUTCFullYear() !== birthYear ||
+    parsedBirthDate.getUTCMonth() !== birthMonth - 1 ||
+    parsedBirthDate.getUTCDate() !== birthDay
+  ) {
+    return null
+  }
 
-  if (monthDifference < 0 || (monthDifference === 0 && today.getDate() < dob.getDate())) age -= 1
+  const [currentYear, currentMonth, currentDay] = getAotearoaDateKey().split("-").map(Number)
+  let age = currentYear - birthYear
+
+  if (currentMonth < birthMonth || (currentMonth === birthMonth && currentDay < birthDay)) {
+    age -= 1
+  }
+
   return age
 }
 
