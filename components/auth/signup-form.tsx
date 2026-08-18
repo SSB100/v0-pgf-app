@@ -3,7 +3,6 @@
 import type React from "react"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -20,8 +19,13 @@ import {
 } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
+function latestEligibleBirthDate() {
+  const today = new Date()
+  const eligible = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate())
+  return eligible.toISOString().split("T")[0]
+}
+
 export default function SignUpForm() {
-  const router = useRouter()
   const [fullName, setFullName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -39,7 +43,12 @@ export default function SignUpForm() {
     setError("")
 
     if (!termsAccepted) {
-      setError("You must accept the terms and conditions to continue")
+      setError("You must accept the Terms and Conditions to continue")
+      return
+    }
+
+    if (!dateOfBirth || dateOfBirth > latestEligibleBirthDate()) {
+      setError("The current Waypoint MVP is for people aged 18 and over")
       return
     }
 
@@ -56,7 +65,6 @@ export default function SignUpForm() {
     setLoading(true)
 
     try {
-      console.log("[v0] Signup form: Sending signup request")
       const response = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -65,10 +73,6 @@ export default function SignUpForm() {
       })
 
       const data = await response.json()
-      console.log("[v0] Signup form: Response received", {
-        ok: response.ok,
-        onboardingComplete: data.onboardingComplete,
-      })
 
       if (!response.ok) {
         setError(data.error || "Something went wrong")
@@ -76,12 +80,11 @@ export default function SignUpForm() {
         return
       }
 
-      console.log("[v0] Signup form: Signup successful, redirecting to onboarding")
       await new Promise((resolve) => setTimeout(resolve, 100))
       window.location.href = "/onboarding"
     } catch (err) {
       console.error("[v0] Signup form error:", err)
-      setError("Unable to create account. Please try again.")
+      setError("Unable to create your account. Please try again.")
       setLoading(false)
     }
   }
@@ -96,204 +99,99 @@ export default function SignUpForm() {
             </div>
           )}
 
-          <div className="space-y-2">
-            <Label htmlFor="fullName" className="text-foreground font-medium">
-              Full Name
-            </Label>
-            <Input
-              id="fullName"
-              type="text"
-              placeholder="Your name"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              required
-              disabled={loading}
-              className="border-input focus:border-primary focus:ring-primary"
-            />
+          <div className="rounded-lg border border-border bg-muted/30 p-3 text-sm text-muted-foreground">
+            The current Waypoint MVP is intended for adults aged 18 and over in Aotearoa New Zealand.
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="email" className="text-foreground font-medium">
-              Email
-            </Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              disabled={loading}
-              className="border-input focus:border-primary focus:ring-primary"
-            />
+            <Label htmlFor="fullName" className="text-foreground font-medium">Full name</Label>
+            <Input id="fullName" type="text" placeholder="Your name" value={fullName} onChange={(e) => setFullName(e.target.value)} required disabled={loading} className="border-input focus:border-primary focus:ring-primary" />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="dateOfBirth" className="text-foreground font-medium">
-              Date of Birth
-            </Label>
-            <Input
-              id="dateOfBirth"
-              type="date"
-              value={dateOfBirth}
-              onChange={(e) => setDateOfBirth(e.target.value)}
-              required
-              disabled={loading}
-              max={new Date().toISOString().split("T")[0]}
-              className="border-input focus:border-primary focus:ring-primary"
-            />
+            <Label htmlFor="email" className="text-foreground font-medium">Email</Label>
+            <Input id="email" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required disabled={loading} className="border-input focus:border-primary focus:ring-primary" />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="country" className="text-foreground font-medium">
-              Country
-            </Label>
-            <Input
-              id="country"
-              type="text"
-              placeholder="e.g., New Zealand, United States"
-              value={country}
-              onChange={(e) => setCountry(e.target.value)}
-              required
-              disabled={loading}
-              className="border-input focus:border-primary focus:ring-primary"
-            />
+            <Label htmlFor="dateOfBirth" className="text-foreground font-medium">Date of birth</Label>
+            <Input id="dateOfBirth" type="date" value={dateOfBirth} onChange={(e) => setDateOfBirth(e.target.value)} required disabled={loading} max={latestEligibleBirthDate()} className="border-input focus:border-primary focus:ring-primary" />
+            <p className="text-xs text-muted-foreground">Used to confirm that you meet the current 18+ age requirement.</p>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="gender" className="text-foreground font-medium">
-              Gender
-            </Label>
+            <Label htmlFor="country" className="text-foreground font-medium">Country</Label>
+            <Input id="country" type="text" placeholder="e.g. New Zealand" value={country} onChange={(e) => setCountry(e.target.value)} required disabled={loading} className="border-input focus:border-primary focus:ring-primary" />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="gender" className="text-foreground font-medium">Gender</Label>
             <Select value={gender} onValueChange={setGender} required disabled={loading}>
-              <SelectTrigger className="border-input focus:border-primary focus:ring-primary">
-                <SelectValue placeholder="Select gender" />
-              </SelectTrigger>
+              <SelectTrigger className="border-input focus:border-primary focus:ring-primary"><SelectValue placeholder="Select gender" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="male">Male</SelectItem>
                 <SelectItem value="female">Female</SelectItem>
-                <SelectItem value="other">Other</SelectItem>
+                <SelectItem value="other">Another gender</SelectItem>
                 <SelectItem value="prefer-not-to-say">Prefer not to say</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password" className="text-foreground font-medium">
-              Password
-            </Label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="At least 8 characters"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              disabled={loading}
-              className="border-input focus:border-primary focus:ring-primary"
-            />
+            <Label htmlFor="password" className="text-foreground font-medium">Password</Label>
+            <Input id="password" type="password" placeholder="At least 8 characters" value={password} onChange={(e) => setPassword(e.target.value)} required disabled={loading} className="border-input focus:border-primary focus:ring-primary" />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="confirmPassword" className="text-foreground font-medium">
-              Confirm Password
-            </Label>
-            <Input
-              id="confirmPassword"
-              type="password"
-              placeholder="Re-enter your password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-              disabled={loading}
-              className="border-input focus:border-primary focus:ring-primary"
-            />
+            <Label htmlFor="confirmPassword" className="text-foreground font-medium">Confirm password</Label>
+            <Input id="confirmPassword" type="password" placeholder="Re-enter your password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required disabled={loading} className="border-input focus:border-primary focus:ring-primary" />
           </div>
 
           <div className="flex items-start space-x-2 pt-2">
-            <Checkbox
-              id="terms"
-              checked={termsAccepted}
-              onCheckedChange={(checked) => setTermsAccepted(checked === true)}
-              disabled={loading}
-              className="mt-1"
-            />
+            <Checkbox id="terms" checked={termsAccepted} onCheckedChange={(checked) => setTermsAccepted(checked === true)} disabled={loading} className="mt-1" />
             <div className="flex-1">
-              <label
-                htmlFor="terms"
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-              >
+              <label htmlFor="terms" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer">
                 I agree to the{" "}
-                <Link href="/terms" target="_blank" className="text-primary hover:underline">
-                  Terms and Conditions
-                </Link>{" "}
+                <Link href="/terms" target="_blank" className="text-primary hover:underline">Terms and Conditions</Link>{" "}
                 <span className="text-destructive">*</span>
               </label>
             </div>
           </div>
 
           <div className="flex items-start space-x-2">
-            <Checkbox
-              id="dataConsent"
-              checked={dataConsent}
-              onCheckedChange={(checked) => setDataConsent(checked === true)}
-              disabled={loading}
-              className="mt-1"
-            />
+            <Checkbox id="dataConsent" checked={dataConsent} onCheckedChange={(checked) => setDataConsent(checked === true)} disabled={loading} className="mt-1" />
             <div className="flex-1">
-              <label
-                htmlFor="dataConsent"
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-              >
-                I consent to sharing my anonymous progress data for research
+              <label htmlFor="dataConsent" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer">
+                I am interested in allowing de-identified Waypoint activity data to contribute to future research
               </label>
               <Dialog>
                 <DialogTrigger asChild>
-                  <button
-                    type="button"
-                    className="text-primary hover:text-primary/80 transition-colors text-xs underline inline"
-                    aria-label="Learn more about data usage"
-                  >
+                  <button type="button" className="text-primary hover:text-primary/80 transition-colors text-xs underline inline" aria-label="Learn more about the research preference">
                     (more info)
                   </button>
                 </DialogTrigger>
                 <DialogContent className="max-w-md">
                   <DialogHeader>
-                    <DialogTitle>How Your Data Helps</DialogTitle>
+                    <DialogTitle>Future Research Preference</DialogTitle>
                     <DialogDescription className="space-y-3 pt-4 text-foreground/80">
                       <p>
-                        By sharing your anonymous progress data, you contribute to important research that helps us
-                        better understand addiction and recovery patterns.
+                        This optional setting records your interest in contributing Waypoint activity data to future research. It does not enrol you in a research study and is not, by itself, consent for a future formal study.
                       </p>
-                      <p className="font-medium">What we collect:</p>
-                      <ul className="list-disc pl-5 space-y-1 text-sm">
-                        <li>Progress through journey modules and skill practices</li>
-                        <li>Check-in patterns and recovery milestones</li>
-                        <li>Aggregated emotional and urge strength trends</li>
-                      </ul>
-                      <p className="font-medium">What we do NOT collect:</p>
-                      <ul className="list-disc pl-5 space-y-1 text-sm">
-                        <li>Your name, email, or any personally identifying information</li>
-                        <li>Private notes or reflections you write</li>
-                        <li>Contact details or communication content</li>
-                      </ul>
-                      <p className="text-sm">
-                        Your anonymized data helps improve Waypoint for future users and contributes to the broader
-                        understanding of effective recovery strategies. You can change this setting anytime in your
-                        account settings.
+                      <p>
+                        Any formal research project would need its own approved participant information, consent process, data rules and governance before your information could be used under that study.
+                      </p>
+                      <p>
+                        Waypoint's research and privacy processes are still being developed. We will not describe data as anonymous, de-identified or excluded from a research dataset unless the implemented process supports that claim.
                       </p>
                     </DialogDescription>
                   </DialogHeader>
                 </DialogContent>
               </Dialog>
-              <p className="text-xs text-muted-foreground mt-1">(Optional)</p>
+              <p className="text-xs text-muted-foreground mt-1">Optional. Leaving this unticked does not limit your use of Waypoint.</p>
             </div>
           </div>
 
-          <Button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
-          >
+          <Button type="submit" disabled={loading} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium">
             {loading ? "Creating account..." : "Create Account"}
           </Button>
         </CardContent>
@@ -301,9 +199,7 @@ export default function SignUpForm() {
         <CardFooter className="flex-col space-y-2 text-center text-sm">
           <p className="text-muted-foreground">
             {"Already have an account? "}
-            <Link href="/auth/signin" className="text-primary hover:text-primary/80 font-medium">
-              Sign in
-            </Link>
+            <Link href="/auth/signin" className="text-primary hover:text-primary/80 font-medium">Sign in</Link>
           </p>
         </CardFooter>
       </form>
