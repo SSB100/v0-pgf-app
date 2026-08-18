@@ -8,12 +8,16 @@ export interface User {
   created_at: Date
 }
 
+export interface UserWithPassword extends User {
+  password_hash: string
+}
+
 async function hashPassword(password: string): Promise<string> {
   const encoder = new TextEncoder()
   const data = encoder.encode(password)
   const hashBuffer = await crypto.subtle.digest("SHA-256", data)
   const hashArray = Array.from(new Uint8Array(hashBuffer))
-  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("")
+  return hashArray.map((byte) => byte.toString(16).padStart(2, "0")).join("")
 }
 
 async function verifyPassword(password: string, hash: string): Promise<boolean> {
@@ -32,9 +36,9 @@ export async function createUser(email: string, password: string, fullName?: str
     RETURNING id, email, full_name, role, created_at
   `
 
-  const user = result[0]
+  const user = result[0] as User | undefined
+  if (!user) throw new Error("User creation did not return a user record")
 
-  // Create user profile
   await sql`
     INSERT INTO user_profiles (user_id)
     VALUES (${user.id})
@@ -43,14 +47,14 @@ export async function createUser(email: string, password: string, fullName?: str
   return user
 }
 
-export async function getUserByEmail(email: string) {
+export async function getUserByEmail(email: string): Promise<UserWithPassword | null> {
   const result = await sql`
     SELECT id, email, password_hash, full_name, role, created_at
     FROM users
     WHERE email = ${email}
   `
 
-  return result[0] || null
+  return (result[0] as UserWithPassword | undefined) || null
 }
 
 export async function getUserById(id: string): Promise<User | null> {
@@ -60,5 +64,5 @@ export async function getUserById(id: string): Promise<User | null> {
     WHERE id = ${id}
   `
 
-  return result[0] || null
+  return (result[0] as User | undefined) || null
 }
