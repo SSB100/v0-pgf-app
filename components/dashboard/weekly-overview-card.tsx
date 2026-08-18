@@ -12,6 +12,9 @@ interface CheckinData {
   urge_strength: number
   behavior_occurred?: boolean
   gambling_occurred: boolean
+  alcohol_occurred?: boolean
+  substance_occurred?: boolean
+  self_harm_actions?: boolean
   emotions_felt: string[] | null
   strongest_emotion: string | null
   good_things: string | null
@@ -40,27 +43,28 @@ export default function WeeklyOverviewCard({ checkins, journeyTypes = [], accoun
   }
 
   const primaryJourney = getPrimaryJourney()
+  const tracksSpecificBehaviour = ["gambling", "alcohol", "substances"].includes(primaryJourney)
+
   const behaviourLabel =
     primaryJourney === "alcohol"
       ? "alcohol use"
       : primaryJourney === "substances"
         ? "substance use"
-        : primaryJourney === "gaming"
-          ? "gaming behaviour you chose to track"
-          : primaryJourney === "gambling"
-            ? "gambling"
-            : "a behaviour you chose to track"
+        : "gambling"
 
   const noBehaviourLabel =
     primaryJourney === "alcohol"
-      ? "Days without alcohol use reported"
+      ? "Recorded days without alcohol use reported"
       : primaryJourney === "substances"
-        ? "Days without substance use reported"
-        : primaryJourney === "gaming"
-          ? "Days without the tracked gaming behaviour"
-          : primaryJourney === "gambling"
-            ? "Days without gambling reported"
-            : "Days without the tracked behaviour"
+        ? "Recorded days without substance use reported"
+        : "Recorded days without gambling reported"
+
+  const didRecordPrimaryBehaviour = (checkin: CheckinData) => {
+    if (primaryJourney === "gambling") return checkin.gambling_occurred === true
+    if (primaryJourney === "alcohol") return checkin.alcohol_occurred === true
+    if (primaryJourney === "substances") return checkin.substance_occurred === true
+    return false
+  }
 
   const toDateKey = (date: Date) => {
     const year = date.getFullYear()
@@ -90,7 +94,7 @@ export default function WeeklyOverviewCard({ checkins, journeyTypes = [], accoun
     const previousRating = previous?.overall_rating ?? previous?.mood_rating ?? null
     const currentRating = overall ?? mood
     const delta = currentRating !== null && previousRating !== null ? currentRating - previousRating : null
-    const behaviourRecorded = checkin ? (checkin.behavior_occurred ?? checkin.gambling_occurred) : false
+    const behaviourRecorded = checkin && tracksSpecificBehaviour ? didRecordPrimaryBehaviour(checkin) : false
 
     const beforeAccount = accountCreatedDate ? date < accountCreatedDate : false
     const missed = !checkin && !beforeAccount
@@ -112,21 +116,20 @@ export default function WeeklyOverviewCard({ checkins, journeyTypes = [], accoun
           : !checkin
             ? "No check-in recorded"
             : delta !== null && delta >= 2
-              ? "Your self-reported rating increased from the previous check-in"
+              ? "Your self-reported rating increased from the previous recorded day"
               : delta !== null && delta <= -2
-                ? "Your self-reported rating decreased from the previous check-in"
-                : "Your rating was similar to the previous check-in",
+                ? "Your self-reported rating decreased from the previous recorded day"
+                : "Your rating was similar to the previous recorded day",
     }
   })
 
   const accountDaysInWindow = chartData.filter((day) => !day.beforeAccount).length
   const completedDays = chartData.filter((day) => day.hasData).length
   const missingDays = chartData.filter((day) => day.missed).length
-  const behaviourDays = validCheckins.filter((checkin) => checkin.behavior_occurred ?? checkin.gambling_occurred).length
-  const noBehaviourDays = validCheckins.length - behaviourDays
+  const behaviourDays = tracksSpecificBehaviour ? validCheckins.filter(didRecordPrimaryBehaviour).length : 0
+  const noBehaviourDays = tracksSpecificBehaviour ? validCheckins.length - behaviourDays : 0
   const avgMood = validCheckins.length ? validCheckins.reduce((sum, checkin) => sum + checkin.mood_rating, 0) / validCheckins.length : 0
   const avgUrges = validCheckins.length ? validCheckins.reduce((sum, checkin) => sum + checkin.urge_strength, 0) / validCheckins.length : 0
-
   const increasedDays = chartData.filter((day) => day.delta !== null && day.delta >= 2)
   const decreasedDays = chartData.filter((day) => day.delta !== null && day.delta <= -2)
   const hasAnyHistory = validCheckins.length > 0
@@ -163,7 +166,7 @@ export default function WeeklyOverviewCard({ checkins, journeyTypes = [], accoun
           <span className="flex items-center gap-1"><i className="size-2 rounded-sm bg-[var(--chart-1)]" />Mood</span>
           <span className="flex items-center gap-1"><i className="size-2 rounded-sm bg-[var(--chart-2)]" />Overall</span>
           <span className="flex items-center gap-1"><i className="size-2 rounded-sm bg-[var(--chart-3)]" />Urges</span>
-          <span className="flex items-center gap-1"><i className="size-2 rounded-full bg-destructive" />Tracked behaviour reported</span>
+          {tracksSpecificBehaviour && <span className="flex items-center gap-1"><i className="size-2 rounded-full bg-destructive" />{behaviourLabel} reported</span>}
         </div>
 
         <ChartContainer config={chartConfig} className="h-[220px] w-full">
@@ -192,20 +195,12 @@ export default function WeeklyOverviewCard({ checkins, journeyTypes = [], accoun
 
         {(increasedDays.length > 0 || decreasedDays.length > 0) && (
           <div className="grid gap-2 sm:grid-cols-2">
-            {increasedDays.length > 0 && (
-              <div className="rounded-lg bg-emerald-500/10 p-2 text-xs text-emerald-700">
-                Your self-reported overall or mood rating increased by 2 or more points on {increasedDays.length} day{increasedDays.length === 1 ? "" : "s"} compared with the previous recorded day.
-              </div>
-            )}
-            {decreasedDays.length > 0 && (
-              <div className="rounded-lg bg-amber-500/10 p-2 text-xs text-amber-700">
-                Your self-reported overall or mood rating decreased by 2 or more points on {decreasedDays.length} day{decreasedDays.length === 1 ? "" : "s"} compared with the previous recorded day.
-              </div>
-            )}
+            {increasedDays.length > 0 && <div className="rounded-lg bg-emerald-500/10 p-2 text-xs text-emerald-700">Your self-reported overall or mood rating increased by 2 or more points on {increasedDays.length} recorded day{increasedDays.length === 1 ? "" : "s"} compared with the previous recorded day.</div>}
+            {decreasedDays.length > 0 && <div className="rounded-lg bg-amber-500/10 p-2 text-xs text-amber-700">Your self-reported overall or mood rating decreased by 2 or more points on {decreasedDays.length} recorded day{decreasedDays.length === 1 ? "" : "s"} compared with the previous recorded day.</div>}
           </div>
         )}
 
-        {noBehaviourDays > 0 && (
+        {tracksSpecificBehaviour && noBehaviourDays > 0 && (
           <div className="flex items-center justify-between rounded-lg border border-emerald-500/20 bg-emerald-500/10 p-2.5">
             <div>
               <div className="text-xs font-medium text-emerald-700">{noBehaviourLabel}</div>
@@ -215,10 +210,10 @@ export default function WeeklyOverviewCard({ checkins, journeyTypes = [], accoun
           </div>
         )}
 
-        {behaviourDays > 0 && (
+        {tracksSpecificBehaviour && behaviourDays > 0 && (
           <div className="rounded-lg border border-primary/20 bg-primary/10 p-2.5 text-xs text-muted-foreground">
             <span className="font-semibold text-foreground">You reported {behaviourLabel} on {behaviourDays} recorded day{behaviourDays === 1 ? "" : "s"}.</span>{" "}
-            This is a record of what you entered, not a judgement about your progress. You can use it to reflect on what was happening and what support may be useful.
+            This is a record of what you entered, not a judgement about your progress.
           </div>
         )}
 
