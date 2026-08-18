@@ -35,5 +35,11 @@ jobs:
       - name: TypeScript check
         run: pnpm exec tsc --noEmit
 
+      - name: Production build check
+        run: pnpm build
+        env:
+          NEON_DATABASE_URL: postgresql://waypoint_ci:waypoint_ci@localhost:5432/waypoint_ci
+          JWT_SECRET: waypoint-ci-only-jwt-secret-not-for-production-2026
+
       - name: Dependency security audit
         run: pnpm audit --audit-level=high
