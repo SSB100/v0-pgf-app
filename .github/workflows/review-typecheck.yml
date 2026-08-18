@@ -15,8 +15,10 @@ jobs:
   review-checks:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout review branch
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
@@ -33,7 +35,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Refresh vulnerable review dependencies once
-        if: github.event_name == 'push' && github.ref == 'refs/heads/waypoint-content-safety-accuracy'
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
         run: |
           if grep -q '"next-auth"' package.json; then
             pnpm remove next-auth crypto @vercel/analytics
@@ -43,7 +45,7 @@ jobs:
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add package.json pnpm-lock.yaml
             git commit -m "security: update vulnerable dependencies"
-            git push origin HEAD:waypoint-content-safety-accuracy
+            git push origin HEAD:${{ github.event.pull_request.head.ref }}
           fi
 
       - name: TypeScript check
