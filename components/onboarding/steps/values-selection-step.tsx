@@ -22,53 +22,68 @@ interface ValuesSelectionStepProps {
   onBack: () => void
 }
 
+const MINIMUM_VALUES = 3
+const RECOMMENDED_VALUES = 8
+
 export default function ValuesSelectionStep({ data, updateData, onNext, onBack }: ValuesSelectionStepProps) {
   const [selectedValues, setSelectedValues] = useState<string[]>(data.initialValuesShortlist || [])
-  const [showEncouragementDialog, setShowEncouragementDialog] = useState(false)
+  const [showSelectionDialog, setShowSelectionDialog] = useState(false)
 
   function toggleValue(value: string) {
     if (selectedValues.includes(value)) {
-      setSelectedValues((prev) => prev.filter((v) => v !== value))
+      setSelectedValues((previous) => previous.filter((item) => item !== value))
     } else {
-      setSelectedValues((prev) => [...prev, value])
+      setSelectedValues((previous) => [...previous, value])
     }
+  }
+
+  function prepareRefinement() {
+    updateData({
+      initialValuesShortlist: selectedValues,
+      secondRoundValues: [],
+      selectedValues: [],
+    })
   }
 
   function handleNext() {
-    updateData({ initialValuesShortlist: selectedValues })
+    prepareRefinement()
 
-    if (selectedValues.length < 8) {
-      setShowEncouragementDialog(true)
-    } else {
-      onNext()
+    if (selectedValues.length < RECOMMENDED_VALUES) {
+      setShowSelectionDialog(true)
+      return
     }
+
+    onNext()
   }
 
   function handleContinueAnyway() {
-    setShowEncouragementDialog(false)
+    if (selectedValues.length < MINIMUM_VALUES) return
+    setShowSelectionDialog(false)
     onNext()
   }
 
   function handleSelectMore() {
-    setShowEncouragementDialog(false)
+    setShowSelectionDialog(false)
   }
 
   const canContinue = selectedValues.length > 0
+  const belowMinimum = selectedValues.length < MINIMUM_VALUES
 
   return (
     <>
       <Card className="soft-shadow-lg border-border/50">
         <CardHeader>
-          <CardTitle className="text-xl sm:text-2xl text-foreground">The Life Garden: Round 1</CardTitle>
+          <CardTitle className="text-xl sm:text-2xl text-foreground">The Life Garden: Choose Your Values</CardTitle>
           <p className="text-xs sm:text-sm text-muted-foreground text-pretty">
-            Select values that resonate with you
+            Start broad. You will narrow these down gradually in the next part of the exercise.
           </p>
         </CardHeader>
 
         <CardContent className="space-y-4">
           <div className="bg-info/10 border border-info/20 rounded-lg p-3 sm:p-4">
             <p className="text-xs sm:text-sm text-foreground text-pretty">
-              Choose the values that make you think "Yes, that matters to me." Don't overthink it—select as many as feel right.
+              Choose anything that makes you think, "Yes, that matters to me." There is no need to rank them yet. The
+              next rounds will help you compare the values you chose and gradually narrow them to three core values.
             </p>
           </div>
 
@@ -85,79 +100,75 @@ export default function ValuesSelectionStep({ data, updateData, onNext, onBack }
                       : "bg-card text-foreground border-border hover:border-primary/50"
                   }`}
                 >
-                  <span className="text-sm">{domain.icon}</span>
+                  <span className="text-sm" aria-hidden="true">{domain.icon}</span>
                   <span>{value}</span>
                 </button>
               ))}
             </div>
           ))}
 
-        <div className="sticky bottom-0 bg-card/95 backdrop-blur-sm border-t border-border pt-3 -mx-6 px-4 sm:px-6 -mb-6 pb-6">
-          <div
-            className={`text-xs sm:text-sm text-center mb-3 font-medium ${canContinue ? "text-primary" : "text-muted-foreground"}`}
-          >
-            {selectedValues.length} selected
+          <div className="sticky bottom-0 bg-card/95 backdrop-blur-sm border-t border-border pt-3 -mx-6 px-4 sm:px-6 -mb-6 pb-6">
+            <div
+              className={`text-xs sm:text-sm text-center mb-3 font-medium ${canContinue ? "text-primary" : "text-muted-foreground"}`}
+            >
+              {selectedValues.length} selected
+            </div>
+            <StepButtonFooter onBack={onBack} onNext={handleNext} disabled={!canContinue} />
           </div>
-          <StepButtonFooter onBack={onBack} onNext={handleNext} disabled={!canContinue} />
-        </div>
         </CardContent>
       </Card>
 
-      <Dialog open={showEncouragementDialog} onOpenChange={setShowEncouragementDialog}>
+      <Dialog open={showSelectionDialog} onOpenChange={setShowSelectionDialog}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle className="text-xl">You Deserve More Values in Your Life</DialogTitle>
+            <DialogTitle className="text-xl">
+              {belowMinimum ? "Choose at least 3 values" : "Want a broader starting garden?"}
+            </DialogTitle>
             <DialogDescription className="text-base pt-2">
-              You've selected {selectedValues.length} {selectedValues.length === 1 ? "value" : "values"} so far. That's
-              a start, but let's explore a bit more.
+              {belowMinimum
+                ? `You have selected ${selectedValues.length}. The Life Garden finishes with three core values, so choose at least three before continuing.`
+                : `You have selected ${selectedValues.length} values. You can continue now, or choose a few more if they also feel meaningful to you.`}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
             <div className="text-sm text-foreground/90 space-y-3">
               <p className="text-pretty">
-                <span className="font-semibold">Understanding Values:</span> Values aren't goals or feelings—they're the
-                principles and qualities that matter most to you, like kindness, honesty, connection, or growth.
+                Values are qualities or directions that matter to you, such as honesty, connection, curiosity, health or
+                creativity. They are not goals you have to complete or standards you have to meet perfectly.
               </p>
-
-              <p className="text-pretty">
-                <span className="font-semibold">Why Multiple Values?</span> Life is rich and multifaceted. We need
-                values across different areas—relationships, personal growth, health, character, and purpose. Each value
-                supports a different part of who you want to be.
-              </p>
-
-              <p className="text-pretty">
-                <span className="font-semibold">You Deserve This:</span> Having strong values isn't selfish—it's
-                essential. When you know what matters to you, you can make choices that lead to a life you're proud of.
-              </p>
+              {!belowMinimum && (
+                <p className="text-pretty">
+                  Starting with around {RECOMMENDED_VALUES} or more can make the narrowing exercise more useful because
+                  you get to compare several things that genuinely matter to you.
+                </p>
+              )}
             </div>
 
             <div className="bg-primary/10 border border-primary/20 rounded-lg p-4">
-              <p className="text-sm font-medium text-foreground mb-2">Think about:</p>
+              <p className="text-sm font-medium text-foreground mb-2">If you want to look again, consider:</p>
               <ul className="text-sm text-foreground/90 space-y-1">
-                <li>• What kind of friend, family member, or partner do you want to be?</li>
-                <li>• What personal qualities would make you feel proud?</li>
-                <li>• How do you want to treat yourself and others?</li>
-                <li>• What gives your life meaning and direction?</li>
+                <li>• How you want to show up in your relationships and whānau</li>
+                <li>• The qualities you want to bring to difficult moments</li>
+                <li>• What supports your wellbeing and sense of balance</li>
+                <li>• What gives your life meaning, curiosity or direction</li>
               </ul>
             </div>
-
-            <p className="text-sm font-medium text-center text-primary">
-              We encourage you to select at least 8 values to create a strong foundation for your journey.
-            </p>
           </div>
 
           <DialogFooter className="gap-2 sm:gap-2">
             <Button type="button" variant="outline" onClick={handleSelectMore} className="flex-1 bg-transparent">
               Select More Values
             </Button>
-            <Button
-              type="button"
-              onClick={handleContinueAnyway}
-              className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground"
-            >
-              Continue Anyway
-            </Button>
+            {!belowMinimum && (
+              <Button
+                type="button"
+                onClick={handleContinueAnyway}
+                className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground"
+              >
+                Continue with {selectedValues.length}
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
