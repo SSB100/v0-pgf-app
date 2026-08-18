@@ -108,7 +108,7 @@ export default function ValuesRankingStep({ data, updateData, onNext, onBack }: 
           <p className="text-sm text-muted-foreground">Choose at least 3 values before refining your garden.</p>
         </CardHeader>
         <CardContent>
-          <StepButtonFooter onBack={onBack} onNext={onBack} nextLabel="Return to values" />
+          <StepButtonFooter onBack={onBack} onNext={onBack} nextText="Return to values" />
         </CardContent>
       </Card>
     )
@@ -193,7 +193,7 @@ export default function ValuesRankingStep({ data, updateData, onNext, onBack }: 
           onBack={handleBack}
           onNext={handleNext}
           disabled={!canContinue}
-          nextLabel={isFinalRound ? "Confirm core values" : "Continue narrowing"}
+          nextText={isFinalRound ? "Confirm core values" : "Continue narrowing"}
         />
       </CardContent>
     </Card>
