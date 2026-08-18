@@ -5,7 +5,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Users } from "lucide-react"
 
 interface Member {
-  userId: string
   alias: string
   profileImage?: string | null
   lastActive?: string | Date
@@ -33,7 +32,7 @@ export default function GroupMembersList({ members }: GroupMembersListProps) {
 
       <CardContent className="space-y-2 flex-1 overflow-y-auto p-4">
         {visibleMembers.map((member) => (
-          <div key={member.userId} className="flex items-center gap-3 p-3 rounded-xl border border-transparent hover:bg-primary/5 hover:border-primary/20 transition-all duration-200">
+          <div key={member.alias} className="flex items-center gap-3 p-3 rounded-xl border border-transparent hover:bg-primary/5 hover:border-primary/20 transition-all duration-200">
             <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-primary/30 bg-primary/10 flex-shrink-0">
               {member.profileImage ? (
                 <Image src={member.profileImage} alt="" fill className="object-cover" />
