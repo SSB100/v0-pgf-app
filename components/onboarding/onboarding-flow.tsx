@@ -33,6 +33,7 @@ interface OnboardingFlowProps {
 }
 
 export type InitialDailyCheckIn = {
+  dateKey?: string
   moodRating: number
   overallRating: number
   urgeStrength: number
