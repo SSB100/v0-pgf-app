@@ -22,13 +22,11 @@ export async function GET(_request: NextRequest, props: { params: Promise<{ grou
     }
 
     const members = await sql`
-      SELECT
-        cp.alias_name,
-        gm.last_active_at
+      SELECT cp.alias_name
       FROM group_memberships gm
       JOIN community_profiles cp ON gm.community_profile_id = cp.id
       WHERE gm.group_id = ${groupId}::uuid
-      ORDER BY gm.last_active_at DESC NULLS LAST
+      ORDER BY cp.alias_name ASC
       LIMIT 100
     `
 
@@ -36,7 +34,6 @@ export async function GET(_request: NextRequest, props: { params: Promise<{ grou
       members: members.map((member: any) => ({
         alias: member.alias_name,
         profileImage: null,
-        lastActive: member.last_active_at,
       })),
     })
   } catch (error) {
