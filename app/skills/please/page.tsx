@@ -27,122 +27,72 @@ export default async function PLEASESkillPage() {
               <div>
                 <CardTitle className="text-2xl sm:text-3xl">PLEASE Skills</CardTitle>
                 <p className="text-muted-foreground text-sm sm:text-base">
-                  Taking Care of Your Mind by Taking Care of Your Body
+                  A DBT-informed reminder to look after physical factors that can affect emotional vulnerability
                 </p>
               </div>
             </div>
           </CardHeader>
+
           <CardContent className="space-y-6">
-            <div>
-              <h3 className="font-semibold text-lg mb-3">What are PLEASE Skills?</h3>
-              <p className="text-foreground leading-relaxed mb-4">
-                PLEASE skills help you build resilience by addressing physical factors that affect emotional
-                vulnerability. When your body is healthier, you're better equipped to manage emotional distress.
+            <div className="space-y-3">
+              <p className="text-foreground leading-relaxed">
+                Sleep, food, physical health, movement, medication and alcohol or other drug use can all affect how easy or difficult it feels to regulate emotions. This page is a self-care prompt, not a medical treatment plan.
               </p>
-              <p className="text-sm text-muted-foreground italic">
-                Looking After You ~ Supporting Resilience while Minimising Vulnerabilities.
+              <p className="text-sm text-muted-foreground">
+                You do not need to do every item perfectly. Choose what is realistic and appropriate for your body, circumstances and goals.
               </p>
             </div>
 
             <div className="space-y-4">
               <div className="bg-secondary/50 rounded-lg p-4">
-                <h4 className="font-semibold mb-2 flex items-center gap-2">
-                  <span className="text-2xl">💊</span>
-                  <span>P - Treat Physical Illness</span>
-                </h4>
+                <h4 className="font-semibold mb-2 flex items-center gap-2"><span className="text-2xl">💊</span><span>Attend to physical health</span></h4>
                 <p className="text-sm text-foreground">
-                  Take care of and be kind to you. If you are feeling medically or physically unwell, see your doctor.
-                  Take prescribed medication as set by your doctor.
+                  If you are unwell, injured or concerned about a health problem, consider appropriate medical care. Take prescribed medicines only as directed by your prescriber and do not start, stop or change medication because of Waypoint.
                 </p>
               </div>
 
               <div className="bg-secondary/50 rounded-lg p-4">
-                <h4 className="font-semibold mb-2 flex items-center gap-2">
-                  <span className="text-2xl">🍎</span>
-                  <span>L - Balanced Eating</span>
-                </h4>
-                <p className="text-sm text-foreground mb-2">
-                  Develop a nutritional plan; don't eat too much or too little.
-                </p>
-                <ul className="text-sm space-y-1 list-disc list-inside text-foreground">
-                  <li>Eat regularly and mindfully throughout the day</li>
-                  <li>Stay away from foods you know prompt an emotional uprising</li>
-                  <li>Know and keep to your portion size</li>
-                  <li>Stay hydrated</li>
-                </ul>
-              </div>
-
-              <div className="bg-secondary/50 rounded-lg p-4">
-                <h4 className="font-semibold mb-2 flex items-center gap-2">
-                  <span className="text-2xl">🚫</span>
-                  <span>E - Avoid Alcohol and Drugs</span>
-                </h4>
+                <h4 className="font-semibold mb-2 flex items-center gap-2"><span className="text-2xl">🍎</span><span>Regular food and hydration</span></h4>
                 <p className="text-sm text-foreground">
-                  Use medications as prescribed. Avoid mood-altering substances that can increase emotional
-                  vulnerability.
+                  Notice whether long gaps without food, dehydration or eating patterns are affecting your energy or mood. Aim for a routine that works for you rather than treating this as a diet or weight-control rule.
                 </p>
               </div>
 
               <div className="bg-secondary/50 rounded-lg p-4">
-                <h4 className="font-semibold mb-2 flex items-center gap-2">
-                  <span className="text-2xl">😴</span>
-                  <span>A - Balanced Sleep</span>
-                </h4>
+                <h4 className="font-semibold mb-2 flex items-center gap-2"><span className="text-2xl">🍷</span><span>Alcohol and other substances</span></h4>
                 <p className="text-sm text-foreground mb-2">
-                  Aim for between seven and nine hours of sleep a night, or at least a sleep schedule that enables you
-                  feel rested and refreshed when you wake.
+                  Alcohol and other substances can affect sleep, mood, judgement and urges. If changing your use is one of your goals, consider doing it with appropriate support.
                 </p>
-                <ul className="text-sm space-y-1 list-disc list-inside text-foreground">
-                  <li>Attempt to keep your sleep schedule consistent</li>
-                  <li>If sleep is a problem for you, refer to the Sleep Hygiene Practice work sheet (pg.34)</li>
-                </ul>
-              </div>
-
-              <div className="bg-secondary/50 rounded-lg p-4">
-                <h4 className="font-semibold mb-2 flex items-center gap-2">
-                  <span className="text-2xl">🏃</span>
-                  <span>S - Get Exercise</span>
-                </h4>
-                <p className="text-sm text-foreground mb-2">
-                  Do some sort of exercise every day; build up to at least 30-minutes daily.
-                </p>
-                <p className="text-xs text-muted-foreground italic">
-                  Note: If you do have any medical concerns, please consult with your doctor prior to starting an
-                  exercise program.
+                <p className="text-sm text-foreground font-medium">
+                  If you drink heavily, use substances regularly, or are concerned you may be dependent, do not make a sudden reduction or stop based only on this page. Withdrawal can require medical or addiction-service support.
                 </p>
               </div>
 
               <div className="bg-secondary/50 rounded-lg p-4">
-                <h4 className="font-semibold mb-2 flex items-center gap-2">
-                  <span className="text-2xl">💚</span>
-                  <span>E - Get Exercise (Second E)</span>
-                </h4>
+                <h4 className="font-semibold mb-2 flex items-center gap-2"><span className="text-2xl">😴</span><span>Sleep</span></h4>
                 <p className="text-sm text-foreground">
-                  The last E reminds us that exercise is so important, it appears twice! Regular physical activity
-                  improves mood, reduces stress, and builds emotional resilience.
+                  Notice whether your current sleep routine is leaving you rested enough to function. If sleep problems are persistent, severe or connected with another health condition, consider discussing them with a healthcare professional rather than relying on a fixed sleep target from an app.
+                </p>
+              </div>
+
+              <div className="bg-secondary/50 rounded-lg p-4">
+                <h4 className="font-semibold mb-2 flex items-center gap-2"><span className="text-2xl">🏃</span><span>Movement</span></h4>
+                <p className="text-sm text-foreground">
+                  If movement helps you, choose an amount and intensity that suit your body and health. A short walk, stretching or another accessible activity can count. Stop if something feels unsafe or medically concerning.
                 </p>
               </div>
             </div>
 
             <div className="bg-primary/10 border border-primary/30 rounded-lg p-4">
-              <h3 className="font-semibold mb-2">Why PLEASE Matters</h3>
-              <p className="text-sm text-foreground mb-3">
-                Physical self-care creates a foundation for emotional regulation. When you're physically depleted, sick,
-                or exhausted, everything feels harder. PLEASE skills help you stay balanced.
-              </p>
-              <p className="text-sm font-medium text-primary">
-                Remember: These are everyday skills to build resilience and minimize vulnerability. Practice them daily,
-                not just in crisis.
+              <h3 className="font-semibold mb-2">Use this as a check-in, not a score</h3>
+              <p className="text-sm text-foreground">
+                The point is to notice factors that may be making today harder and identify one practical adjustment or support option. Completing these items does not measure recovery, resilience or mental health.
               </p>
             </div>
 
             <div className="flex gap-3 flex-col sm:flex-row">
-              <Button asChild className="bg-primary hover:bg-primary/90 text-white flex-1">
-                <Link href="/dashboard">Return to Dashboard</Link>
-              </Button>
-              <Button asChild variant="outline" className="flex-1 bg-transparent">
-                <Link href="/skills">Browse More Skills</Link>
-              </Button>
+              <Button asChild className="bg-primary hover:bg-primary/90 text-white flex-1"><Link href="/dashboard">Return to Dashboard</Link></Button>
+              <Button asChild variant="outline" className="flex-1 bg-transparent"><Link href="/skills">Browse More Skills</Link></Button>
             </div>
           </CardContent>
         </Card>
