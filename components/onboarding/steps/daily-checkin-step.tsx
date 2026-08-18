@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -78,6 +78,32 @@ export default function DailyCheckInStep({ data, updateData, onNext, onBack }: D
     skillsUsed: data.initialDailyCheckIn?.skillsUsed || [],
     emotionsFelt: data.initialDailyCheckIn?.emotionsFelt || [],
   })
+  const [dateError, setDateError] = useState("")
+
+  useEffect(() => {
+    if (formData.dateKey) return
+
+    let cancelled = false
+
+    async function loadAotearoaDate() {
+      try {
+        const response = await fetch("/api/check-in/check-today", { cache: "no-store" })
+        const payload = await response.json()
+        if (!response.ok || typeof payload.date !== "string") throw new Error("Unable to confirm today's date")
+        if (!cancelled) {
+          setFormData((previous) => ({ ...previous, dateKey: payload.date }))
+          setDateError("")
+        }
+      } catch {
+        if (!cancelled) setDateError("We couldn't confirm today's date. Please try again before continuing.")
+      }
+    }
+
+    loadAotearoaDate()
+    return () => {
+      cancelled = true
+    }
+  }, [formData.dateKey])
 
   const journeyTypes = data.journeyTypes || []
   const hasGambling = journeyTypes.includes("gambling")
@@ -111,6 +137,7 @@ export default function DailyCheckInStep({ data, updateData, onNext, onBack }: D
   }
 
   function handleNext() {
+    if (!formData.dateKey) return
     updateData({ initialDailyCheckIn: formData })
     onNext()
   }
@@ -133,7 +160,7 @@ export default function DailyCheckInStep({ data, updateData, onNext, onBack }: D
           </p>
           <p className="text-sm text-foreground/90 text-pretty">
             This is your first real check-in, not a demo. When you finish onboarding, the answers you enter here will
-            appear on your dashboard as today&apos;s check-in and become the starting point for your weekly view.
+            appear on your dashboard and become the starting point for your weekly view.
           </p>
         </div>
 
@@ -141,6 +168,12 @@ export default function DailyCheckInStep({ data, updateData, onNext, onBack }: D
           Your answers are self-reported and are not a diagnosis, risk assessment or clinical judgement. Waypoint is not
           monitored in real time.
         </div>
+
+        {dateError && (
+          <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
+            {dateError}
+          </div>
+        )}
 
         <div className="space-y-3">
           <label htmlFor="onboarding-mood-rating" className="block text-sm font-semibold text-foreground">
@@ -389,7 +422,12 @@ export default function DailyCheckInStep({ data, updateData, onNext, onBack }: D
           </p>
         </div>
 
-        <StepButtonFooter onBack={onBack} onNext={handleNext} nextText="Save First Check-In & Continue" />
+        <StepButtonFooter
+          onBack={onBack}
+          onNext={handleNext}
+          nextText={formData.dateKey ? "Save First Check-In & Continue" : "Preparing Check-In..."}
+          disabled={!formData.dateKey}
+        />
       </CardContent>
     </Card>
   )
