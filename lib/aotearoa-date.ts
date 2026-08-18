@@ -19,6 +19,18 @@ export function getAotearoaDateKey(date: Date = new Date()): string {
   return `${year}-${month}-${day}`
 }
 
+export function normaliseDateKey(value: unknown): string | null {
+  if (value instanceof Date) return value.toISOString().slice(0, 10)
+  if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}/.test(value)) return value.slice(0, 10)
+  return null
+}
+
+export function formatDateKeyEnNz(dateKey: string): string {
+  const [year, month, day] = dateKey.split("-")
+  if (!year || !month || !day) return dateKey
+  return `${day}/${month}/${year}`
+}
+
 export function addCalendarDays(dateKey: string, days: number): string {
   const [year, month, day] = dateKey.split("-").map(Number)
   const date = new Date(Date.UTC(year, month - 1, day + days, 12, 0, 0))
