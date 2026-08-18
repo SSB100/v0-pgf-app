@@ -5,10 +5,6 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Users, ArrowRight, Loader2 } from "lucide-react"
 
-interface CommunityButtonProps {
-  userId: string
-}
-
 interface MembershipStatus {
   hasProfile: boolean
   groupId?: string
@@ -16,7 +12,7 @@ interface MembershipStatus {
   alias?: string
 }
 
-export default function CommunityButton({ userId }: CommunityButtonProps) {
+export default function CommunityButton() {
   const router = useRouter()
   const [status, setStatus] = useState<MembershipStatus | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -25,10 +21,12 @@ export default function CommunityButton({ userId }: CommunityButtonProps) {
     async function checkStatus() {
       try {
         const profileRes = await fetch("/api/community/profile")
+        if (!profileRes.ok) throw new Error("Unable to load community profile")
         const profileData = await profileRes.json()
 
         if (profileData.profile) {
           const membershipRes = await fetch("/api/community/group/join")
+          if (!membershipRes.ok) throw new Error("Unable to load community membership")
           const membershipData = await membershipRes.json()
 
           setStatus({
@@ -40,8 +38,8 @@ export default function CommunityButton({ userId }: CommunityButtonProps) {
         } else {
           setStatus({ hasProfile: false })
         }
-      } catch (err) {
-        console.error("Error checking community status:", err)
+      } catch (error) {
+        console.error("Error checking community status:", error)
         setStatus({ hasProfile: false })
       } finally {
         setIsLoading(false)

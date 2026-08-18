@@ -8,15 +8,9 @@ import { useState } from "react"
 import { getAddictionTerms, getRelevantExamples } from "@/lib/journey-personalization"
 
 export default function DistressToleranceClient({ journeyTypes }: { journeyTypes: string[] }) {
-  const { addictionTerm, verb, verbIng } = getAddictionTerms(journeyTypes)
+  const { addictionTerm, verb } = getAddictionTerms(journeyTypes)
   const examples = getRelevantExamples(journeyTypes, "distress")
-
-  const [isCompleting, setIsCompleting] = useState(false)
-  const [showDialog, setShowDialog] = useState(false)
   const [lowIntensity, setLowIntensity] = useState("")
-  const [highIntensity, setHighIntensity] = useState("")
-  const [fadingUrge, setFadingUrge] = useState("")
-  const [errors, setErrors] = useState<Record<string, boolean>>({})
 
   return (
     <div className="min-h-screen bg-background pb-24 lg:pb-6">
@@ -25,53 +19,47 @@ export default function DistressToleranceClient({ journeyTypes }: { journeyTypes
       <main className="max-w-4xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-6">
         <Card className="border-2 border-primary/30">
           <CardHeader>
-            <CardTitle className="text-3xl font-bold">💪 Distress Tolerance</CardTitle>
-            <p className="text-muted-foreground">Module 8 of 11</p>
+            <CardTitle className="text-3xl font-bold">Distress Tolerance</CardTitle>
+            <p className="text-muted-foreground">Self-guided journey module</p>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="bg-primary/10 p-4 rounded-lg">
-              <p className="text-lg leading-relaxed">
-                Distress tolerance is your ability to sit with uncomfortable feelings—like urges, cravings, anxiety, or
-                boredom—without trying to escape them through {addictionTerm}.
+            <div className="bg-primary/10 p-4 rounded-lg space-y-2">
+              <p className="text-base leading-relaxed">
+                Distress tolerance is a DBT-informed idea about getting through difficult emotions, urges or situations when the problem cannot be solved immediately.
+              </p>
+              <p className="text-xs text-muted-foreground">
+                It does not mean you should ignore danger, tolerate abuse or avoid getting professional help. If a situation is unsafe, getting to safety comes first.
               </p>
             </div>
 
             <div className="space-y-4">
-              <h3 className="text-xl font-semibold">Why Distress Tolerance Matters</h3>
+              <h3 className="text-xl font-semibold">Why practise it?</h3>
               <p className="leading-relaxed">
-                Here's the truth: urges to {verb} are uncomfortable, but they're not dangerous. They feel intense, but
-                they won't last forever. Most urges peak within 15-20 minutes and then start to fade—if you don't act on
-                them.
+                Urges and emotions can change in intensity over time, but there is no fixed timetable that applies to everyone. A distress-tolerance skill can give you something concrete to do while you decide what response fits your goals and circumstances.
               </p>
               <p className="leading-relaxed">
-                The problem is, our brains want to escape discomfort immediately.{" "}
-                {addictionTerm.charAt(0).toUpperCase() + addictionTerm.slice(1)} has been your escape route. Distress
-                tolerance teaches you to ride out the discomfort instead of running from it.
+                If {addictionTerm || "a familiar behaviour"} has sometimes been one way you respond to discomfort, this module invites you to experiment with other options as well. It does not assume that every difficult feeling has the same cause or solution.
               </p>
             </div>
 
-            <div className="bg-white p-4 rounded-lg border">
-              <p className="font-semibold text-sm mb-2">When the urge is building (low-medium intensity):</p>
+            <div className="bg-card p-4 rounded-lg border space-y-2">
+              <p className="font-semibold text-sm">Plan one option you could try when an urge starts to build:</p>
               <Textarea
-                placeholder={`Example: I'll go for a walk while listening to my favorite podcast (distraction + self-soothe). Common triggers: ${examples.distress.slice(0, 2).join(", ")}`}
+                placeholder={`For example: pause, change rooms, contact someone, go for a walk, or use another skill. Cues you have recorded may include: ${examples.distress.slice(0, 2).join(", ") || "a stressful situation"}.`}
                 value={lowIntensity}
-                onChange={(e) => {
-                  setLowIntensity(e.target.value)
-                  if (errors.lowIntensity) setErrors({ ...errors, lowIntensity: false })
-                }}
-                className={errors.lowIntensity ? "border-red-500 border-2" : ""}
+                onChange={(event) => setLowIntensity(event.target.value)}
                 rows={3}
               />
-              {errors.lowIntensity && <p className="text-sm text-red-600 mt-1">This field is required</p>}
+              <p className="text-xs text-muted-foreground">
+                This reflection is optional. You can use a hypothetical example if writing about a recent situation feels uncomfortable.
+              </p>
             </div>
 
-            <Card className="border-green-200 bg-green-50">
-              <CardContent className="p-6">
-                <h4 className="font-semibold text-green-900 mb-2">Key Takeaway</h4>
-                <p className="text-green-800">
-                  Distress tolerance isn't about eliminating urges—it's about surviving them without making things
-                  worse. Every time you ride out an urge to {verb} without acting on it, you're rewiring your brain and
-                  proving to yourself that you're stronger than the urge.
+            <Card className="border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950/20">
+              <CardContent className="p-6 space-y-2">
+                <h4 className="font-semibold text-green-900 dark:text-green-100">Key idea</h4>
+                <p className="text-green-800 dark:text-green-200">
+                  Distress tolerance is not about proving that you are stronger than an urge or making a feeling disappear. It is about having more than one option available while a difficult moment is happening.
                 </p>
               </CardContent>
             </Card>

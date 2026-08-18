@@ -21,11 +21,8 @@ async function getUserJourneyData(userId: string) {
 
 export default async function BuildingAwarenessPage() {
   const session = await getSession()
-  if (!session) {
-    redirect("/auth/signin")
-  }
+  if (!session) redirect("/auth/signin")
 
-  const { journeyTypes } = await getUserJourneyData(session.userId)
-
+  const { journeyTypes } = await getUserJourneyData(session.id)
   return <BuildingAwarenessClient journeyTypes={journeyTypes} />
 }

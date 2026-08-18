@@ -25,15 +25,14 @@ interface ReportUserDialogProps {
   onClose: () => void
   reportedAlias: string
   groupId: string
-  reportedUserId: string
-  messageId?: string
+  messageId: string
 }
 
 const REPORT_REASONS = [
   { value: "harassment", label: "Harassment or bullying" },
-  { value: "inappropriate", label: "Inappropriate content" },
-  { value: "spam", label: "Spam or promotion" },
-  { value: "abuse", label: "Abusive language" },
+  { value: "inappropriate", label: "Content that may be unsafe or inappropriate" },
+  { value: "spam", label: "Spam, advertising or promotion" },
+  { value: "abuse", label: "Threatening or abusive language" },
   { value: "other", label: "Other reason" },
 ]
 
@@ -42,7 +41,6 @@ export default function ReportUserDialog({
   onClose,
   reportedAlias,
   groupId,
-  reportedUserId,
   messageId,
 }: ReportUserDialogProps) {
   const [reason, setReason] = useState("")
@@ -66,8 +64,7 @@ export default function ReportUserDialog({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           groupId,
-          reportedUserId,
-          messageId: messageId || null,
+          messageId,
           reason,
           description: description || null,
         }),
@@ -75,7 +72,7 @@ export default function ReportUserDialog({
 
       if (!response.ok) {
         const data = await response.json()
-        throw new Error(data.error || "Failed to submit report")
+        throw new Error(data.error || "Failed to record report")
       }
 
       setSuccess(true)
@@ -84,7 +81,7 @@ export default function ReportUserDialog({
         setReason("")
         setDescription("")
         setSuccess(false)
-      }, 2000)
+      }, 2500)
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred")
     } finally {
@@ -108,19 +105,19 @@ export default function ReportUserDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <AlertCircle className="w-5 h-5 text-destructive" />
-            Report User
+            Report a community concern
           </DialogTitle>
           <DialogDescription>
-            Help us keep the community safe by reporting {reportedAlias}'s behavior.
+            Record a concern about a message posted under the alias {reportedAlias}. Reports are not an emergency-support channel.
           </DialogDescription>
         </DialogHeader>
 
         {success ? (
           <div className="py-8 text-center space-y-2">
             <div className="text-3xl">✓</div>
-            <p className="font-medium text-sm">Report submitted</p>
+            <p className="font-medium text-sm">Report recorded</p>
             <p className="text-xs text-muted-foreground">
-              Thank you for helping keep our community safe. Our team will review this report.
+              The current MVP does not have a staffed real-time moderation service. Reports are stored for later review during development, so no response time is promised. If there is an immediate safety risk, use the Support page or emergency services instead.
             </p>
           </div>
         ) : (
@@ -128,14 +125,10 @@ export default function ReportUserDialog({
             <div className="space-y-2">
               <label className="text-sm font-medium">Reason for report</label>
               <Select value={reason} onValueChange={setReason} disabled={isSubmitting}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a reason..." />
-                </SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Select a reason..." /></SelectTrigger>
                 <SelectContent>
                   {REPORT_REASONS.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
+                    <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -144,7 +137,7 @@ export default function ReportUserDialog({
             <div className="space-y-2">
               <label className="text-sm font-medium">Additional details (optional)</label>
               <Textarea
-                placeholder="Provide more context about the incident..."
+                placeholder="Add context that would help someone understand the concern..."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 disabled={isSubmitting}
@@ -155,18 +148,16 @@ export default function ReportUserDialog({
               <p className="text-xs text-muted-foreground text-right">{description.length}/500</p>
             </div>
 
+            <p className="text-xs text-muted-foreground">Do not use this form for an emergency or to request urgent clinical support.</p>
+
             {error && <div className="text-sm text-destructive bg-destructive/10 p-2 rounded">{error}</div>}
           </div>
         )}
 
         {!success && (
           <DialogFooter>
-            <Button variant="outline" onClick={() => handleOpenChange(false)} disabled={isSubmitting}>
-              Cancel
-            </Button>
-            <Button onClick={handleSubmit} disabled={isSubmitting || !reason}>
-              {isSubmitting ? "Submitting..." : "Submit Report"}
-            </Button>
+            <Button variant="outline" onClick={() => handleOpenChange(false)} disabled={isSubmitting}>Cancel</Button>
+            <Button onClick={handleSubmit} disabled={isSubmitting || !reason}>{isSubmitting ? "Recording..." : "Record report"}</Button>
           </DialogFooter>
         )}
       </DialogContent>

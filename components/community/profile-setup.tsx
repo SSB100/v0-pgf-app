@@ -21,7 +21,7 @@ export default function ProfileSetup({ onProfileCreated, isLoading = false }: Pr
     setError("")
 
     if (!aliasName.trim()) {
-      setError("Please enter an alias name")
+      setError("Please enter an alias")
       return
     }
 
@@ -37,7 +37,7 @@ export default function ProfileSetup({ onProfileCreated, isLoading = false }: Pr
       const data = await response.json()
 
       if (!response.ok) {
-        setError(data.error || "Failed to create profile")
+        setError(data.error || "Failed to create community alias")
         return
       }
 
@@ -54,21 +54,19 @@ export default function ProfileSetup({ onProfileCreated, isLoading = false }: Pr
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-2xl">
           <Heart className="w-6 h-6 text-primary" />
-          Create Your Anonymous Alias
+          Create Your Community Alias
         </CardTitle>
         <CardDescription>
-          Your alias helps protect your privacy while connecting with others on the same journey
+          Other community members will see this alias instead of the name on your Waypoint account.
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleCreateProfile} className="space-y-4">
           <div className="space-y-2">
-            <label htmlFor="alias" className="text-sm font-medium">
-              Choose Your Alias
-            </label>
+            <label htmlFor="alias" className="text-sm font-medium">Choose an alias</label>
             <Input
               id="alias"
-              placeholder="e.g., Phoenix, Hope, Strength..."
+              placeholder="e.g. Phoenix, Hope, NorthStar..."
               value={aliasName}
               onChange={(e) => setAliasName(e.target.value)}
               disabled={isSubmitting || isLoading}
@@ -80,18 +78,13 @@ export default function ProfileSetup({ onProfileCreated, isLoading = false }: Pr
 
           {error && <div className="text-sm text-destructive bg-destructive/10 p-2 rounded">{error}</div>}
 
-          <Button
-            type="submit"
-            disabled={!aliasName.trim() || isSubmitting || isLoading}
-            className="w-full"
-            size="lg"
-          >
-            {isSubmitting ? "Creating Alias..." : "Continue"}
+          <Button type="submit" disabled={!aliasName.trim() || isSubmitting || isLoading} className="w-full" size="lg">
+            {isSubmitting ? "Creating alias..." : "Continue"}
             <ArrowRight className="w-4 h-4 ml-2" />
           </Button>
 
           <p className="text-xs text-muted-foreground text-center">
-            Your alias is completely anonymous. Your real name is never shared in community groups.
+            Your real name is not displayed to other community members through your alias. Waypoint still stores the account-to-alias link internally, so this should not be treated as full anonymity from Waypoint itself.
           </p>
         </form>
       </CardContent>

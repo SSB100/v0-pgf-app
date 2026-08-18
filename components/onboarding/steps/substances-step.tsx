@@ -4,6 +4,7 @@ import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
+import { supportResources } from "@/lib/support-resources"
 import type { OnboardingData } from "../onboarding-flow"
 import { StepButtonFooter } from "./step-button-footer"
 
@@ -14,16 +15,16 @@ interface SubstancesStepProps {
   onBack: () => void
 }
 
-const FREQUENCY_OPTIONS = ["Daily", "Several times a week", "Weekly", "Occasionally", "Currently clean"]
+const FREQUENCY_OPTIONS = ["Daily", "Several times a week", "Weekly", "Occasionally", "Not using currently"]
 
 const SUBSTANCE_TYPES = [
   "Cannabis",
-  "Prescription medications (misuse)",
-  "Stimulants (cocaine, meth, etc.)",
+  "Prescription medication used differently from prescribed",
+  "Stimulants (for example cocaine or methamphetamine)",
   "Opioids",
-  "MDMA/Ecstasy",
+  "MDMA / ecstasy",
   "Hallucinogens",
-  "Synthetic drugs",
+  "Synthetic substances",
   "Other",
 ]
 
@@ -34,21 +35,21 @@ const TRIGGER_OPTIONS = [
   "Emotional pain",
   "Physical pain",
   "Sleep difficulties",
-  "Peer pressure",
-  "Trauma response",
+  "Peer or social pressure",
+  "Trauma-related distress",
   "Work pressure",
   "Loneliness",
 ]
 
 const IMPACT_AREAS = [
   "Physical health",
-  "Mental health",
+  "Mental wellbeing",
   "Relationships",
-  "Work/School",
-  "Financial",
+  "Work or study",
+  "Finances",
   "Legal issues",
-  "Self-esteem",
-  "Memory/cognition",
+  "How I feel about myself",
+  "Memory or concentration",
 ]
 
 export default function SubstancesStep({ data, updateData, onNext, onBack }: SubstancesStepProps) {
@@ -88,25 +89,16 @@ export default function SubstancesStep({ data, updateData, onNext, onBack }: Sub
       <CardHeader>
         <CardTitle className="text-2xl text-foreground">Understanding Your Substance Use</CardTitle>
         <p className="text-muted-foreground text-pretty">
-          Help us understand your situation so we can provide the right support. This information is confidential.
+          These questions help personalise Waypoint around the patterns and impacts you choose to share. Your answers are stored with your Waypoint account.
         </p>
       </CardHeader>
 
       <CardContent className="space-y-4">
         <div className="space-y-2">
-          <Label className="text-lg font-semibold text-foreground">How often do you use substances?</Label>
+          <Label className="text-lg font-semibold text-foreground">How often do you currently use substances?</Label>
           <div className="space-y-1.5">
             {FREQUENCY_OPTIONS.map((option) => (
-              <button
-                key={option}
-                type="button"
-                onClick={() => setFrequency(option)}
-                className={`w-full px-3 py-2 rounded-lg border-2 text-left text-sm font-medium transition-all ${
-                  frequency === option
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "border-border bg-card text-foreground hover:border-primary/50"
-                }`}
-              >
+              <button key={option} type="button" onClick={() => setFrequency(option)} className={`w-full px-3 py-2 rounded-lg border-2 text-left text-sm font-medium transition-all ${frequency === option ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-foreground hover:border-primary/50"}`}>
                 {option}
               </button>
             ))}
@@ -114,34 +106,17 @@ export default function SubstancesStep({ data, updateData, onNext, onBack }: Sub
         </div>
 
         <div className="space-y-2">
-          <Label             className="text-lg font-semibold text-foreground">
-            When was your last use? <span className="text-xs text-muted-foreground">(Optional)</span>
+          <Label className="text-lg font-semibold text-foreground">
+            If recent, when did you last use a substance? <span className="text-xs text-muted-foreground">(Optional)</span>
           </Label>
-          <Input
-            type="date"
-            value={lastUseDate}
-            onChange={(e) => setLastUseDate(e.target.value)}
-            max={new Date().toISOString().split("T")[0]}
-            className="w-full"
-          />
+          <Input type="date" value={lastUseDate} onChange={(e) => setLastUseDate(e.target.value)} max={new Date().toISOString().split("T")[0]} className="w-full" />
         </div>
 
         <div className="space-y-2">
-          <Label             className="text-lg font-semibold text-foreground">
-            What substances are you working on? (select all that apply)
-          </Label>
+          <Label className="text-lg font-semibold text-foreground">Which substances are relevant to the change you want to make? (select all that apply)</Label>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
             {SUBSTANCE_TYPES.map((type) => (
-              <button
-                key={type}
-                type="button"
-                onClick={() => toggleSubstanceType(type)}
-                className={`px-3 py-2 rounded-lg border-2 text-sm font-medium transition-all ${
-                  substanceTypes.includes(type)
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "border-border bg-card text-foreground hover:border-primary/50"
-                }`}
-              >
+              <button key={type} type="button" onClick={() => toggleSubstanceType(type)} className={`px-3 py-2 rounded-lg border-2 text-sm font-medium transition-all ${substanceTypes.includes(type) ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-foreground hover:border-primary/50"}`}>
                 {type}
               </button>
             ))}
@@ -149,21 +124,10 @@ export default function SubstancesStep({ data, updateData, onNext, onBack }: Sub
         </div>
 
         <div className="space-y-2">
-          <Label             className="text-lg font-semibold text-foreground">
-            What triggers your urge to use? (select all that apply)
-          </Label>
-            <div className="grid grid-cols-2 gap-1.5">
+          <Label className="text-lg font-semibold text-foreground">What tends to increase your urge to use? (select all that apply)</Label>
+          <div className="grid grid-cols-2 gap-1.5">
             {TRIGGER_OPTIONS.map((trigger) => (
-              <button
-                key={trigger}
-                type="button"
-                onClick={() => toggleTrigger(trigger)}
-                className={`px-3 py-2 rounded-lg border-2 text-sm font-medium transition-all ${
-                  triggers.includes(trigger)
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "border-border bg-card text-foreground hover:border-primary/50"
-                }`}
-              >
+              <button key={trigger} type="button" onClick={() => toggleTrigger(trigger)} className={`px-3 py-2 rounded-lg border-2 text-sm font-medium transition-all ${triggers.includes(trigger) ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-foreground hover:border-primary/50"}`}>
                 {trigger}
               </button>
             ))}
@@ -171,31 +135,22 @@ export default function SubstancesStep({ data, updateData, onNext, onBack }: Sub
         </div>
 
         <div className="space-y-2">
-          <Label             className="text-lg font-semibold text-foreground">
-            What areas of life has substance use affected? (select all that apply)
-          </Label>
-            <div className="grid grid-cols-2 gap-1.5">
+          <Label className="text-lg font-semibold text-foreground">Which areas of your life, if any, have been affected by substance use? (select all that apply)</Label>
+          <div className="grid grid-cols-2 gap-1.5">
             {IMPACT_AREAS.map((area) => (
-              <button
-                key={area}
-                type="button"
-                onClick={() => toggleImpact(area)}
-                className={`px-3 py-2 rounded-lg border-2 text-sm font-medium transition-all ${
-                  impacts.includes(area)
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "border-border bg-card text-foreground hover:border-primary/50"
-                }`}
-              >
+              <button key={area} type="button" onClick={() => toggleImpact(area)} className={`px-3 py-2 rounded-lg border-2 text-sm font-medium transition-all ${impacts.includes(area) ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-foreground hover:border-primary/50"}`}>
                 {area}
               </button>
             ))}
           </div>
         </div>
 
-        <div className="bg-info/10 border border-info/20 rounded-lg p-3">
+        <div className="bg-info/10 border border-info/20 rounded-lg p-3 space-y-2">
           <p className="text-sm text-foreground text-pretty">
-            Recovery is possible. By understanding your patterns, you're taking control of your journey. Every step
-            forward matters.
+            Noticing patterns can help you decide which changes, skills or supports may be useful. These answers are for personalisation and are not a clinical assessment.
+          </p>
+          <p className="text-xs text-muted-foreground text-pretty">
+            Withdrawal risks differ between substances. If you are worried about stopping or reducing use, a GP, addiction service or the Alcohol Drug Helpline ({supportResources.alcoholDrug.phone}) can help you plan more safely.
           </p>
         </div>
 

@@ -27,88 +27,78 @@ export default async function TIPSkillPage() {
               <div>
                 <CardTitle className="text-2xl sm:text-3xl">TIP Skills</CardTitle>
                 <p className="text-muted-foreground text-sm sm:text-base">
-                  Temperature, Intense Exercise, Paced Breathing
+                  Temperature, brief physical activity and paced breathing
                 </p>
               </div>
             </div>
           </CardHeader>
+
           <CardContent className="space-y-6">
-            <div>
-              <h3 className="font-semibold text-lg mb-2">What are TIP Skills?</h3>
+            <div className="space-y-3">
+              <h3 className="font-semibold text-lg">What are TIP skills?</h3>
               <p className="text-foreground leading-relaxed">
-                TIP skills are crisis survival techniques from DBT that help you quickly reduce intense emotions by
-                changing your body chemistry. They're especially useful when emotions feel overwhelming and you need
-                immediate relief.
+                TIP is a DBT distress-tolerance approach that uses changes in body state to help some people reduce very high arousal long enough to choose what to do next. It is a coping skill, not medical treatment or emergency care.
+              </p>
+            </div>
+
+            <div className="border border-amber-500/30 bg-amber-500/5 rounded-lg p-4">
+              <p className="text-sm text-foreground">
+                <strong>Use the physical parts cautiously.</strong> Cold exposure and intense exercise can affect heart rate and circulation and are not suitable for everyone. If you have heart problems or another medical condition that could make these unsafe, use a gentler option such as paced breathing and check with a clinician before trying the temperature or intense-exercise parts.
               </p>
             </div>
 
             <div className="space-y-4">
               <div className="bg-secondary/50 rounded-lg p-4">
-                <h4 className="font-semibold mb-2 flex items-center gap-2">
-                  <span className="text-2xl">🧊</span>
-                  <span>T - Temperature</span>
-                </h4>
+                <h4 className="font-semibold mb-2 flex items-center gap-2"><span className="text-2xl">🧊</span><span>T - Temperature</span></h4>
                 <p className="text-sm text-foreground mb-3">
-                  Cold water activates your body's "dive reflex," which slows your heart rate and helps calm intense
-                  emotions quickly.
+                  A brief cool sensation can help shift attention and body arousal for some people. Keep it mild and stop if you feel dizzy, faint, painful or unwell.
                 </p>
-                <ul className="text-sm space-y-1 list-disc list-inside text-foreground">
-                  <li>Splash cold water on your face</li>
-                  <li>Hold an ice pack to your face or neck for 30 seconds</li>
-                  <li>Take a cold shower</li>
+                <ul className="text-sm space-y-1 list-disc pl-5 text-foreground">
+                  <li>Splash cool water on your face.</li>
+                  <li>Hold a wrapped cool pack against your cheeks for a short period.</li>
+                  <li>Skip this part if cold exposure is not safe or comfortable for you.</li>
                 </ul>
               </div>
 
               <div className="bg-secondary/50 rounded-lg p-4">
-                <h4 className="font-semibold mb-2 flex items-center gap-2">
-                  <span className="text-2xl">🏃</span>
-                  <span>I - Intense Exercise</span>
-                </h4>
+                <h4 className="font-semibold mb-2 flex items-center gap-2"><span className="text-2xl">🏃</span><span>I - Intense or Brisk Movement</span></h4>
                 <p className="text-sm text-foreground mb-3">
-                  Physical activity releases built-up tension and emotional energy, helping shift your body out of
-                  crisis mode.
+                  Brief movement can help discharge physical tension. Choose an intensity that is appropriate for your body rather than pushing through pain or medical symptoms.
                 </p>
-                <ul className="text-sm space-y-1 list-disc list-inside text-foreground">
-                  <li>Do jumping jacks or push-ups for 5-10 minutes</li>
-                  <li>Go for a fast walk or run</li>
-                  <li>Dance intensely to music</li>
+                <ul className="text-sm space-y-1 list-disc pl-5 text-foreground">
+                  <li>Try a brisk walk, a short set of comfortable body-weight movements, or energetic dancing.</li>
+                  <li>Stop if you feel chest pain, faintness, unusual shortness of breath or another concerning symptom.</li>
                 </ul>
               </div>
 
               <div className="bg-secondary/50 rounded-lg p-4">
-                <h4 className="font-semibold mb-2 flex items-center gap-2">
-                  <span className="text-2xl">🫁</span>
-                  <span>P - Paced Breathing</span>
-                </h4>
+                <h4 className="font-semibold mb-2 flex items-center gap-2"><span className="text-2xl">🫁</span><span>P - Paced Breathing</span></h4>
                 <p className="text-sm text-foreground mb-3">
-                  Slow, deep breathing activates your parasympathetic nervous system, which helps calm your body and
-                  mind.
+                  Slow your breathing gently, with a slightly longer exhale than inhale if that feels comfortable. Do not force a breath-hold or a pace that makes you light-headed.
                 </p>
-                <ul className="text-sm space-y-1 list-disc list-inside text-foreground">
-                  <li>Breathe in slowly for 5 counts</li>
-                  <li>Breathe out slowly for 7 counts</li>
-                  <li>Repeat for 3-5 minutes</li>
+                <ul className="text-sm space-y-1 list-disc pl-5 text-foreground">
+                  <li>Let your breathing settle into a slower rhythm.</li>
+                  <li>Keep the breath comfortable rather than trying to hit an exact count.</li>
+                  <li>Return to normal breathing if you feel dizzy or uncomfortable.</li>
                 </ul>
               </div>
             </div>
 
             <div className="bg-primary/10 border border-primary/30 rounded-lg p-4">
-              <h3 className="font-semibold mb-2">When to Use TIP Skills</h3>
-              <ul className="text-sm space-y-1 list-disc list-inside text-foreground">
-                <li>When emotions feel overwhelming (intensity 7+)</li>
-                <li>Before a strong urge to gamble</li>
-                <li>During a panic attack or crisis moment</li>
-                <li>When you need to calm down before using other skills</li>
+              <h3 className="font-semibold mb-2">When might this be useful?</h3>
+              <ul className="text-sm space-y-1 list-disc pl-5 text-foreground">
+                <li>When emotion or an urge feels unusually intense.</li>
+                <li>When you want a short pause before choosing another coping strategy.</li>
+                <li>When you are physically safe and the technique itself is appropriate for you.</li>
               </ul>
+              <p className="text-xs text-muted-foreground mt-3">
+                If you or someone else is in immediate danger, use emergency or crisis support rather than relying on a Waypoint skill.
+              </p>
             </div>
 
             <div className="flex gap-3 flex-col sm:flex-row">
-              <Button asChild className="bg-primary hover:bg-primary/90 text-white flex-1">
-                <Link href="/dashboard">Return to Dashboard</Link>
-              </Button>
-              <Button asChild variant="outline" className="flex-1 bg-transparent">
-                <Link href="/skills">Browse More Skills</Link>
-              </Button>
+              <Button asChild className="bg-primary hover:bg-primary/90 text-white flex-1"><Link href="/dashboard">Return to Dashboard</Link></Button>
+              <Button asChild variant="outline" className="flex-1 bg-transparent"><Link href="/skills">Browse More Skills</Link></Button>
             </div>
           </CardContent>
         </Card>

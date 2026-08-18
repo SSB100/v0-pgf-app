@@ -26,16 +26,13 @@ async function getUserJourneyData(userId: string) {
 
 export default async function StopSkillPage() {
   const user = await getSession()
-
-  if (!user) {
-    redirect("/auth/signin")
-  }
+  if (!user) redirect("/auth/signin")
 
   const { journeyTypes } = await getUserJourneyData(user.id)
 
   return (
     <div className="min-h-screen bg-background pb-24 lg:pb-6">
-      <DashboardHeader userName={user.name} userEmail={user.email} />
+      <DashboardHeader userName={user.full_name || "there"} userEmail={user.email} />
 
       <main className="max-w-4xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-6">
         <Link href="/journey">

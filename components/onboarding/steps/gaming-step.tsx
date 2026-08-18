@@ -26,70 +26,50 @@ export default function GamingStep({ data, updateData, onNext, onBack }: GamingS
   const [inGamePurchases, setInGamePurchases] = useState(data.inGamePurchases || "")
 
   useEffect(() => {
-    if (skipInitialQuestion) {
-      setPlaysGames(true)
-    }
+    if (skipInitialQuestion) setPlaysGames(true)
   }, [skipInitialQuestion])
 
   function handleNext() {
     if (playsGames === false) {
       updateData({ playsVideoGames: false })
       onNext()
-    } else {
-      updateData({
-        playsVideoGames: true,
-        gamingFrequency,
-        gamingImpact,
-        lootBoxExposure,
-        inGamePurchases,
-      })
-      onNext()
+      return
     }
+
+    updateData({
+      playsVideoGames: true,
+      gamingFrequency,
+      gamingImpact,
+      lootBoxExposure,
+      inGamePurchases,
+    })
+    onNext()
   }
 
-  const canContinue =
-    playsGames === false || (playsGames && gamingFrequency && gamingImpact && lootBoxExposure && inGamePurchases)
+  const canContinue = playsGames === false || (playsGames && gamingFrequency && gamingImpact && lootBoxExposure && inGamePurchases)
 
   return (
     <Card className="soft-shadow-lg border-border/50">
       <CardHeader>
-        <CardTitle className="text-2xl text-foreground">Online Video Games</CardTitle>
+        <CardTitle className="text-2xl text-foreground">Gaming and In-Game Spending</CardTitle>
         <p className="text-muted-foreground text-pretty">
-          Understanding your gaming habits helps us identify potential risk factors.
+          These questions help Waypoint understand whether gaming, chance-based rewards or in-game spending are relevant to you. They are for personalisation, not a diagnosis or risk score.
         </p>
       </CardHeader>
 
       <CardContent className="space-y-4">
         {!skipInitialQuestion && (
           <div className="space-y-3">
-            <Label className="text-lg font-semibold text-foreground">Do you play online video games?</Label>
+            <Label className="text-lg font-semibold text-foreground">Do you play video games?</Label>
             <p className="text-sm text-muted-foreground">
-              This refers to games like Fortnite, FIFA, Call of Duty, League of Legends, etc. Not casino or betting
-              sites.
+              This includes console, computer and mobile games. Gambling websites and betting services are covered separately.
             </p>
             <div className="space-y-2">
-              <button
-                type="button"
-                onClick={() => setPlaysGames(true)}
-                className={`w-full p-3 rounded-lg border-2 text-left font-medium transition-all ${
-                  playsGames === true
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "border-border bg-card text-foreground hover:border-primary/50"
-                }`}
-              >
-                Yes
-              </button>
-              <button
-                type="button"
-                onClick={() => setPlaysGames(false)}
-                className={`w-full p-3 rounded-lg border-2 text-left font-medium transition-all ${
-                  playsGames === false
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "border-border bg-card text-foreground hover:border-primary/50"
-                }`}
-              >
-                No
-              </button>
+              {[{ value: true, label: "Yes" }, { value: false, label: "No" }].map((option) => (
+                <button key={option.label} type="button" onClick={() => setPlaysGames(option.value)} className={`w-full p-3 rounded-lg border-2 text-left font-medium transition-all ${playsGames === option.value ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-foreground hover:border-primary/50"}`}>
+                  {option.label}
+                </button>
+              ))}
             </div>
           </div>
         )}
@@ -97,19 +77,10 @@ export default function GamingStep({ data, updateData, onNext, onBack }: GamingS
         {playsGames === true && (
           <>
             <div className="space-y-2">
-              <Label             className="text-lg font-semibold text-foreground">How often do you play?</Label>
+              <Label className="text-lg font-semibold text-foreground">How often do you usually play?</Label>
               <div className="space-y-1.5">
-                {["Rarely", "1-2 times/week", "3-5 times/week", "Daily", "Multiple times daily"].map((option) => (
-                  <button
-                    key={option}
-                    type="button"
-                    onClick={() => setGamingFrequency(option)}
-                    className={`w-full px-3 py-2 rounded-lg border-2 text-left text-sm font-medium transition-all ${
-                      gamingFrequency === option
-                        ? "border-primary bg-primary/10 text-primary"
-                        : "border-border bg-card text-foreground hover:border-primary/50"
-                    }`}
-                  >
+                {["Rarely", "1–2 times a week", "3–5 times a week", "Daily", "More than once most days"].map((option) => (
+                  <button key={option} type="button" onClick={() => setGamingFrequency(option)} className={`w-full px-3 py-2 rounded-lg border-2 text-left text-sm font-medium transition-all ${gamingFrequency === option ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-foreground hover:border-primary/50"}`}>
                     {option}
                   </button>
                 ))}
@@ -117,24 +88,11 @@ export default function GamingStep({ data, updateData, onNext, onBack }: GamingS
             </div>
 
             <div className="space-y-2">
-              <Label             className="text-lg font-semibold text-foreground">
-                Has gaming ever negatively impacted your life?
-              </Label>
-              <p className="text-sm text-muted-foreground">
-                Consider time spent, relationships, responsibilities, or financial impact.
-              </p>
+              <Label className="text-lg font-semibold text-foreground">How much, if at all, has gaming affected other parts of your life?</Label>
+              <p className="text-sm text-muted-foreground">You might think about time, sleep, relationships, work or study, responsibilities, or spending.</p>
               <div className="space-y-1.5">
-                {["No impact", "Minor impact", "Moderate impact", "Significant impact"].map((option) => (
-                  <button
-                    key={option}
-                    type="button"
-                    onClick={() => setGamingImpact(option)}
-                    className={`w-full px-3 py-2 rounded-lg border-2 text-left text-sm font-medium transition-all ${
-                      gamingImpact === option
-                        ? "border-primary bg-primary/10 text-primary"
-                        : "border-border bg-card text-foreground hover:border-primary/50"
-                    }`}
-                  >
+                {["No noticeable impact", "A small impact", "A moderate impact", "A significant impact"].map((option) => (
+                  <button key={option} type="button" onClick={() => setGamingImpact(option)} className={`w-full px-3 py-2 rounded-lg border-2 text-left text-sm font-medium transition-all ${gamingImpact === option ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-foreground hover:border-primary/50"}`}>
                     {option}
                   </button>
                 ))}
@@ -142,29 +100,11 @@ export default function GamingStep({ data, updateData, onNext, onBack }: GamingS
             </div>
 
             <div className="space-y-2">
-              <Label             className="text-lg font-semibold text-foreground">
-                Have you encountered loot boxes or mystery rewards in games?
-              </Label>
-              <p className="text-sm text-muted-foreground">
-                These are randomized rewards you can buy or earn in games.
-              </p>
+              <Label className="text-lg font-semibold text-foreground">Have games you play included loot boxes or similar randomised rewards?</Label>
+              <p className="text-sm text-muted-foreground">These are rewards whose contents are not known before they are opened, and some games allow them to be bought with money or in-game currency.</p>
               <div className="space-y-1.5">
-                {[
-                  "Never encountered",
-                  "Yes, but never purchased",
-                  "Yes, purchased occasionally",
-                  "Yes, purchased regularly",
-                ].map((option) => (
-                  <button
-                    key={option}
-                    type="button"
-                    onClick={() => setLootBoxExposure(option)}
-                    className={`w-full px-3 py-2 rounded-lg border-2 text-left text-sm font-medium transition-all ${
-                      lootBoxExposure === option
-                        ? "border-primary bg-primary/10 text-primary"
-                        : "border-border bg-card text-foreground hover:border-primary/50"
-                    }`}
-                  >
+                {["I have not encountered them", "Yes, but I have not bought them", "Yes, I have bought them occasionally", "Yes, I have bought them regularly"].map((option) => (
+                  <button key={option} type="button" onClick={() => setLootBoxExposure(option)} className={`w-full px-3 py-2 rounded-lg border-2 text-left text-sm font-medium transition-all ${lootBoxExposure === option ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-foreground hover:border-primary/50"}`}>
                     {option}
                   </button>
                 ))}
@@ -172,21 +112,10 @@ export default function GamingStep({ data, updateData, onNext, onBack }: GamingS
             </div>
 
             <div className="space-y-2">
-              <Label             className="text-lg font-semibold text-foreground">
-                How much do you typically spend on in-game purchases per month?
-              </Label>
+              <Label className="text-lg font-semibold text-foreground">About how much do you spend on in-game purchases in a typical month?</Label>
               <div className="space-y-1.5">
-                {["Nothing", "Less than $20", "$20-$50", "$50-$100", "More than $100"].map((option) => (
-                  <button
-                    key={option}
-                    type="button"
-                    onClick={() => setInGamePurchases(option)}
-                    className={`w-full px-3 py-2 rounded-lg border-2 text-left text-sm font-medium transition-all ${
-                      inGamePurchases === option
-                        ? "border-primary bg-primary/10 text-primary"
-                        : "border-border bg-card text-foreground hover:border-primary/50"
-                    }`}
-                  >
+                {["Nothing", "Less than NZ$20", "NZ$20–50", "NZ$51–100", "More than NZ$100"].map((option) => (
+                  <button key={option} type="button" onClick={() => setInGamePurchases(option)} className={`w-full px-3 py-2 rounded-lg border-2 text-left text-sm font-medium transition-all ${inGamePurchases === option ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-foreground hover:border-primary/50"}`}>
                     {option}
                   </button>
                 ))}
@@ -195,8 +124,7 @@ export default function GamingStep({ data, updateData, onNext, onBack }: GamingS
 
             <div className="bg-info/10 border border-info/20 rounded-lg p-4">
               <p className="text-sm text-foreground text-pretty">
-                Many modern games include gambling-like features. Being aware of these patterns helps you make informed
-                choices about your gaming habits.
+                Some games include paid or chance-based features that can feel relevant to gambling or spending concerns. Waypoint records what you report so you can decide whether these patterns matter to the goals you have chosen.
               </p>
             </div>
           </>

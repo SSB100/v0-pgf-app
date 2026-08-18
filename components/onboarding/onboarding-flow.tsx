@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo, useCallback } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Save } from "lucide-react"
@@ -40,12 +40,12 @@ export type OnboardingData = {
   strongestEmotion?: string
   situationDescription?: string
   selfTalk?: string
-  stillExperiencing?: boolean
+  stillExperiencing?: boolean | null
 
   // Choice points
   recognizedChoicePoints?: string[]
 
-  // Values data
+  // Values and strengths
   selectedValues: Array<{
     name: string
     importance: number
@@ -53,6 +53,8 @@ export type OnboardingData = {
   }>
   initialValuesShortlist?: string[]
   secondRoundValues?: string[]
+  perceivedStrengths?: string[]
+  identifiedStrengths?: string[]
 
   // Gambling-specific
   gamblingFrequency?: string
@@ -64,29 +66,40 @@ export type OnboardingData = {
   impactAreas: string[]
   seekingHelp?: string
 
+  // Alcohol-specific
   alcoholFrequency?: string
   lastDrinkDate?: string
   drinkingTypes?: string[]
   alcoholTriggers?: string[]
   alcoholImpactAreas?: string[]
 
+  // Substance-specific
   substanceFrequency?: string
   lastSubstanceDate?: string
   substanceTypes?: string[]
   substanceTriggers?: string[]
   substanceImpactAreas?: string[]
 
+  // Gaming / internet
+  playsVideoGames?: boolean
+  gamingFrequency?: string
+  gamingImpact?: string
+  lootBoxExposure?: string
+  inGamePurchases?: string
+
+  // Mental wellbeing
   mentalHealthAreas?: string[]
   mentalHealthFrequency?: string
   currentCopingMethods?: string[]
   mentalHealthSupportNeeds?: string[]
   receivingMentalHealthTreatment?: string
 
+  // Personal growth
   growthGoals?: string[]
   growthMotivation?: string
   growthChallenges?: string[]
 
-  // Physical harm
+  // Physical harm / safety
   selfHarmThoughts?: string
   selfHarmActions?: string
   suicidalThoughts?: string
@@ -137,33 +150,16 @@ export default function OnboardingFlow({ userId, userName, initialStep = 1, init
     const baseSteps: StepType[] = ["welcome", "journey_type"]
     const journeyTypes = data.journeyTypes || []
 
-    // Add addiction/journey-specific steps based on selection
-    if (journeyTypes.includes("gambling")) {
-      baseSteps.push("gambling")
-    }
-    if (journeyTypes.includes("alcohol")) {
-      baseSteps.push("alcohol")
-    }
-    if (journeyTypes.includes("substances")) {
-      baseSteps.push("substances")
-    }
-    if (journeyTypes.includes("mental_health")) {
-      baseSteps.push("mental_health")
-    }
-    if (journeyTypes.includes("personal_growth")) {
-      baseSteps.push("personal_growth")
-    }
-    if (journeyTypes.includes("gaming") || journeyTypes.includes("gambling")) {
-      baseSteps.push("gaming")
-    }
+    if (journeyTypes.includes("gambling")) baseSteps.push("gambling")
+    if (journeyTypes.includes("alcohol")) baseSteps.push("alcohol")
+    if (journeyTypes.includes("substances")) baseSteps.push("substances")
+    if (journeyTypes.includes("mental_health")) baseSteps.push("mental_health")
+    if (journeyTypes.includes("personal_growth")) baseSteps.push("personal_growth")
+    if (journeyTypes.includes("gaming") || journeyTypes.includes("gambling")) baseSteps.push("gaming")
 
-    // Add physical harm step for addiction types (not personal growth only)
-    const hasAddiction = journeyTypes.some((t) => ["gambling", "alcohol", "substances", "gaming"].includes(t))
-    if (hasAddiction || journeyTypes.includes("mental_health")) {
-      baseSteps.push("physical_harm")
-    }
+    const hasAddiction = journeyTypes.some((type) => ["gambling", "alcohol", "substances", "gaming"].includes(type))
+    if (hasAddiction || journeyTypes.includes("mental_health")) baseSteps.push("physical_harm")
 
-    // Common steps for everyone
     baseSteps.push(
       "awareness_intro",
       "awareness",
@@ -188,14 +184,13 @@ export default function OnboardingFlow({ userId, userName, initialStep = 1, init
 
   useEffect(() => {
     if (initialStep > 1 && initialData) {
-      // Find the closest valid step index based on saved step
       const targetIndex = Math.min(initialStep - 1, stepList.length - 1)
       setCurrentStepIndex(targetIndex)
     }
   }, [initialStep, initialData, stepList.length])
 
   function updateData(newData: Partial<OnboardingData>) {
-    setData((prev) => ({ ...prev, ...newData }))
+    setData((previous) => ({ ...previous, ...newData }))
   }
 
   async function saveProgress() {
@@ -208,7 +203,7 @@ export default function OnboardingFlow({ userId, userName, initialStep = 1, init
       })
 
       if (response.ok) {
-        alert("Your progress has been saved! You can return anytime to continue where you left off.")
+        alert("Your progress has been saved. You can return later to continue where you left off.")
         router.push("/auth/signin")
       } else {
         alert("Failed to save progress. Please try again.")
@@ -222,48 +217,32 @@ export default function OnboardingFlow({ userId, userName, initialStep = 1, init
   }
 
   function nextStep() {
-    if (currentStepIndex < totalSteps - 1) {
-      setCurrentStepIndex((prev) => prev + 1)
-    }
+    if (currentStepIndex < totalSteps - 1) setCurrentStepIndex((previous) => previous + 1)
   }
 
   function prevStep() {
-    if (currentStepIndex > 0) {
-      setCurrentStepIndex((prev) => prev - 1)
-    }
+    if (currentStepIndex > 0) setCurrentStepIndex((previous) => previous - 1)
   }
 
   async function completeOnboarding() {
     try {
-      console.log("[v0] Starting onboarding completion...")
       setIsSaving(true)
-
       const response = await fetch("/api/onboarding/complete", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId, data }),
       })
 
-      console.log("[v0] Response status:", response.status)
-
       const responseData = await response.json()
-      console.log("[v0] Response data:", responseData)
-
       if (response.ok) {
-        console.log("[v0] Onboarding completed successfully, redirecting to dashboard...")
         router.replace("/dashboard")
       } else {
-        console.error("[v0] Onboarding completion failed:", responseData)
-        alert(
-          `There was an error completing your onboarding: ${responseData.error || "Unknown error"}. ${responseData.details || ""}`,
-        )
+        alert(`There was an error completing your onboarding: ${responseData.error || "Unknown error"}. ${responseData.details || ""}`)
         setIsSaving(false)
       }
     } catch (error) {
       console.error("[v0] Onboarding completion error:", error)
-      alert(
-        `There was an error completing your onboarding: ${error instanceof Error ? error.message : "Unknown error"}`,
-      )
+      alert(`There was an error completing your onboarding: ${error instanceof Error ? error.message : "Unknown error"}`)
       setIsSaving(false)
     }
   }
@@ -315,7 +294,6 @@ export default function OnboardingFlow({ userId, userName, initialStep = 1, init
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-secondary via-background to-muted">
-      {/* Slim toolbar — just the save button, no progress dots */}
       {currentStep !== "completion" && (
         <div className="sticky top-[73px] z-40 bg-card/80 backdrop-blur-sm border-b border-border">
           <div className="max-w-2xl mx-auto px-4 py-2 flex justify-end">
@@ -327,7 +305,6 @@ export default function OnboardingFlow({ userId, userName, initialStep = 1, init
         </div>
       )}
 
-      {/* Use natural scroll so the browser scrolls inputs into view when the keyboard opens */}
       <div className="py-6 px-4 pb-[60vh]">
         <div className="max-w-2xl mx-auto">{renderCurrentStep()}</div>
       </div>
