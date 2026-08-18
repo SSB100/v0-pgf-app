@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { sql } from "@/lib/db"
 import { getUserFromSession } from "@/lib/session"
+import { differenceInCalendarDays, getAotearoaDateKey } from "@/lib/aotearoa-date"
 
 const MAX_REFLECTION_LENGTH = 4000
 const MAX_LIST_ITEMS = 30
@@ -23,6 +24,12 @@ function cleanStringList(value: unknown) {
     .map((item) => item.trim())
     .filter(Boolean)
     .slice(0, MAX_LIST_ITEMS)
+}
+
+function normalizeDateKey(value: unknown) {
+  if (value instanceof Date) return value.toISOString().slice(0, 10)
+  if (typeof value === "string") return value.slice(0, 10)
+  return null
 }
 
 export async function POST(request: Request) {
@@ -67,10 +74,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Strongest emotion must be one of the emotions you selected" }, { status: 400 })
     }
 
+    const today = getAotearoaDateKey()
+
     const existingCheckIn = await sql`
       SELECT id
       FROM daily_checkins
-      WHERE user_id = ${user.id}::uuid AND date = CURRENT_DATE
+      WHERE user_id = ${user.id}::uuid AND date = ${today}::date
       LIMIT 1
     `
 
@@ -78,7 +87,7 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           error: "You've already completed your daily check-in today",
-          message: "One check-in can be recorded per day in the current MVP",
+          message: "One check-in can be recorded per Aotearoa calendar day in the current MVP",
         },
         { status: 409 },
       )
@@ -87,27 +96,30 @@ export async function POST(request: Request) {
     const occurred = gamblingOccurred || alcoholOccurred || substanceOccurred || selfHarmActions
 
     const userProfile = await sql`
-      SELECT check_in_streak, last_check_in_date, longest_streak, level_credits, total_points_earned
+      SELECT check_in_streak, longest_streak, level_credits, total_points_earned
       FROM user_profiles
       WHERE user_id = ${user.id}::uuid
     `
 
+    const previousCheckIn = await sql`
+      SELECT date
+      FROM daily_checkins
+      WHERE user_id = ${user.id}::uuid
+      ORDER BY date DESC
+      LIMIT 1
+    `
+
     const currentStreak = userProfile[0]?.check_in_streak || 0
-    const lastCheckInDate = userProfile[0]?.last_check_in_date
     const longestStreak = userProfile[0]?.longest_streak || 0
     const currentLevelCredits = userProfile[0]?.level_credits || 0
     const totalPointsEarned = userProfile[0]?.total_points_earned || 0
+    const previousDateKey = normalizeDateKey(previousCheckIn[0]?.date)
 
     let newStreak = 1
     let streakBroken = false
 
-    if (lastCheckInDate) {
-      const lastCheckInDay = new Date(lastCheckInDate)
-      lastCheckInDay.setHours(0, 0, 0, 0)
-      const todayDay = new Date()
-      todayDay.setHours(0, 0, 0, 0)
-
-      const daysDifference = Math.floor((todayDay.getTime() - lastCheckInDay.getTime()) / (1000 * 60 * 60 * 24))
+    if (previousDateKey) {
+      const daysDifference = differenceInCalendarDays(today, previousDateKey)
       if (daysDifference === 0) newStreak = currentStreak
       else if (daysDifference === 1) newStreak = currentStreak + 1
       else if (daysDifference > 1) {
@@ -142,7 +154,7 @@ export async function POST(request: Request) {
       )
       VALUES (
         ${user.id}::uuid,
-        CURRENT_DATE,
+        ${today}::date,
         ${moodRating},
         ${overallRating},
         ${urgeStrength},
@@ -170,8 +182,8 @@ export async function POST(request: Request) {
     for (const problemType of problemTypes) {
       await sql`
         UPDATE problem_areas
-        SET last_occurrence_date = CURRENT_DATE,
-            last_bet_date = CASE WHEN ${problemType} = 'gambling' THEN CURRENT_DATE ELSE last_bet_date END
+        SET last_occurrence_date = ${today}::date,
+            last_bet_date = CASE WHEN ${problemType} = 'gambling' THEN ${today}::date ELSE last_bet_date END
         WHERE user_id = ${user.id}::uuid AND problem_type = ${problemType}
       `
     }
@@ -196,6 +208,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
+      date: today,
       streak: newStreak,
       levelCreditsAwarded: 1,
       totalLevelCredits: newLevelCredits,
