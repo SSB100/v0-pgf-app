@@ -7,7 +7,6 @@ import { Users } from "lucide-react"
 interface Member {
   alias: string
   profileImage?: string | null
-  lastActive?: string | Date
 }
 
 interface GroupMembersListProps {
@@ -45,11 +44,6 @@ export default function GroupMembersList({ members }: GroupMembersListProps) {
 
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-foreground truncate">{member.alias}</p>
-              {member.lastActive && (
-                <p className="text-xs text-muted-foreground/70">
-                  Last recorded activity {new Date(member.lastActive).toLocaleString("en-NZ", { dateStyle: "short", timeStyle: "short" })}
-                </p>
-              )}
             </div>
           </div>
         ))}
@@ -68,7 +62,7 @@ export default function GroupMembersList({ members }: GroupMembersListProps) {
         )}
 
         <p className="pt-2 text-[11px] leading-relaxed text-muted-foreground">
-          Waypoint does not show Growth Companion levels here. App engagement should not be used to rank people in a peer-support space.
+          Waypoint shows only community aliases here. App engagement and activity timestamps are not displayed to other members.
         </p>
       </CardContent>
     </Card>
