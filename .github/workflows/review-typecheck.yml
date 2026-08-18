@@ -34,17 +34,15 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Refresh vulnerable review dependencies once
+      - name: Apply dependency audit fixes to the review branch
         if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
         run: |
-          if grep -q '"next-auth"' package.json; then
-            pnpm remove next-auth crypto @vercel/analytics
-            pnpm add next@16.2.11
-            pnpm add -D postcss@^8.5.18
+          pnpm audit --fix || true
+          if ! git diff --quiet -- package.json pnpm-lock.yaml; then
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add package.json pnpm-lock.yaml
-            git commit -m "security: update vulnerable dependencies"
+            git commit -m "security: apply dependency audit fixes"
             git push origin HEAD:${{ github.event.pull_request.head.ref }}
           fi
 
