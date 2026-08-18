@@ -3,6 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowRight } from "lucide-react"
 import Link from "next/link"
+import { differenceInCalendarDays, getAotearoaDateKey, normaliseDateKey } from "@/lib/aotearoa-date"
 
 interface CurrentStateCardProps {
   awareness: any
@@ -23,14 +24,9 @@ export default function CurrentStateCard({ awareness, problems, todayCheckIn }: 
 
   const strongestEmotion = todayCheckIn?.strongest_emotion || awareness?.strongest_emotion || awareness?.emotion || null
 
-  const getLastOccurrenceDate = () => {
-    if (!problems) return null
-    return problems.last_occurrence_date || problems.last_bet_date || null
-  }
-
-  const lastOccurrenceDate = getLastOccurrenceDate()
-  const daysSinceLastBehavior = lastOccurrenceDate
-    ? Math.max(0, Math.floor((new Date().getTime() - new Date(lastOccurrenceDate).getTime()) / (1000 * 60 * 60 * 24)))
+  const lastOccurrenceDateKey = normaliseDateKey(problems?.last_occurrence_date || problems?.last_bet_date)
+  const daysSinceLastBehavior = lastOccurrenceDateKey
+    ? Math.max(0, differenceInCalendarDays(getAotearoaDateKey(), lastOccurrenceDateKey))
     : null
 
   const behaviorLabel =
