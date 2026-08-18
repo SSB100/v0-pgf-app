@@ -16,27 +16,21 @@ interface Message {
   content: string
   timestamp: string
   profileImage?: string
-  growthLevel?: number
-  growthType?: string
 }
 
 interface Member {
-  userId: string
   alias: string
-  profileImage?: string
-  growthLevel?: number
-  growthType?: string
+  profileImage?: string | null
   lastActive?: string
 }
 
 interface CommunityChatClientProps {
-  userId: string
   groupId: string
   userAlias: string
   journeyType: string
 }
 
-export default function CommunityChatClient({ userId, groupId, userAlias, journeyType }: CommunityChatClientProps) {
+export default function CommunityChatClient({ groupId, userAlias, journeyType }: CommunityChatClientProps) {
   const router = useRouter()
   const [messages, setMessages] = useState<Message[]>([])
   const [members, setMembers] = useState<Member[]>([])
@@ -68,7 +62,7 @@ export default function CommunityChatClient({ userId, groupId, userAlias, journe
 
         setMessages(messagesData.messages || [])
         setMembers(membersData.members || [])
-      } catch (err) {
+      } catch (error) {
         setMessages([])
         setMembers([])
       } finally {
@@ -90,13 +84,13 @@ export default function CommunityChatClient({ userId, groupId, userAlias, journe
 
     const contentToSend = messageInput.trim()
     const tempMessage: Message = {
-      id: Math.random().toString(),
+      id: `pending-${crypto.randomUUID()}`,
       alias: userAlias,
       content: contentToSend,
       timestamp: new Date().toISOString(),
     }
 
-    setMessages((prev) => [...prev, tempMessage])
+    setMessages((previous) => [...previous, tempMessage])
     setMessageInput("")
     setIsSending(true)
 
@@ -108,12 +102,10 @@ export default function CommunityChatClient({ userId, groupId, userAlias, journe
       })
 
       if (!response.ok) {
-        console.error("Failed to send message")
-        setMessages((prev) => prev.filter((message) => message.id !== tempMessage.id))
+        setMessages((previous) => previous.filter((message) => message.id !== tempMessage.id))
       }
-    } catch (err) {
-      console.error("Error sending message:", err)
-      setMessages((prev) => prev.filter((message) => message.id !== tempMessage.id))
+    } catch (error) {
+      setMessages((previous) => previous.filter((message) => message.id !== tempMessage.id))
     } finally {
       setIsSending(false)
     }
@@ -134,7 +126,6 @@ export default function CommunityChatClient({ userId, groupId, userAlias, journe
         <div className="bg-gradient-to-r from-primary/15 via-primary/10 to-transparent border-b-2 border-border/50 px-3 sm:px-6 py-3 sm:py-4 flex items-center justify-between gap-2">
           <div className="space-y-0.5 min-w-0">
             <div className="flex items-center gap-2">
-              <div className="w-2.5 h-2.5 rounded-full bg-green-500 flex-shrink-0" />
               <h2 className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent truncate">
                 {journeyType.split("_").map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(" ")}
               </h2>
@@ -162,7 +153,7 @@ export default function CommunityChatClient({ userId, groupId, userAlias, journe
             </div>
           ) : messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground gap-3">
-              <div className="text-5xl">💭</div>
+              <div className="text-5xl" aria-hidden="true">💭</div>
               <div>
                 <p className="font-semibold text-foreground mb-1">No messages yet</p>
                 <p className="text-sm">You can start a respectful peer conversation if you want to.</p>
@@ -172,13 +163,10 @@ export default function CommunityChatClient({ userId, groupId, userAlias, journe
             messages.map((message) => (
               <ChatMessage
                 key={message.id}
-                id={message.id}
                 alias={message.alias}
                 content={message.content}
                 timestamp={new Date(message.timestamp)}
                 profileImage={message.profileImage}
-                growthLevel={message.growthLevel}
-                growthType={message.growthType}
                 isCurrentUser={message.alias === userAlias}
                 onReport={() => handleReportClick(message.alias, message.id)}
               />
@@ -200,6 +188,7 @@ export default function CommunityChatClient({ userId, groupId, userAlias, journe
                 }
               }}
               disabled={isSending}
+              maxLength={1000}
               className="text-base border-border/50 focus:border-primary/50 bg-background/50"
             />
             <Button onClick={handleSendMessage} disabled={!messageInput.trim() || isSending} size="icon" className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary flex-shrink-0" aria-label="Send message">
