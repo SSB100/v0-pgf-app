@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation"
 import { getSession } from "@/lib/session"
 import { sql } from "@/lib/db"
+import { addCalendarDays, differenceInCalendarDays, getAotearoaDateKey } from "@/lib/aotearoa-date"
 import Image from "next/image"
 import DashboardHeader from "@/components/dashboard/dashboard-header"
 import CurrentStateCard from "@/components/dashboard/current-state-card"
@@ -16,10 +17,19 @@ import { Map, ClipboardCheck, Sparkles, ArrowRight } from "lucide-react"
 import GrowthAvatarCard from "@/components/dashboard/growth-avatar-card"
 import RelapseSupportCard from "@/components/dashboard/relapse-support-card"
 
+function toDateKey(value: unknown): string | null {
+  if (value instanceof Date) return value.toISOString().slice(0, 10)
+  if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}/.test(value)) return value.slice(0, 10)
+  return null
+}
+
 export default async function DashboardPage() {
   const user = await getSession()
 
   if (!user) redirect("/auth/signin")
+
+  const today = getAotearoaDateKey()
+  const weekStart = addCalendarDays(today, -6)
 
   let profileResult
   try {
@@ -54,9 +64,9 @@ export default async function DashboardPage() {
     WHERE user_id = ${user.id}
   `
 
-  const completedModulesCount = completedModulesResult[0]?.count || 0
+  const completedModulesCount = Number(completedModulesResult[0]?.count || 0)
   const totalModulesCount = 11
-  const incompleteModulesCount = totalModulesCount - completedModulesCount
+  const incompleteModulesCount = Math.max(0, totalModulesCount - completedModulesCount)
 
   const awarenessResult = await sql`
     SELECT emotion, all_emotions, strongest_emotion, situation_context, created_at
@@ -113,7 +123,9 @@ export default async function DashboardPage() {
       good_things,
       bad_things
     FROM daily_checkins
-    WHERE user_id = ${user.id} AND date >= CURRENT_DATE - INTERVAL '6 days' AND date <= CURRENT_DATE
+    WHERE user_id = ${user.id}
+      AND date >= ${weekStart}::date
+      AND date <= ${today}::date
     ORDER BY date ASC
   `
 
@@ -135,7 +147,7 @@ export default async function DashboardPage() {
       self_harm_actions,
       created_at
     FROM daily_checkins
-    WHERE user_id = ${user.id} AND date = CURRENT_DATE
+    WHERE user_id = ${user.id} AND date = ${today}::date
     LIMIT 1
   `
 
@@ -146,7 +158,7 @@ export default async function DashboardPage() {
   const recentSkills = skillsResult || []
   const weeklyCheckins = (weeklyCheckinsResult || []).map((checkin: any) => ({
     ...checkin,
-    date: checkin.date instanceof Date ? checkin.date.toISOString().slice(0, 10) : String(checkin.date).slice(0, 10),
+    date: toDateKey(checkin.date) || String(checkin.date).slice(0, 10),
   }))
   const todayCheckIn = todayCheckInResult[0] || null
 
@@ -156,11 +168,11 @@ export default async function DashboardPage() {
       : profile.journey_types
     : []
 
-  const gamblingProblem = allProblems.find((p: any) => p.problem_type === "gambling")
-  const alcoholProblem = allProblems.find((p: any) => p.problem_type === "alcohol")
-  const substancesProblem = allProblems.find((p: any) => p.problem_type === "substances")
-  const mentalHealthProblem = allProblems.find((p: any) => p.problem_type === "mental_health")
-  const personalGrowthProblem = allProblems.find((p: any) => p.problem_type === "personal_growth")
+  const gamblingProblem = allProblems.find((problem: any) => problem.problem_type === "gambling")
+  const alcoholProblem = allProblems.find((problem: any) => problem.problem_type === "alcohol")
+  const substancesProblem = allProblems.find((problem: any) => problem.problem_type === "substances")
+  const mentalHealthProblem = allProblems.find((problem: any) => problem.problem_type === "mental_health")
+  const personalGrowthProblem = allProblems.find((problem: any) => problem.problem_type === "personal_growth")
 
   const primaryProblem = gamblingProblem || alcoholProblem || substancesProblem || allProblems[0] || null
   const primaryProblemType = primaryProblem?.problem_type || ""
@@ -174,14 +186,10 @@ export default async function DashboardPage() {
           ? todayCheckIn?.substance_occurred === true
           : false
 
-  const daysSinceLastPrimaryBehavior =
-    primaryProblem?.last_occurrence_date || primaryProblem?.last_bet_date
-      ? Math.floor(
-          (new Date().getTime() -
-            new Date(primaryProblem.last_occurrence_date || primaryProblem.last_bet_date).getTime()) /
-            (1000 * 60 * 60 * 24),
-        )
-      : null
+  const lastPrimaryBehaviorDate = toDateKey(primaryProblem?.last_occurrence_date || primaryProblem?.last_bet_date)
+  const daysSinceLastPrimaryBehavior = lastPrimaryBehaviorDate
+    ? differenceInCalendarDays(today, lastPrimaryBehaviorDate)
+    : null
 
   return (
     <div className="min-h-screen bg-background pb-24 lg:pb-6">
@@ -268,7 +276,7 @@ export default async function DashboardPage() {
         {todayCheckIn && hadPrimaryTrackedBehaviorToday && daysSinceLastPrimaryBehavior !== null && (
           <RelapseSupportCard
             journeyType={primaryProblemType}
-            daysSinceRelapse={daysSinceLastPrimaryBehavior || 0}
+            daysSinceRelapse={Math.max(0, daysSinceLastPrimaryBehavior)}
             todayMood={todayCheckIn.mood_rating}
           />
         )}
