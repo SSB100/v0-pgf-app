@@ -1,4 +1,4 @@
-name: Waypoint review typecheck
+name: Waypoint review checks
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
       - main
 
 jobs:
-  typecheck:
+  review-checks:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -31,3 +31,6 @@ jobs:
 
       - name: TypeScript check
         run: pnpm exec tsc --noEmit
+
+      - name: Dependency security audit
+        run: pnpm audit --audit-level=high
