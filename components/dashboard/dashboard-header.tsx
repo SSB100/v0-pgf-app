@@ -4,7 +4,7 @@ import UserMenu from "@/components/layout/user-menu"
 import AppLogo from "@/components/layout/app-logo"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { Map } from "lucide-react"
+import { LifeBuoy, Map } from "lucide-react"
 
 interface DashboardHeaderProps {
   userName: string
@@ -25,32 +25,42 @@ export default function DashboardHeader({ userName, userEmail, journeyProgress }
   }
 
   return (
-    <header className="bg-card/90 backdrop-blur-md border-b border-border/60 sticky top-0 z-40 shadow-sm">
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 py-3 sm:py-3.5 flex items-center justify-between gap-3">
-        <Link href="/dashboard" className="flex items-center gap-3 hover:opacity-80 transition-opacity flex-shrink-0">
+    <header className="sticky top-0 z-40 border-b border-border/60 bg-card/90 shadow-sm backdrop-blur-xl">
+      <div className="mx-auto flex min-h-16 max-w-[1440px] items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
+        <Link href="/dashboard" className="shrink-0 transition-opacity hover:opacity-80" aria-label="Waypoint dashboard">
           <AppLogo size="sm" showText={true} />
         </Link>
 
-        <div className="min-w-0 flex-1 mx-4 hidden sm:block">
-          <h1 className="text-base sm:text-lg font-bold text-foreground truncate leading-tight">
+        <div className="mx-4 hidden min-w-0 flex-1 md:block">
+          <p className="truncate text-sm font-semibold text-foreground">
             Welcome back, <span className="text-primary">{userName}</span>
-          </h1>
-          <p className="text-xs text-muted-foreground">Continue your growth journey</p>
+          </p>
+          <p className="text-xs text-muted-foreground">Your next step and recent reflections are ready below.</p>
         </div>
 
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="flex shrink-0 items-center gap-2">
+          <Link
+            href="/support"
+            className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-destructive/20 bg-destructive/5 px-3 text-sm font-semibold text-destructive transition-colors hover:bg-destructive/10"
+            aria-label="Get support"
+          >
+            <LifeBuoy className="size-4" />
+            <span className="hidden sm:inline">Support</span>
+          </Link>
+
           <Link
             href="/journey"
-            className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-semibold text-sm shadow-md"
+            className="hidden min-h-10 items-center gap-2 rounded-lg bg-primary px-3.5 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 lg:inline-flex"
           >
-            <Map className="w-4 h-4" />
-            <span className="hidden sm:inline">My Journey</span>
-            {journeyProgress && journeyProgress.completed > 0 && (
-              <span className="text-xs font-bold bg-primary-foreground/20 px-1.5 py-0.5 rounded-md">
-                {journeyProgress.completed} explored
+            <Map className="size-4" />
+            <span>Journey</span>
+            {journeyProgress && (
+              <span className="rounded-md bg-primary-foreground/15 px-1.5 py-0.5 text-xs font-bold">
+                {journeyProgress.completed}/{journeyProgress.total}
               </span>
             )}
           </Link>
+
           <UserMenu userName={userName} userEmail={userEmail} />
         </div>
       </div>
