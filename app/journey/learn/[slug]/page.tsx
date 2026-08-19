@@ -3,6 +3,7 @@ import { getSession } from "@/lib/session"
 import { sql } from "@/lib/db"
 import GuidedLearningModule from "@/components/journey/guided-learning-module"
 import { JOURNEY_MODULE_BY_SLUG, JOURNEY_MODULES } from "@/lib/journey-curriculum"
+import { prepareJourneyModuleForSelfGuidedUse } from "@/lib/journey-self-guided-presentation"
 
 interface GuidedModulePageProps {
   params: Promise<{ slug: string }>
@@ -13,8 +14,9 @@ export default async function GuidedModulePage({ params }: GuidedModulePageProps
   if (!user) redirect("/auth/signin")
 
   const { slug } = await params
-  const module = JOURNEY_MODULE_BY_SLUG[slug]
-  if (!module) notFound()
+  const sourceModule = JOURNEY_MODULE_BY_SLUG[slug]
+  if (!sourceModule) notFound()
+  const module = prepareJourneyModuleForSelfGuidedUse(sourceModule)
 
   const profileResult = await sql`
     SELECT onboarding_completed
