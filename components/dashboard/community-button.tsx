@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Users, ArrowRight, Loader2 } from "lucide-react"
+import { ArrowRight, Loader2, Users } from "lucide-react"
 
 interface MembershipStatus {
   hasProfile: boolean
@@ -59,9 +59,9 @@ export default function CommunityButton() {
 
   if (isLoading) {
     return (
-      <Button disabled className="w-full sm:w-auto">
-        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-        Loading...
+      <Button disabled variant="outline" className="border-primary/20 font-medium">
+        <Loader2 className="mr-2 size-4 animate-spin" />
+        Community
       </Button>
     )
   }
@@ -69,20 +69,12 @@ export default function CommunityButton() {
   return (
     <Button
       onClick={handleClick}
-      className="w-full sm:w-auto bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+      variant="outline"
+      className="border-primary/20 font-medium hover:border-primary/40 hover:bg-primary/5"
     >
-      <Users className="w-4 h-4 mr-2" />
-      {status?.hasProfile && status?.groupId ? (
-        <>
-          Community ({status.alias})
-          <ArrowRight className="w-4 h-4 ml-2" />
-        </>
-      ) : (
-        <>
-          Join Community
-          <ArrowRight className="w-4 h-4 ml-2" />
-        </>
-      )}
+      <Users className="mr-2 size-4" />
+      {status?.hasProfile && status?.groupId ? "Community" : "Join Community"}
+      <ArrowRight className="ml-2 size-4" />
     </Button>
   )
 }

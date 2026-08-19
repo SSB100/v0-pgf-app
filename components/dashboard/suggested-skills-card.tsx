@@ -128,45 +128,49 @@ export default function SuggestedSkillsCard({ awareness, problems, weeklyCheckin
     )
   }
 
-  const uniqueSuggestions = Array.from(new Map(suggestions.map((item) => [item.skill, item])).values()).slice(0, 6)
+  const uniqueSuggestions = Array.from(new Map(suggestions.map((item) => [item.skill, item])).values()).slice(0, 3)
 
   return (
-    <Card className="border-border/50 overflow-hidden">
+    <Card className="overflow-hidden border-border/50">
       <div className="relative overflow-hidden">
         <div className="absolute inset-0">
           <Image src="/images/dashboard-skills.jpg" alt="" fill className="object-cover object-center opacity-10" />
           <div className="absolute inset-0 bg-gradient-to-r from-card via-card/90 to-card/70" />
         </div>
         <CardHeader className="relative pb-3">
-          <CardTitle className="text-lg font-bold text-foreground flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-primary/15 border border-primary/25 flex items-center justify-center flex-shrink-0"><BookOpen className="w-4 h-4 text-primary" /></div>
-            Journey Modules You Could Explore
+          <CardTitle className="flex items-center gap-2.5 text-lg font-bold text-foreground">
+            <div className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-primary/25 bg-primary/15"><BookOpen className="size-4 text-primary" /></div>
+            Modules that may be useful next
           </CardTitle>
           <p className="text-sm text-muted-foreground">
-            These are simple Waypoint suggestions based on information you recorded. They are not clinical recommendations, diagnoses or a substitute for individual professional advice.
+            Three Waypoint suggestions based on information you recorded. They are not clinical recommendations, diagnoses or a substitute for individual professional advice.
           </p>
         </CardHeader>
       </div>
 
-      <CardContent className="pt-0">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+      <CardContent className="space-y-4 pt-0">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
           {uniqueSuggestions.map((suggestion) => (
-            <div key={suggestion.skill} className="flex flex-col rounded-xl border border-border/60 bg-secondary/20 hover:bg-secondary/40 hover:border-primary/40 transition-all p-4">
-              <div className="flex items-start gap-3 mb-3">
-                <div className="w-9 h-9 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0"><BookOpen className="w-4 h-4 text-primary" /></div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-sm text-foreground leading-tight">{suggestion.skill}</h3>
-                  <p className="text-[11px] text-primary/70 font-medium mt-0.5">Why it is being shown</p>
+            <div key={suggestion.skill} className="flex flex-col rounded-xl border border-border/60 bg-secondary/20 p-4 transition-all hover:border-primary/40 hover:bg-secondary/40">
+              <div className="mb-3 flex items-start gap-3">
+                <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-primary/20 bg-primary/10"><BookOpen className="size-4 text-primary" /></div>
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-sm font-semibold leading-tight text-foreground">{suggestion.skill}</h3>
+                  <p className="mt-0.5 text-[11px] font-medium text-primary/70">Why it is being shown</p>
                 </div>
               </div>
-              <p className="text-xs text-muted-foreground mb-2 leading-relaxed">{suggestion.reason}</p>
-              <p className="text-sm text-muted-foreground mb-4 text-pretty leading-relaxed flex-1">{suggestion.description}</p>
-              <Link href={suggestion.link} className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:text-primary/80 transition-colors">
-                Explore this module <ArrowRight className="w-3.5 h-3.5" />
+              <p className="mb-2 text-xs leading-relaxed text-muted-foreground">{suggestion.reason}</p>
+              <p className="mb-4 flex-1 text-pretty text-sm leading-relaxed text-muted-foreground">{suggestion.description}</p>
+              <Link href={suggestion.link} className="inline-flex min-h-10 items-center gap-1.5 text-sm font-semibold text-primary transition-colors hover:text-primary/80">
+                Explore module <ArrowRight className="size-3.5" />
               </Link>
             </div>
           ))}
         </div>
+
+        <Link href="/journey" className="inline-flex min-h-10 items-center gap-2 text-sm font-semibold text-primary hover:underline">
+          Browse all Journey modules <ArrowRight className="size-4" />
+        </Link>
       </CardContent>
     </Card>
   )
