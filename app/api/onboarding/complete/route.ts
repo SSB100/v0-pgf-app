@@ -60,6 +60,14 @@ function uniqueStrings(values: string[]) {
   })
 }
 
+function latestDate(...values: Array<string | null>) {
+  return values.filter((value): value is string => Boolean(value)).sort().at(-1) || null
+}
+
+function isIntegerInRange(value: unknown, min: number, max: number): value is number {
+  return Number.isInteger(value) && Number(value) >= min && Number(value) <= max
+}
+
 function cleanOptionalDate(value: unknown, fieldName: string): string | null {
   if (value === null || value === undefined || value === "") return null
   if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
@@ -106,6 +114,74 @@ function normaliseSelectedValues(value: unknown) {
     seen.add(key)
     return true
   })
+}
+
+function normaliseInitialDailyCheckIn(value: unknown) {
+  if (typeof value !== "object" || value === null) {
+    throw new InputError("Please complete your first daily check-in")
+  }
+
+  const record = value as Record<string, unknown>
+  const dateKey = cleanOptionalDate(record.dateKey, "First check-in date")
+  if (!dateKey) throw new InputError("Please complete your first daily check-in")
+
+  const moodRating = record.moodRating
+  const overallRating = record.overallRating
+  const urgeStrength = record.urgeStrength
+
+  if (!isIntegerInRange(moodRating, 1, 10)) {
+    throw new InputError("First check-in mood rating must be a whole number from 1 to 10")
+  }
+  if (!isIntegerInRange(overallRating, 1, 10)) {
+    throw new InputError("First check-in overall rating must be a whole number from 1 to 10")
+  }
+  if (!isIntegerInRange(urgeStrength, 0, 10)) {
+    throw new InputError("First check-in urge strength must be a whole number from 0 to 10")
+  }
+
+  const gamblingOccurred = record.gamblingOccurred
+  const alcoholOccurred = record.alcoholOccurred
+  const substanceOccurred = record.substanceOccurred
+  const selfHarmThoughts = record.selfHarmThoughts
+  const selfHarmActions = record.selfHarmActions
+  const usedSkills = record.usedSkills
+
+  if (
+    typeof gamblingOccurred !== "boolean" ||
+    typeof alcoholOccurred !== "boolean" ||
+    typeof substanceOccurred !== "boolean" ||
+    typeof selfHarmThoughts !== "boolean" ||
+    typeof selfHarmActions !== "boolean" ||
+    typeof usedSkills !== "boolean"
+  ) {
+    throw new InputError("First check-in contains an invalid yes/no response")
+  }
+
+  const emotionsFelt = uniqueStrings(cleanStringList(record.emotionsFelt, 30, 100))
+  const strongestEmotion = cleanText(record.strongestEmotion, 100)
+  if (strongestEmotion && emotionsFelt.length > 0 && !emotionsFelt.includes(strongestEmotion)) {
+    throw new InputError("Strongest emotion must be one of the emotions selected in your first check-in")
+  }
+
+  const skillsUsed = usedSkills ? uniqueStrings(cleanStringList(record.skillsUsed, 30, 100)) : []
+
+  return {
+    dateKey,
+    moodRating,
+    overallRating,
+    urgeStrength,
+    gamblingOccurred,
+    alcoholOccurred,
+    substanceOccurred,
+    selfHarmThoughts,
+    selfHarmActions,
+    skillsUsed,
+    badThings: cleanText(record.badThings),
+    goodThings: cleanText(record.goodThings),
+    emotionsFelt,
+    strongestEmotion,
+    emotionContext: cleanText(record.emotionContext),
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -159,6 +235,10 @@ export async function POST(request: NextRequest) {
 
     const coreRankByName = new Map(selectedValues.map((value, index) => [value.name, index + 1] as const))
 
+    const initialDailyCheckIn = normaliseInitialDailyCheckIn(data.initialDailyCheckIn)
+    const today = getAotearoaDateKey()
+    const checkInDate = initialDailyCheckIn.dateKey
+
     const currentEmotions = cleanStringList(data.currentEmotions, 30, 100)
     const strongestEmotion = cleanText(data.strongestEmotion, 100)
     if (strongestEmotion && currentEmotions.length > 0 && !currentEmotions.includes(strongestEmotion)) {
@@ -192,6 +272,10 @@ export async function POST(request: NextRequest) {
     const lastDrinkDate = cleanOptionalDate(data.lastDrinkDate, "Last alcohol-use date")
     const lastSubstanceDate = cleanOptionalDate(data.lastSubstanceDate, "Last substance-use date")
 
+    const effectiveLastBetDate = latestDate(lastBetDate, initialDailyCheckIn.gamblingOccurred ? checkInDate : null)
+    const effectiveLastDrinkDate = latestDate(lastDrinkDate, initialDailyCheckIn.alcoholOccurred ? checkInDate : null)
+    const effectiveLastSubstanceDate = latestDate(lastSubstanceDate, initialDailyCheckIn.substanceOccurred ? checkInDate : null)
+
     const growthAvatar = ALLOWED_AVATARS.has(data.growthAvatar) ? data.growthAvatar : "growth_tree"
     const stillExperiencing = typeof data.stillExperiencing === "boolean" ? data.stillExperiencing : null
 
@@ -204,7 +288,8 @@ export async function POST(request: NextRequest) {
     const queries: any[] = []
 
     // Guarantee a profile row exists, then replace all onboarding-derived records
-    // atomically. Daily check-ins and other post-onboarding history are untouched.
+    // atomically. The first daily check-in below is the person's actual self-report,
+    // not a generated or assumed baseline.
     queries.push(db`
       INSERT INTO user_profiles (user_id)
       VALUES (${user.id})
@@ -248,7 +333,7 @@ export async function POST(request: NextRequest) {
       `)
     })
 
-    if (journeyTypes.includes("gambling") && (gamblingTriggers.length > 0 || gamblingFrequency)) {
+    if (journeyTypes.includes("gambling") && (gamblingTriggers.length > 0 || gamblingFrequency || initialDailyCheckIn.gamblingOccurred)) {
       queries.push(db`
         INSERT INTO problem_areas (
           user_id, problem_type, triggers, patterns, last_bet_date,
@@ -260,19 +345,19 @@ export async function POST(request: NextRequest) {
           'gambling',
           ${JSON.stringify(gamblingTriggers)}::jsonb,
           ${`Frequency: ${gamblingFrequency || "Not specified"}. Impact areas: ${gamblingImpactAreas.join(", ") || "Not specified"}`},
-          ${lastBetDate},
+          ${effectiveLastBetDate},
           ${JSON.stringify(gamblingForms)}::jsonb,
           ${JSON.stringify(mostUsedGamblingForms)}::jsonb,
           ${cleanText(data.illegalGambling, 100)},
           ${gamblingFrequency},
-          ${lastBetDate},
+          ${effectiveLastBetDate},
           ${JSON.stringify(gamblingForms)}::jsonb,
           ${JSON.stringify(gamblingImpactAreas)}::jsonb
         )
       `)
     }
 
-    if (journeyTypes.includes("alcohol") && (alcoholTriggers.length > 0 || alcoholFrequency)) {
+    if (journeyTypes.includes("alcohol") && (alcoholTriggers.length > 0 || alcoholFrequency || initialDailyCheckIn.alcoholOccurred)) {
       queries.push(db`
         INSERT INTO problem_areas (
           user_id, problem_type, triggers, patterns, frequency,
@@ -284,14 +369,14 @@ export async function POST(request: NextRequest) {
           ${JSON.stringify(alcoholTriggers)}::jsonb,
           ${`Frequency: ${alcoholFrequency || "Not specified"}. Types: ${drinkingTypes.join(", ") || "Not specified"}`},
           ${alcoholFrequency},
-          ${lastDrinkDate},
+          ${effectiveLastDrinkDate},
           ${JSON.stringify(drinkingTypes)}::jsonb,
           ${JSON.stringify(alcoholImpactAreas)}::jsonb
         )
       `)
     }
 
-    if (journeyTypes.includes("substances") && (substanceTriggers.length > 0 || substanceFrequency)) {
+    if (journeyTypes.includes("substances") && (substanceTriggers.length > 0 || substanceFrequency || initialDailyCheckIn.substanceOccurred)) {
       queries.push(db`
         INSERT INTO problem_areas (
           user_id, problem_type, triggers, patterns, frequency,
@@ -303,18 +388,21 @@ export async function POST(request: NextRequest) {
           ${JSON.stringify(substanceTriggers)}::jsonb,
           ${`Frequency: ${substanceFrequency || "Not specified"}. Types: ${substanceTypes.join(", ") || "Not specified"}`},
           ${substanceFrequency},
-          ${lastSubstanceDate},
+          ${effectiveLastSubstanceDate},
           ${JSON.stringify(substanceTypes)}::jsonb,
           ${JSON.stringify(substanceImpactAreas)}::jsonb
         )
       `)
     }
 
-    if (journeyTypes.includes("mental_health") && mentalHealthAreas.length > 0) {
+    if (
+      journeyTypes.includes("mental_health") &&
+      (mentalHealthAreas.length > 0 || initialDailyCheckIn.selfHarmThoughts || initialDailyCheckIn.selfHarmActions)
+    ) {
       queries.push(db`
         INSERT INTO problem_areas (
           user_id, problem_type, triggers, patterns, frequency,
-          specific_types, impact_areas
+          last_occurrence_date, specific_types, impact_areas
         )
         VALUES (
           ${user.id},
@@ -322,6 +410,7 @@ export async function POST(request: NextRequest) {
           ${JSON.stringify(copingMethods)}::jsonb,
           ${`Frequency: ${mentalHealthFrequency || "Not specified"}. Treatment: ${cleanText(data.receivingMentalHealthTreatment, 100) || "Not specified"}`},
           ${mentalHealthFrequency},
+          ${initialDailyCheckIn.selfHarmActions ? checkInDate : null},
           ${JSON.stringify(mentalHealthAreas)}::jsonb,
           ${JSON.stringify(mentalHealthSupportNeeds)}::jsonb
         )
@@ -346,6 +435,68 @@ export async function POST(request: NextRequest) {
       `)
     }
 
+    const behaviorOccurred =
+      initialDailyCheckIn.gamblingOccurred ||
+      initialDailyCheckIn.alcoholOccurred ||
+      initialDailyCheckIn.substanceOccurred ||
+      initialDailyCheckIn.selfHarmActions
+
+    queries.push(db`
+      INSERT INTO daily_checkins (
+        user_id,
+        date,
+        mood_rating,
+        overall_rating,
+        urge_strength,
+        behavior_occurred,
+        gambling_occurred,
+        alcohol_occurred,
+        substance_occurred,
+        self_harm_thoughts,
+        self_harm_actions,
+        skills_used,
+        bad_things,
+        good_things,
+        emotions_felt,
+        strongest_emotion,
+        emotion_context
+      )
+      VALUES (
+        ${user.id}::uuid,
+        ${checkInDate}::date,
+        ${initialDailyCheckIn.moodRating},
+        ${initialDailyCheckIn.overallRating},
+        ${initialDailyCheckIn.urgeStrength},
+        ${behaviorOccurred},
+        ${initialDailyCheckIn.gamblingOccurred},
+        ${initialDailyCheckIn.alcoholOccurred},
+        ${initialDailyCheckIn.substanceOccurred},
+        ${initialDailyCheckIn.selfHarmThoughts},
+        ${initialDailyCheckIn.selfHarmActions},
+        ${JSON.stringify(initialDailyCheckIn.skillsUsed)}::jsonb,
+        ${initialDailyCheckIn.badThings},
+        ${initialDailyCheckIn.goodThings},
+        ${initialDailyCheckIn.emotionsFelt.length > 0 ? initialDailyCheckIn.emotionsFelt : null},
+        ${initialDailyCheckIn.strongestEmotion},
+        ${initialDailyCheckIn.emotionContext}
+      )
+      ON CONFLICT (user_id, date) DO NOTHING
+    `)
+
+    initialDailyCheckIn.skillsUsed.forEach((skill) => {
+      queries.push(db`
+        INSERT INTO skills_practice (user_id, skill_name, skill_category, practiced_at)
+        SELECT ${user.id}::uuid, ${skill}, 'self-reported', ${checkInDate}::date
+        WHERE NOT EXISTS (
+          SELECT 1
+          FROM skills_practice
+          WHERE user_id = ${user.id}::uuid
+            AND skill_name = ${skill}
+            AND practiced_at::date = ${checkInDate}::date
+        )
+      `)
+    })
+
     queries.push(db`
       UPDATE user_profiles
       SET
@@ -361,13 +512,13 @@ export async function POST(request: NextRequest) {
         suicidal_thoughts = ${cleanText(data.suicidalThoughts, 100)},
         alcohol_use = ${cleanText(data.alcoholUse, 100) || alcoholFrequency},
         alcohol_frequency = ${alcoholFrequency},
-        last_drink_date = ${lastDrinkDate},
+        last_drink_date = ${effectiveLastDrinkDate},
         drinking_types = ${JSON.stringify(drinkingTypes)}::jsonb,
         alcohol_triggers = ${JSON.stringify(alcoholTriggers)}::jsonb,
         alcohol_impact_areas = ${JSON.stringify(alcoholImpactAreas)}::jsonb,
         drug_use = ${cleanText(data.drugUse, 100) || substanceFrequency},
         substance_frequency = ${substanceFrequency},
-        last_substance_date = ${lastSubstanceDate},
+        last_substance_date = ${effectiveLastSubstanceDate},
         substance_types = ${JSON.stringify(substanceTypes)}::jsonb,
         substance_triggers = ${JSON.stringify(substanceTriggers)}::jsonb,
         substance_impact_areas = ${JSON.stringify(substanceImpactAreas)}::jsonb,
@@ -386,6 +537,14 @@ export async function POST(request: NextRequest) {
         gaming_impact = ${cleanText(data.gamingImpact, 100)},
         loot_box_exposure = ${cleanText(data.lootBoxExposure, 100)},
         in_game_purchases = ${cleanText(data.inGamePurchases, 100)},
+        check_in_streak = CASE
+          WHEN ${checkInDate}::date = ${today}::date THEN GREATEST(COALESCE(check_in_streak, 0), 1)
+          ELSE 0
+        END,
+        longest_streak = GREATEST(COALESCE(longest_streak, 0), 1),
+        level_credits = GREATEST(COALESCE(level_credits, 0), 1),
+        total_points_earned = GREATEST(COALESCE(total_points_earned, 0), 1),
+        last_check_in_date = ${checkInDate}::date,
         onboarding_current_step = NULL,
         onboarding_data = NULL,
         updated_at = NOW()

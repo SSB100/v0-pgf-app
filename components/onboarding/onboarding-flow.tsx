@@ -21,6 +21,7 @@ import ValuesSelectionStep from "./steps/values-selection-step"
 import ValuesRankingStep from "./steps/values-ranking-step"
 import ValuesSummaryStep from "./steps/values-summary-step"
 import StrengthsStep from "./steps/strengths-step"
+import DailyCheckInStep from "./steps/daily-checkin-step"
 import AvatarSelectionStep from "./steps/avatar-selection-step"
 import CompletionStep from "./steps/completion-step"
 
@@ -29,6 +30,25 @@ interface OnboardingFlowProps {
   userName: string
   initialStep?: number
   initialData?: OnboardingData
+}
+
+export type InitialDailyCheckIn = {
+  dateKey?: string
+  moodRating: number
+  overallRating: number
+  urgeStrength: number
+  gamblingOccurred: boolean
+  alcoholOccurred: boolean
+  substanceOccurred: boolean
+  selfHarmThoughts: boolean
+  selfHarmActions: boolean
+  usedSkills: boolean
+  skillsUsed: string[]
+  badThings: string
+  goodThings: string
+  emotionsFelt: string[]
+  strongestEmotion: string
+  emotionContext: string
 }
 
 export type OnboardingData = {
@@ -55,6 +75,9 @@ export type OnboardingData = {
   secondRoundValues?: string[]
   perceivedStrengths?: string[]
   identifiedStrengths?: string[]
+
+  // First daily check-in
+  initialDailyCheckIn?: InitialDailyCheckIn
 
   // Gambling-specific
   gamblingFrequency?: string
@@ -129,6 +152,7 @@ type StepType =
   | "values_ranking"
   | "values_summary"
   | "strengths"
+  | "daily_checkin"
   | "avatar_selection"
   | "completion"
 
@@ -168,6 +192,7 @@ export default function OnboardingFlow({ userId, userName, initialStep = 1, init
       "values_ranking",
       "values_summary",
       "strengths",
+      "daily_checkin",
       "avatar_selection",
       "completion",
     )
@@ -283,6 +308,8 @@ export default function OnboardingFlow({ userId, userName, initialStep = 1, init
         return <ValuesSummaryStep data={data} onNext={nextStep} onBack={prevStep} />
       case "strengths":
         return <StrengthsStep data={data} updateData={updateData} onNext={nextStep} onBack={prevStep} />
+      case "daily_checkin":
+        return <DailyCheckInStep data={data} updateData={updateData} onNext={nextStep} onBack={prevStep} />
       case "avatar_selection":
         return <AvatarSelectionStep data={data} updateData={updateData} onNext={nextStep} onBack={prevStep} />
       case "completion":

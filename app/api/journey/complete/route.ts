@@ -1,19 +1,12 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { getSession } from "@/lib/session"
 import { sql } from "@/lib/db"
+import { JOURNEY_MODULE_TITLE_BY_SLUG } from "@/lib/journey-curriculum"
 
-const JOURNEY_MODULES: Record<string, string> = {
-  "understanding-your-mind": "Understanding Your Mind",
-  "building-awareness": "Building Daily Awareness",
-  "recognizing-triggers": "Recognizing Your Triggers",
-  "choice-points": "Your Choice Points",
-  "discovering-values": "Discovering Your Values",
-  "recognizing-strengths": "Recognizing Your Strengths",
-  "stop-skill": "STOP Skill",
+// Keep the previous standalone Distress Tolerance route rewardable for users who
+// arrive through an old bookmark while the new Journey uses more specific modules.
+const LEGACY_JOURNEY_MODULES: Record<string, string> = {
   "distress-tolerance": "Distress Tolerance",
-  "opposite-action": "Opposite Action",
-  "dear-man": "DEAR MAN Communication",
-  "reality-acceptance": "Reality Acceptance",
 }
 
 export async function POST(request: NextRequest) {
@@ -23,7 +16,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
     const moduleSlug = typeof body.moduleSlug === "string" ? body.moduleSlug : ""
-    const moduleTitle = JOURNEY_MODULES[moduleSlug]
+    const moduleTitle = JOURNEY_MODULE_TITLE_BY_SLUG[moduleSlug] || LEGACY_JOURNEY_MODULES[moduleSlug]
 
     if (!moduleTitle) {
       return NextResponse.json({ error: "Unknown journey module" }, { status: 400 })

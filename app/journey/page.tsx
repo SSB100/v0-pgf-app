@@ -2,12 +2,86 @@ import { redirect } from "next/navigation"
 import { getSession } from "@/lib/session"
 import { sql } from "@/lib/db"
 import Image from "next/image"
+import Link from "next/link"
+import {
+  Brain,
+  CheckCircle2,
+  ChevronRight,
+  Compass,
+  Heart,
+  MessageCircle,
+  PauseCircle,
+  Shield,
+  Sparkles,
+  Wrench,
+} from "lucide-react"
 import DashboardHeader from "@/components/dashboard/dashboard-header"
 import MobileNav from "@/components/dashboard/mobile-nav"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { CheckCircle2, Circle, Shield, ChevronRight, Eye, Heart, Wrench } from "lucide-react"
-import Link from "next/link"
+import {
+  JOURNEY_CATEGORY_ORDER,
+  JOURNEY_MODULES,
+  type JourneyCategory,
+} from "@/lib/journey-curriculum"
+
+const CATEGORY_META: Record<JourneyCategory, {
+  description: string
+  Icon: typeof Brain
+  borderClass: string
+  iconClass: string
+  progressClass: string
+}> = {
+  "Getting Started": {
+    description: "Understand what is happening and what may help change become possible.",
+    Icon: Compass,
+    borderClass: "border-sky-500/35 bg-sky-500/5",
+    iconClass: "bg-sky-500/15 border-sky-500/30 text-sky-500",
+    progressClass: "bg-sky-500",
+  },
+  "Mindfulness & Awareness": {
+    description: "Notice thoughts, emotions, urges and choice points before reacting automatically.",
+    Icon: Brain,
+    borderClass: "border-blue-500/35 bg-blue-500/5",
+    iconClass: "bg-blue-500/15 border-blue-500/30 text-blue-500",
+    progressClass: "bg-blue-500",
+  },
+  "Emotions & Responses": {
+    description: "Understand emotions and practise different ways of responding.",
+    Icon: Sparkles,
+    borderClass: "border-violet-500/35 bg-violet-500/5",
+    iconClass: "bg-violet-500/15 border-violet-500/30 text-violet-500",
+    progressClass: "bg-violet-500",
+  },
+  "Values & Direction": {
+    description: "Reconnect with values and strengths, then turn them into realistic action.",
+    Icon: Heart,
+    borderClass: "border-pink-500/35 bg-pink-500/5",
+    iconClass: "bg-pink-500/15 border-pink-500/30 text-pink-500",
+    progressClass: "bg-pink-500",
+  },
+  "Distress & Problem Solving": {
+    description: "Build options for intense moments and problems that can be acted on.",
+    Icon: Wrench,
+    borderClass: "border-emerald-500/35 bg-emerald-500/5",
+    iconClass: "bg-emerald-500/15 border-emerald-500/30 text-emerald-500",
+    progressClass: "bg-emerald-500",
+  },
+  "Relationships & Connection": {
+    description: "Practise communication while keeping needs, relationships and self-respect in view.",
+    Icon: MessageCircle,
+    borderClass: "border-amber-500/35 bg-amber-500/5",
+    iconClass: "bg-amber-500/15 border-amber-500/30 text-amber-500",
+    progressClass: "bg-amber-500",
+  },
+  "Putting It Together": {
+    description: "Bring the learning into one practical plan you can return to.",
+    Icon: CheckCircle2,
+    borderClass: "border-primary/35 bg-primary/5",
+    iconClass: "bg-primary/15 border-primary/30 text-primary",
+    progressClass: "bg-primary",
+  },
+}
 
 export default async function JourneyPage() {
   const user = await getSession()
@@ -26,10 +100,11 @@ export default async function JourneyPage() {
     FROM journey_completions
     WHERE user_id = ${user.id}
   `
-  const completedModules = completedResult.map((row) => row.module_slug)
+  const completedModules = new Set(completedResult.map((row) => row.module_slug))
+  const knownSlugs = new Set(JOURNEY_MODULES.map((module) => module.slug))
 
   const valuesResult = await sql`
-    SELECT value_name, category
+    SELECT value_name
     FROM user_values
     WHERE user_id = ${user.id} AND is_core_value = true
     ORDER BY rank
@@ -37,85 +112,136 @@ export default async function JourneyPage() {
   `
   const coreValues = valuesResult.map((v) => v.value_name)
 
-  const moduleCategories = [
-    {
-      name: "Awareness",
-      description: "Notice thoughts, feelings, urges and patterns with more curiosity",
-      Icon: Eye,
-      image: "/images/journey-awareness.jpg",
-      accentClass: "border-blue-500/40 bg-blue-500/5",
-      iconClass: "bg-blue-500/15 border-blue-500/30 text-blue-400",
-      progressClass: "bg-blue-500",
-      modules: [
-        { slug: "understanding-your-mind", title: "Understanding Your Mind", description: "Explore three mind states used in DBT-informed reflection", link: "/journey/understanding-your-mind" },
-        { slug: "building-awareness", title: "Building Daily Awareness", description: "Practise noticing emotions, thoughts and urges with less judgement", link: "/journey/building-awareness" },
-        { slug: "recognizing-triggers", title: "Recognising Your Triggers", description: "Notice situations, emotions and thoughts that tend to increase urges", link: "/journey/recognizing-triggers" },
-        { slug: "choice-points", title: "Your Choice Points", description: "Explore moments where you can choose an action that fits your values", link: "/journey/choice-points" },
-      ],
-    },
-    {
-      name: "Values",
-      description: "Explore what matters to you and how you want to act on it",
-      Icon: Heart,
-      image: "/images/journey-values.jpg",
-      accentClass: "border-primary/40 bg-primary/5",
-      iconClass: "bg-primary/15 border-primary/30 text-primary",
-      progressClass: "bg-primary",
-      modules: [
-        { slug: "discovering-values", title: "Discovering Your Values", description: "Explore what matters to you and the qualities you want to bring to your life", link: "/journey/discovering-values" },
-        { slug: "recognizing-strengths", title: "Recognising Your Strengths", description: "Notice strengths and resources you may be able to draw on", link: "/journey/recognizing-strengths" },
-      ],
-    },
-    {
-      name: "Skills",
-      description: "Practise skills for urges, difficult emotions and communication",
-      Icon: Wrench,
-      image: "/images/journey-skills.jpg",
-      accentClass: "border-emerald-500/40 bg-emerald-500/5",
-      iconClass: "bg-emerald-500/15 border-emerald-500/30 text-emerald-400",
-      progressClass: "bg-emerald-500",
-      modules: [
-        { slug: "stop-skill", title: "STOP Skill", description: "Practise pausing before deciding what to do next", link: "/journey/stop-skill" },
-        { slug: "distress-tolerance", title: "Distress Tolerance", description: "Explore ways to get through difficult moments without acting automatically", link: "/journey/distress-tolerance" },
-        { slug: "opposite-action", title: "Opposite Action", description: "Explore when acting differently from an emotional urge may be useful", link: "/journey/opposite-action" },
-        { slug: "dear-man", title: "DEAR MAN Communication", description: "Practise a structured approach to asking for what you need or setting a boundary", link: "/journey/dear-man" },
-        { slug: "reality-acceptance", title: "Reality Acceptance", description: "Explore acceptance when a situation cannot be changed right now", link: "/journey/reality-acceptance" },
-      ],
-    },
-  ]
-
-  const totalModules = moduleCategories.reduce((sum, cat) => sum + cat.modules.length, 0)
-  const completedCount = completedModules.length
+  const totalModules = JOURNEY_MODULES.length
+  const completedCount = Array.from(completedModules).filter((slug) => knownSlugs.has(slug)).length
+  const nextModule = JOURNEY_MODULES.find((module) => !completedModules.has(module.slug)) || null
+  const currentCategory: JourneyCategory = nextModule?.category || "Putting It Together"
 
   return (
     <div className="min-h-screen bg-background pb-24 lg:pb-6">
-      <DashboardHeader userName={user.full_name || "there"} userEmail={user.email} journeyProgress={{ completed: completedCount, total: totalModules }} />
+      <DashboardHeader
+        userName={user.full_name || "there"}
+        userEmail={user.email}
+        journeyProgress={{ completed: completedCount, total: totalModules }}
+      />
 
       <main className="max-w-4xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-6">
-        <div className="relative overflow-hidden rounded-2xl border border-primary/30 min-h-[200px] sm:min-h-[240px]">
+        <div className="relative overflow-hidden rounded-2xl border border-primary/30 min-h-[220px] sm:min-h-[245px]">
           <Image src="/images/journey-hero.jpg" alt="A path through a green valley representing personal growth" fill className="object-cover object-center" priority />
-          <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/80 to-background/40" />
-          <div className="relative p-6 sm:p-8 flex flex-col justify-center min-h-[200px] sm:min-h-[240px]">
-            <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-2">Your Living Well Plan</p>
-            <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-3 text-pretty leading-tight">Explore at your own pace</h1>
-            <p className="text-sm text-muted-foreground mb-3 max-w-xl">
-              These modules are self-guided learning and practice, informed by established therapeutic approaches. They are not a treatment programme or clinical assessment.
+          <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/84 to-background/45" />
+          <div className="relative p-6 sm:p-8 flex flex-col justify-center min-h-[220px] sm:min-h-[245px] max-w-2xl">
+            <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-2">Your Learning Journey</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-3 text-pretty leading-tight">One step at a time.</h1>
+            <p className="text-sm text-muted-foreground leading-relaxed max-w-xl">
+              This Journey is meant to unfold over weeks, not in one sitting. A useful pace is one module on a harder day, or up to two when you have more capacity. Then stop and give the ideas time to settle into real life.
             </p>
-            {coreValues.length > 0 && (
-              <p className="text-sm text-muted-foreground mb-4 text-pretty max-w-md">
-                Values you chose: <span className="text-foreground font-medium">{coreValues.join(", ")}</span>
-              </p>
-            )}
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 bg-card/80 backdrop-blur-sm rounded-lg px-3 py-2 border border-border/50">
-                <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                <span className="text-sm font-semibold text-foreground">{completedCount} explored</span>
-              </div>
-              <div className="flex items-center gap-2 bg-card/80 backdrop-blur-sm rounded-lg px-3 py-2 border border-border/50">
-                <Circle className="w-4 h-4 text-primary" />
-                <span className="text-sm font-semibold text-foreground">{totalModules - completedCount} available</span>
-              </div>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Badge className="bg-card/85 text-foreground border-border/60 hover:bg-card/85">
+                {completedCount > 0 ? `${completedCount} explored` : "Start when you are ready"}
+              </Badge>
+              <Badge variant="outline" className="bg-card/70">Suggested pace: 1–2 modules a day</Badge>
             </div>
+          </div>
+        </div>
+
+        {nextModule ? (
+          <div className="rounded-2xl border-2 border-primary/30 bg-primary/5 p-5 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold uppercase tracking-wider text-primary mb-1">Your next small step</p>
+                <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-2">{nextModule.title}</h2>
+                <p className="text-sm text-muted-foreground leading-relaxed">{nextModule.description}</p>
+                <p className="text-xs text-muted-foreground mt-2">About {nextModule.estimatedMinutes} minutes. You can pause part-way through.</p>
+              </div>
+              <Link href={`/journey/learn/${nextModule.slug}`} className="flex-shrink-0">
+                <Button size="lg" className="w-full sm:w-auto">
+                  Continue Journey <ChevronRight className="ml-1.5 h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-5 sm:p-6">
+            <p className="text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-1">Journey explored</p>
+            <h2 className="text-xl font-bold text-foreground mb-2">You have explored every module.</h2>
+            <p className="text-sm text-muted-foreground">There is no requirement to keep moving forward. Revisit individual modules when a skill or idea becomes relevant again.</p>
+          </div>
+        )}
+
+        {coreValues.length > 0 && (
+          <div className="rounded-xl border border-border bg-card p-4">
+            <p className="text-xs text-muted-foreground">
+              Values you narrowed down during onboarding: <span className="font-medium text-foreground">{coreValues.join(", ")}</span>. They can change in priority over time.
+            </p>
+          </div>
+        )}
+
+        <div>
+          <div className="mb-4">
+            <h2 className="text-xl font-bold text-foreground">The seven stages</h2>
+            <p className="text-sm text-muted-foreground mt-1">Only your current stage is opened for you. The others stay folded away unless you choose to look ahead or revisit them.</p>
+          </div>
+
+          <div className="space-y-3">
+            {JOURNEY_CATEGORY_ORDER.map((category) => {
+              const modules = JOURNEY_MODULES.filter((module) => module.category === category)
+              const meta = CATEGORY_META[category]
+              const { Icon } = meta
+              const completedInCategory = modules.filter((module) => completedModules.has(module.slug)).length
+              const progressPct = modules.length > 0 ? (completedInCategory / modules.length) * 100 : 0
+              const categoryComplete = completedInCategory === modules.length
+              const isCurrentCategory = category === currentCategory
+
+              return (
+                <details key={category} open={isCurrentCategory} className={`group rounded-xl border ${meta.borderClass} overflow-hidden`}>
+                  <summary className="list-none cursor-pointer p-4 sm:p-5 select-none">
+                    <div className="flex items-start gap-3">
+                      <div className={`w-10 h-10 rounded-lg border flex items-center justify-center flex-shrink-0 ${meta.iconClass}`}>
+                        <Icon className="w-5 h-5" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-2 mb-1">
+                          <h3 className="text-base sm:text-lg font-bold text-foreground">{category}</h3>
+                          {isCurrentCategory && !categoryComplete && <Badge className="text-[10px] py-0">Current stage</Badge>}
+                          {categoryComplete && <Badge className="bg-emerald-500/15 text-emerald-500 border-emerald-500/30 text-[10px] py-0">Explored</Badge>}
+                        </div>
+                        <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">{meta.description}</p>
+                      </div>
+                      <span className="text-xs font-semibold text-muted-foreground whitespace-nowrap">{completedInCategory}/{modules.length}</span>
+                    </div>
+                    <div className="mt-3 bg-background/50 rounded-full h-1.5 overflow-hidden">
+                      <div className={`${meta.progressClass} h-full transition-all duration-500`} style={{ width: `${progressPct}%` }} />
+                    </div>
+                  </summary>
+
+                  <div className="border-t border-border/40 bg-background/35 p-3 sm:p-4 space-y-2">
+                    {modules.map((module) => {
+                      const isCompleted = completedModules.has(module.slug)
+                      const isNext = nextModule?.slug === module.slug
+
+                      return (
+                        <Link key={module.slug} href={`/journey/learn/${module.slug}`} className="block">
+                          <div className={`flex items-center gap-3 p-3.5 rounded-xl border transition-all hover:border-primary/50 hover:bg-secondary/30 ${isNext ? "border-primary/40 bg-primary/5" : isCompleted ? "border-emerald-500/25 bg-emerald-500/5" : "border-border/50 bg-card"}`}>
+                            <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${isCompleted ? "bg-emerald-500/20" : "bg-secondary/50"}`}>
+                              {isCompleted ? <CheckCircle2 className="w-4.5 h-4.5 text-emerald-500" /> : <span className="w-2 h-2 rounded-full bg-muted-foreground/50" />}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex flex-wrap items-center gap-2 mb-0.5">
+                                <h4 className="font-semibold text-sm sm:text-base text-foreground">{module.title}</h4>
+                                {isNext && <Badge variant="outline" className="text-[10px] py-0 border-primary/40 text-primary">Next</Badge>}
+                              </div>
+                              <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">{module.description}</p>
+                              <p className="text-[11px] text-muted-foreground/75 mt-1">About {module.estimatedMinutes} min</p>
+                            </div>
+                            <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                          </div>
+                        </Link>
+                      )
+                    })}
+                  </div>
+                </details>
+              )
+            })}
           </div>
         </div>
 
@@ -129,79 +255,25 @@ export default async function JourneyPage() {
               <Shield className="w-5 h-5 text-orange-500" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-foreground">Consider practical safeguards</p>
-              <p className="text-xs text-muted-foreground">Optional barriers, support and environment changes can add space between an urge and an action. Choose what fits your goals.</p>
+              <p className="text-sm font-semibold text-foreground">Learning works alongside practical safeguards</p>
+              <p className="text-xs text-muted-foreground">Support, environment changes and barriers can create extra space while you practise new responses.</p>
             </div>
             <Link href="/safeguards">
-              <Button variant="outline" size="sm" className="flex-shrink-0 border-orange-500/40 text-orange-400 hover:bg-orange-500/10">View options <ChevronRight className="w-3.5 h-3.5 ml-1" /></Button>
+              <Button variant="outline" size="sm" className="flex-shrink-0 border-orange-500/40 text-orange-400 hover:bg-orange-500/10">
+                Safety options <ChevronRight className="w-3.5 h-3.5 ml-1" />
+              </Button>
             </Link>
           </div>
         </div>
 
-        <div className="space-y-10">
-          {moduleCategories.map((category, categoryIndex) => {
-            const { Icon } = category
-            const completedInCategory = category.modules.filter((m) => completedModules.includes(m.slug)).length
-            const progressPct = (completedInCategory / category.modules.length) * 100
-
-            return (
-              <div key={category.name} className="space-y-3">
-                <div className={`relative overflow-hidden rounded-xl border ${category.accentClass} min-h-[100px]`}>
-                  <div className="absolute right-0 top-0 bottom-0 w-48 sm:w-64">
-                    <Image src={category.image} alt="" fill className="object-cover object-center" />
-                    <div className="absolute inset-0 bg-gradient-to-r from-card via-card/60 to-transparent" />
-                  </div>
-                  <div className="relative p-4 sm:p-5">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className={`w-9 h-9 rounded-lg border flex items-center justify-center flex-shrink-0 ${category.iconClass}`}><Icon className="w-4 h-4" /></div>
-                      <div>
-                        <h2 className="text-lg font-bold text-foreground">{category.name}</h2>
-                        <p className="text-xs text-muted-foreground max-w-xs text-pretty">{category.description}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 max-w-xs">
-                      <div className="flex-1 bg-background/50 rounded-full h-1.5 overflow-hidden">
-                        <div className={`${category.progressClass} h-full transition-all duration-500`} style={{ width: `${progressPct}%` }} />
-                      </div>
-                      <span className="text-xs font-semibold text-muted-foreground whitespace-nowrap">{completedInCategory}/{category.modules.length}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-2 pl-0 sm:pl-3">
-                  {category.modules.map((module, moduleIndex) => {
-                    const isCompleted = completedModules.includes(module.slug)
-                    const globalIndex = moduleCategories.slice(0, categoryIndex).reduce((sum, cat) => sum + cat.modules.length, 0) + moduleIndex
-
-                    return (
-                      <Link key={module.slug} href={module.link} className="block">
-                        <div className={`flex items-center gap-4 p-4 rounded-xl border transition-all hover:border-primary/50 hover:bg-secondary/30 cursor-pointer ${isCompleted ? "border-emerald-500/30 bg-emerald-500/5" : "border-border/50 bg-card"}`}>
-                          <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${isCompleted ? "bg-emerald-500/20" : "bg-secondary/50"}`}>
-                            {isCompleted ? <CheckCircle2 className="w-5 h-5 text-emerald-500" /> : <span className="text-sm font-bold text-muted-foreground">{globalIndex + 1}</span>}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-0.5">
-                              <h3 className="font-semibold text-sm sm:text-base text-foreground">{module.title}</h3>
-                              {isCompleted && <Badge className="flex-shrink-0 bg-emerald-500/15 text-emerald-500 border-emerald-500/30 text-xs py-0">Explored</Badge>}
-                            </div>
-                            <p className="text-xs sm:text-sm text-muted-foreground text-pretty leading-relaxed">{module.description}</p>
-                          </div>
-                          <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                        </div>
-                      </Link>
-                    )
-                  })}
-                </div>
-              </div>
-            )
-          })}
-        </div>
-
-        <div className="relative overflow-hidden rounded-xl border border-primary/20 bg-card p-6 text-center">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5 pointer-events-none" />
-          <p className="relative text-sm text-foreground/80 text-balance leading-relaxed">
-            There is no deadline for completing the modules, and taking a break does not undo what you have already learned. Use the parts that are helpful and return when it suits you.
-          </p>
+        <div className="rounded-xl border border-primary/20 bg-card p-5 sm:p-6 flex gap-3">
+          <PauseCircle className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+          <div>
+            <p className="text-sm font-semibold text-foreground mb-1">Do not race the Journey.</p>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              The aim is not to collect completions. Learn one thing, try it, notice what happens, and come back later. At one or two modules a day, this becomes a multi-week process rather than another task to finish as quickly as possible.
+            </p>
+          </div>
         </div>
       </main>
 
