@@ -45,9 +45,9 @@ export default function DashboardHeader({ userName, userEmail, journeyProgress }
           >
             <Map className="w-4 h-4" />
             <span className="hidden sm:inline">My Journey</span>
-            {journeyProgress && (
+            {journeyProgress && journeyProgress.completed > 0 && (
               <span className="text-xs font-bold bg-primary-foreground/20 px-1.5 py-0.5 rounded-md">
-                {journeyProgress.completed}/{journeyProgress.total}
+                {journeyProgress.completed} explored
               </span>
             )}
           </Link>
