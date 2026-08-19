@@ -14,7 +14,7 @@ import WeeklyOverviewCard from "@/components/dashboard/weekly-overview-card"
 import SafeguardsCard from "@/components/dashboard/safeguards-card"
 import JourneyProgressCard from "@/components/dashboard/journey-progress-card"
 import Link from "next/link"
-import { Map, ClipboardCheck, Sparkles, ArrowRight } from "lucide-react"
+import { Map, ClipboardCheck, ArrowRight } from "lucide-react"
 import GrowthAvatarCard from "@/components/dashboard/growth-avatar-card"
 import RelapseSupportCard from "@/components/dashboard/relapse-support-card"
 
@@ -66,9 +66,14 @@ export default async function DashboardPage() {
   `
 
   const knownJourneySlugs = new Set(JOURNEY_MODULES.map((module) => module.slug))
-  const completedModulesCount = completedModulesResult.filter((row: any) => knownJourneySlugs.has(row.module_slug)).length
+  const completedJourneySlugs = new Set(
+    completedModulesResult
+      .map((row: any) => row.module_slug)
+      .filter((slug: string) => knownJourneySlugs.has(slug)),
+  )
+  const completedModulesCount = completedJourneySlugs.size
   const totalModulesCount = JOURNEY_MODULES.length
-  const incompleteModulesCount = Math.max(0, totalModulesCount - completedModulesCount)
+  const nextJourneyModule = JOURNEY_MODULES.find((module) => !completedJourneySlugs.has(module.slug)) || null
 
   const awarenessResult = await sql`
     SELECT emotion, all_emotions, strongest_emotion, situation_context, created_at
@@ -214,54 +219,28 @@ export default async function DashboardPage() {
           </div>
         )}
 
-        {incompleteModulesCount > 0 && (
+        {nextJourneyModule && (
           <div className="relative overflow-hidden rounded-xl border border-primary/30 bg-card">
             <div className="absolute inset-0 pointer-events-none">
               <Image src="/images/growth-journey.jpg" alt="" fill className="object-cover object-center opacity-10" />
               <div className="absolute inset-0 bg-gradient-to-r from-card/95 via-card/85 to-card/60" />
             </div>
 
-            <div className="relative p-5 sm:p-6">
-              <div className="flex items-start justify-between gap-4 mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-primary/15 border border-primary/25 flex items-center justify-center flex-shrink-0">
-                    <Map className="w-5 h-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-primary uppercase tracking-wide">Your Journey</p>
-                    <h3 className="text-base font-bold text-foreground leading-tight">
-                      {incompleteModulesCount} {incompleteModulesCount === 1 ? "module" : "modules"} available to explore
-                    </h3>
-                  </div>
+            <div className="relative p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center gap-4">
+              <div className="flex items-start gap-3 flex-1 min-w-0">
+                <div className="w-10 h-10 rounded-lg bg-primary/15 border border-primary/25 flex items-center justify-center flex-shrink-0">
+                  <Map className="w-5 h-5 text-primary" />
                 </div>
-                <Link href="/journey" className="flex-shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors">
-                  Explore modules
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" /></svg>
-                </Link>
-              </div>
-
-              <p className="text-sm text-muted-foreground leading-relaxed mb-4">
-                Journey modules provide self-guided learning and practice around awareness, emotions, values, urges, communication and coping. Each module teaches the idea, checks the key learning and finishes with a small practice exercise.
-              </p>
-
-              <div className="flex flex-wrap gap-2 mb-4">
-                {["Understand patterns", "Practise coping skills", "Explore values", "Build action plans"].map((label) => (
-                  <span key={label} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
-                    <span className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
-                    {label}
-                  </span>
-                ))}
-              </div>
-
-              <div className="flex items-center gap-3 rounded-lg bg-secondary/10 border border-secondary/25 px-4 py-3">
-                <div className="w-8 h-8 rounded-full bg-secondary/20 border border-secondary/30 flex items-center justify-center flex-shrink-0">
-                  <Sparkles className="w-4 h-4 text-secondary" />
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-1">Your next Journey step</p>
+                  <h3 className="text-base sm:text-lg font-bold text-foreground leading-tight mb-1">{nextJourneyModule.title}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{nextJourneyModule.description}</p>
+                  <p className="text-xs text-muted-foreground mt-1">About {nextJourneyModule.estimatedMinutes} minutes. One module is enough for a session.</p>
                 </div>
-                <p className="text-xs text-foreground/80 leading-relaxed">
-                  <span className="font-semibold text-foreground">Your Growth Companion reflects Waypoint activity.</span>{" "}
-                  Completing modules and check-ins can earn growth credits. Companion levels represent engagement with the app, not a clinical measure of recovery or wellbeing.
-                </p>
               </div>
+              <Link href={`/journey/learn/${nextJourneyModule.slug}`} className="flex-shrink-0 inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors">
+                Continue <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
             </div>
           </div>
         )}
