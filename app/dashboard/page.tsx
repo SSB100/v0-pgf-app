@@ -24,6 +24,27 @@ function toDateKey(value: unknown): string | null {
   return null
 }
 
+interface DashboardSectionIntroProps {
+  id: string
+  eyebrow: string
+  title: string
+  description: string
+}
+
+function DashboardSectionIntro({ id, eyebrow, title, description }: DashboardSectionIntroProps) {
+  return (
+    <div className="max-w-3xl">
+      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">{eyebrow}</p>
+      <h2 id={id} className="mt-1 text-xl font-bold tracking-tight text-foreground sm:text-2xl">
+        {title}
+      </h2>
+      <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground sm:text-[15px]">
+        {description}
+      </p>
+    </div>
+  )
+}
+
 export default async function DashboardPage() {
   const user = await getSession()
 
@@ -203,52 +224,74 @@ export default async function DashboardPage() {
         journeyProgress={{ completed: completedModulesCount, total: totalModulesCount }}
       />
 
-      <main className="mx-auto max-w-[1440px] space-y-6 px-4 py-5 sm:px-6 sm:py-7 lg:px-8 lg:py-8">
-        <section className="space-y-3 sm:space-y-4" aria-labelledby="today-heading">
-          <div className="flex items-end justify-between gap-4">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Today</p>
-              <h1 id="today-heading" className="mt-1 text-xl font-bold tracking-tight text-foreground sm:text-2xl">
-                Pick up where you left off
-              </h1>
-            </div>
-            <p className="hidden max-w-md text-right text-sm text-muted-foreground md:block">
-              Your next useful action first, with the rest of your information kept close without competing for attention.
-            </p>
-          </div>
+      <main className="mx-auto max-w-[1440px] space-y-9 px-4 py-5 sm:px-6 sm:py-7 lg:px-8 lg:py-8">
+        <section className="space-y-4" aria-labelledby="companion-heading">
+          <DashboardSectionIntro
+            id="companion-heading"
+            eyebrow="Growth Companion"
+            title="See how your companion grows with the time you put into Waypoint"
+            description="Your companion is a visual record of app engagement. This section explains how Growth Credits are earned and used, shows your current stage, and keeps the game-like part of Waypoint separate from any judgement about recovery or wellbeing."
+          />
+          <GrowthAvatarCard
+            avatarType={profile.growth_avatar || "growth_tree"}
+            level={profile.tree_growth_level}
+            levelCredits={profile.level_credits || 0}
+            streak={profile.check_in_streak || 0}
+            longestStreak={profile.longest_streak || 0}
+          />
+        </section>
 
-          <div className="grid gap-4 xl:grid-cols-[minmax(0,1.65fr)_minmax(320px,0.85fr)]">
+        {todayCheckIn && hadPrimaryTrackedBehaviorToday && daysSinceLastPrimaryBehavior !== null && (
+          <RelapseSupportCard
+            journeyType={primaryProblemType}
+            daysSinceRelapse={Math.max(0, daysSinceLastPrimaryBehavior)}
+            todayMood={todayCheckIn.mood_rating}
+          />
+        )}
+
+        <section className="space-y-4" aria-labelledby="today-heading">
+          <DashboardSectionIntro
+            id="today-heading"
+            eyebrow="Today"
+            title="Use Waypoint in the way that helps today"
+            description="This is not a task list. You can check in, spend a little time learning, do both, or leave them for another day. The aim is to make useful options easy to find without turning them into obligations."
+          />
+
+          <div className="grid gap-4 lg:grid-cols-2">
             {nextJourneyModule ? (
-              <div className="relative min-h-[250px] overflow-hidden rounded-2xl border border-primary/25 bg-card shadow-sm sm:min-h-[270px]">
+              <div className="relative min-h-[245px] overflow-hidden rounded-2xl border border-primary/25 bg-card shadow-sm">
                 <div className="absolute inset-0 pointer-events-none">
-                  <Image src="/images/growth-journey.jpg" alt="" fill className="object-cover object-center opacity-20" priority />
-                  <div className="absolute inset-0 bg-gradient-to-r from-card via-card/95 to-card/65" />
+                  <Image src="/images/growth-journey.jpg" alt="" fill className="object-cover object-center opacity-15" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-card via-card/95 to-card/70" />
                 </div>
 
-                <div className="relative flex h-full flex-col justify-between gap-6 p-5 sm:p-6 lg:p-7">
+                <div className="relative flex h-full flex-col justify-between gap-5 p-5 sm:p-6">
                   <div>
-                    <div className="mb-5 flex flex-wrap items-center gap-2">
+                    <div className="mb-4 flex flex-wrap items-center gap-2">
                       <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
                         <Map className="size-3.5" />
-                        Next Journey step
+                        Learning option
                       </span>
                       <span className="text-xs font-medium text-muted-foreground">
                         Module {nextJourneyModuleNumber} of {totalModulesCount} · about {nextJourneyModule.estimatedMinutes} min
                       </span>
                     </div>
 
-                    <h2 className="max-w-2xl text-2xl font-bold leading-tight tracking-tight text-foreground sm:text-3xl">
+                    <h3 className="text-xl font-bold leading-tight tracking-tight text-foreground sm:text-2xl">
                       {nextJourneyModule.title}
-                    </h2>
-                    <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+                    </h3>
+                    <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                      This is the first Journey module you have not explored yet. Open it if the topic feels useful now, or browse the Journey and choose something else.
+                    </p>
+                    <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                       {nextJourneyModule.description}
                     </p>
                   </div>
 
-                  <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-                    <div className="min-w-0 flex-1 sm:max-w-md">
+                  <div className="space-y-4">
+                    <div>
                       <div className="mb-1.5 flex items-center justify-between text-xs text-muted-foreground">
-                        <span>Your Journey</span>
+                        <span>Your Journey so far</span>
                         <span>{completedModulesCount}/{totalModulesCount} explored</span>
                       </div>
                       <div className="h-2 overflow-hidden rounded-full bg-secondary">
@@ -256,25 +299,33 @@ export default async function DashboardPage() {
                       </div>
                     </div>
 
-                    <Link
-                      href={`/journey/learn/${nextJourneyModule.slug}`}
-                      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
-                    >
-                      Continue Journey <ArrowRight className="size-4" />
-                    </Link>
+                    <div className="flex flex-col gap-2 sm:flex-row">
+                      <Link
+                        href={`/journey/learn/${nextJourneyModule.slug}`}
+                        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
+                      >
+                        Open this module <ArrowRight className="size-4" />
+                      </Link>
+                      <Link
+                        href="/journey"
+                        className="inline-flex min-h-11 items-center justify-center rounded-xl border border-border bg-background/80 px-5 py-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-secondary/50"
+                      >
+                        Browse Journey
+                      </Link>
+                    </div>
                   </div>
                 </div>
               </div>
             ) : (
-              <div className="flex min-h-[250px] flex-col justify-between rounded-2xl border border-primary/25 bg-primary/5 p-5 shadow-sm sm:p-6 lg:p-7">
+              <div className="flex min-h-[245px] flex-col justify-between rounded-2xl border border-primary/25 bg-primary/5 p-5 shadow-sm sm:p-6">
                 <div>
                   <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
                     <CheckCircle2 className="size-3.5" />
-                    Journey explored
+                    Journey library explored
                   </span>
-                  <h2 className="mt-5 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">You have explored every current module</h2>
-                  <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
-                    Revisit any module when a skill or idea would be useful. Completing the library is an app milestone, not a measure of recovery or wellbeing.
+                  <h3 className="mt-5 text-xl font-bold tracking-tight text-foreground sm:text-2xl">Everything stays available to revisit</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                    You have explored every current module. Revisit any skill or idea when it is useful. Finishing the library is an app milestone, not a measure of recovery or wellbeing.
                   </p>
                 </div>
                 <Link href="/journey" className="mt-6 inline-flex min-h-11 w-fit items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground">
@@ -293,13 +344,13 @@ export default async function DashboardPage() {
                 </span>
               </div>
 
-              <h2 className="mt-5 text-xl font-bold tracking-tight text-foreground">
-                {todayCheckIn ? "Today's check-in is done" : "How are things today?"}
-              </h2>
+              <h3 className="mt-5 text-xl font-bold tracking-tight text-foreground">
+                {todayCheckIn ? "Today's check-in is recorded" : "A quick check-in, if it would be useful"}
+              </h3>
               <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
                 {todayCheckIn
-                  ? "Your entry is saved. Use the snapshot below to see what you recorded and the weekly view to notice patterns over time."
-                  : "A short check-in can capture your mood, urges and anything that stood out. Skip it if today is not the day for it."}
+                  ? "Your entry is saved. The recent picture below shows what you recorded alongside your wider weekly pattern."
+                  : "A daily check-in gives you a small snapshot of mood, urges and what stood out. It also earns one Growth Credit, but missing a day does not take anything away from your companion."}
               </p>
 
               {todayCheckIn ? (
@@ -316,66 +367,88 @@ export default async function DashboardPage() {
                       </p>
                     </div>
                   </div>
-                  <a href="#recent-check-in" className="mt-5 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-border bg-background px-4 py-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-secondary/50">
-                    Review today's snapshot <ArrowRight className="size-4" />
+                  <a href="#recent-picture" className="mt-5 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-border bg-background px-4 py-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-secondary/50">
+                    See what you recorded <ArrowRight className="size-4" />
                   </a>
                 </>
               ) : (
                 <Link href="/check-in" className="mt-5 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90">
-                  Start check-in <ArrowRight className="size-4" />
+                  Open daily check-in <ArrowRight className="size-4" />
                 </Link>
               )}
             </div>
           </div>
         </section>
 
-        {todayCheckIn && hadPrimaryTrackedBehaviorToday && daysSinceLastPrimaryBehavior !== null && (
-          <RelapseSupportCard
-            journeyType={primaryProblemType}
-            daysSinceRelapse={Math.max(0, daysSinceLastPrimaryBehavior)}
-            todayMood={todayCheckIn.mood_rating}
+        <section id="recent-picture" className="scroll-mt-24 space-y-4" aria-labelledby="recent-picture-heading">
+          <DashboardSectionIntro
+            id="recent-picture-heading"
+            eyebrow="Your check-ins"
+            title="A recent picture, not a score"
+            description="These cards reflect what you have recorded in Waypoint. They can help you remember how recent days felt and notice patterns over time, but they do not grade the day or decide whether you are doing well or badly."
           />
-        )}
-
-        <QuickActionsBar />
-
-        <section className="grid gap-5 xl:grid-cols-12 xl:gap-6" aria-label="Your Waypoint overview">
-          <div className="space-y-5 xl:col-span-8 xl:space-y-6">
-            <div id="recent-check-in" className="scroll-mt-24">
-              <CurrentStateCard awareness={latestAwareness} problems={primaryProblem} todayCheckIn={todayCheckIn} />
-            </div>
-
+          <div className="grid gap-5 xl:grid-cols-[minmax(340px,0.9fr)_minmax(0,1.5fr)] xl:gap-6">
+            <CurrentStateCard awareness={latestAwareness} problems={primaryProblem} todayCheckIn={todayCheckIn} />
             <WeeklyOverviewCard checkins={weeklyCheckins} journeyTypes={journeyTypes} accountCreatedAt={user.created_at} />
-
-            <SuggestedSkillsCard awareness={latestAwareness} problems={primaryProblem} values={values} weeklyCheckins={weeklyCheckins} />
           </div>
-
-          <aside className="space-y-5 xl:col-span-4 xl:space-y-6" aria-label="Growth and values">
-            <GrowthAvatarCard
-              avatarType={profile.growth_avatar || "growth_tree"}
-              level={profile.tree_growth_level}
-              levelCredits={profile.level_credits || 0}
-              streak={profile.check_in_streak || 0}
-              longestStreak={profile.longest_streak || 0}
-            />
-
-            <CoreValuesCard values={values} />
-          </aside>
         </section>
 
-        {journeyTypes.length > 0 && (
-          <JourneyProgressCard
-            journeyTypes={journeyTypes}
-            gamblingProblem={gamblingProblem}
-            alcoholProblem={alcoholProblem}
-            substancesProblem={substancesProblem}
-            mentalHealthProblem={mentalHealthProblem}
-            personalGrowthProblem={personalGrowthProblem}
-            profile={profile}
+        <section className="space-y-4" aria-labelledby="learning-heading">
+          <DashboardSectionIntro
+            id="learning-heading"
+            eyebrow="Learning ideas"
+            title="Skills and modules that may be worth a look"
+            description="Waypoint uses information you have entered to surface a few relevant learning options. These are suggestions, not instructions or clinical recommendations, and you can always ignore them and choose something else from the Journey."
           />
-        )}
+          <SuggestedSkillsCard awareness={latestAwareness} problems={primaryProblem} values={values} weeklyCheckins={weeklyCheckins} />
+        </section>
 
-        <SafeguardsCard />
+        <section className="space-y-4" aria-labelledby="direction-heading">
+          <DashboardSectionIntro
+            id="direction-heading"
+            eyebrow="Your direction"
+            title="What matters to you and the areas you chose to focus on"
+            description="Your values are reminders of the kind of direction that matters to you. Your focus areas summarise what you selected during onboarding and any dates you chose to record. Neither section is a judgement about progress."
+          />
+          <div className="grid gap-5 xl:grid-cols-[minmax(300px,0.75fr)_minmax(0,1.55fr)] xl:gap-6">
+            <CoreValuesCard values={values} />
+            {journeyTypes.length > 0 ? (
+              <JourneyProgressCard
+                journeyTypes={journeyTypes}
+                gamblingProblem={gamblingProblem}
+                alcoholProblem={alcoholProblem}
+                substancesProblem={substancesProblem}
+                mentalHealthProblem={mentalHealthProblem}
+                personalGrowthProblem={personalGrowthProblem}
+                profile={profile}
+              />
+            ) : (
+              <div className="rounded-2xl border border-dashed border-border p-5 text-sm text-muted-foreground">
+                No focus areas are currently recorded. You can still use Journey modules, check-ins and safeguards without choosing one.
+              </div>
+            )}
+          </div>
+        </section>
+
+        <section className="space-y-4" aria-labelledby="safeguards-heading">
+          <DashboardSectionIntro
+            id="safeguards-heading"
+            eyebrow="Practical support"
+            title="Add a little more space between an urge and an action"
+            description="Safeguards are optional practical barriers and support ideas. They can include device controls, money and payment changes, self-exclusion information, routines and people you trust. Choose only what fits your circumstances."
+          />
+          <SafeguardsCard />
+        </section>
+
+        <section className="hidden space-y-4 lg:block" aria-labelledby="more-heading">
+          <DashboardSectionIntro
+            id="more-heading"
+            eyebrow="More of Waypoint"
+            title="Other places you can use when they are relevant"
+            description="Support, safety information, community and the sharing preview live here so they stay easy to find without competing with the main dashboard sections."
+          />
+          <QuickActionsBar />
+        </section>
       </main>
 
       <MobileNav />
