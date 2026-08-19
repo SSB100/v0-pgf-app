@@ -36,16 +36,16 @@ export default function SuggestedSkillsCard({ awareness, problems, weeklyCheckin
   if ((avgUrges !== null && avgUrges >= 7) || awareness?.emotion_intensity >= 7) {
     suggestions.push(
       {
-        skill: "TIP Skills",
+        skill: "Creating Space: STOP & TIP",
         reason: "Your recent urge ratings were on the higher end of the scale",
-        description: "A DBT-informed set of body-based techniques that some people use when emotional intensity feels high.",
-        link: "/skills/tip",
+        description: "A DBT-informed module on pausing before action and optional body-based ways of working with high intensity.",
+        link: "/journey/learn/stop-skill",
       },
       {
-        skill: "STOP Skill",
+        skill: "Grounding, Breath, RAIN & Urge Surfing",
         reason: "You recorded stronger urges recently",
-        description: "A short pause-and-observe framework that can create time before deciding what to do next.",
-        link: "/skills/stop",
+        description: "Several present-moment practices for noticing an urge without automatically following it.",
+        link: "/journey/learn/grounding-and-urge-surfing",
       },
     )
   }
@@ -56,13 +56,13 @@ export default function SuggestedSkillsCard({ awareness, problems, weeklyCheckin
         skill: "Opposite Action",
         reason: "Your recent mood ratings were toward the lower end of the scale",
         description: "A DBT-informed skill for considering whether a different action may be useful when an emotional urge does not fit the facts or your goals.",
-        link: "/skills/opposite-action",
+        link: "/journey/learn/opposite-action",
       },
       {
-        skill: "PLEASE Skills",
+        skill: "ABC PLEASE",
         reason: "Lower mood ratings can be a useful prompt to review basic wellbeing routines",
-        description: "A DBT-informed reminder to consider physical health, eating, sleep, substances and movement as factors that can affect emotional wellbeing.",
-        link: "/skills/please",
+        description: "A DBT-informed module connecting physical foundations, positive experiences and achievable mastery-building activities.",
+        link: "/journey/learn/abc-please",
       },
     )
   }
@@ -73,26 +73,26 @@ export default function SuggestedSkillsCard({ awareness, problems, weeklyCheckin
   ) {
     suggestions.push(
       {
-        skill: "RAIN Mindfulness",
+        skill: "Grounding, Breath, RAIN & Urge Surfing",
         reason: "You have recorded some difficult emotions",
-        description: "A mindfulness-based reflection practice: Recognise, Allow, Investigate and Nurture.",
-        link: "/skills/rain",
+        description: "A set of mindfulness-based ways to orient attention and create space around emotions, thoughts or urges.",
+        link: "/journey/learn/grounding-and-urge-surfing",
       },
       {
-        skill: "IMPROVE Skills",
+        skill: "ACCEPTS & IMPROVE",
         reason: "You have recorded some difficult emotions",
-        description: "A DBT-informed collection of options for making a difficult moment more manageable.",
-        link: "/skills/improve",
+        description: "A DBT-informed menu of short-term options for making a difficult period more manageable.",
+        link: "/journey/learn/accepts-improve",
       },
     )
   }
 
   if (problems?.patterns) {
     suggestions.push({
-      skill: "Problem Solving",
+      skill: "Six-Step Problem Solving",
       reason: "You recorded patterns you want to understand or change",
-      description: "A structured framework for defining a problem, considering options and choosing a next step.",
-      link: "/skills/interpersonal/problem-solving",
+      description: "A structured framework for defining a solvable problem, comparing options and choosing a concrete next step.",
+      link: "/journey/learn/problem-solving",
     })
   }
 
@@ -100,30 +100,30 @@ export default function SuggestedSkillsCard({ awareness, problems, weeklyCheckin
     suggestions.push({
       skill: "Reality Acceptance",
       reason: "Your recent check-ins included lower mood and stronger urges",
-      description: "An acceptance-based skill for situations that cannot be changed right now. It is not about approving of what happened or giving up on change.",
-      link: "/skills/reality-acceptance",
+      description: "An acceptance-based module for facts that cannot be changed right now while preserving boundaries, safety and available action.",
+      link: "/journey/learn/reality-acceptance",
     })
   }
 
   if (suggestions.length === 0) {
     suggestions.push(
       {
-        skill: "STOP Skill",
+        skill: "Creating Space: STOP & TIP",
         reason: "A general pause-and-observe option",
         description: "A short framework for creating space before deciding what to do next.",
-        link: "/skills/stop",
+        link: "/journey/learn/stop-skill",
       },
       {
-        skill: "RAIN Mindfulness",
+        skill: "Mindfulness Foundations",
         reason: "A general awareness option",
-        description: "A mindfulness-based practice for noticing emotions and urges with less judgement.",
-        link: "/skills/rain",
+        description: "Learn Observe, Describe and Participate, plus the DBT ‘How’ skills for bringing attention to the present.",
+        link: "/journey/learn/mindfulness-foundations",
       },
       {
         skill: "DEAR MAN",
         reason: "A general communication option",
-        description: "A DBT-informed structure for making a request or setting a boundary.",
-        link: "/skills/interpersonal/dear-man",
+        description: "A DBT-informed structure for making a request, saying no or setting a boundary.",
+        link: "/journey/learn/dear-man",
       },
     )
   }
@@ -140,10 +140,10 @@ export default function SuggestedSkillsCard({ awareness, problems, weeklyCheckin
         <CardHeader className="relative pb-3">
           <CardTitle className="text-lg font-bold text-foreground flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-primary/15 border border-primary/25 flex items-center justify-center flex-shrink-0"><BookOpen className="w-4 h-4 text-primary" /></div>
-            Skills You Could Explore
+            Journey Modules You Could Explore
           </CardTitle>
           <p className="text-sm text-muted-foreground">
-            These are simple app suggestions based on information you recorded. They are not clinical recommendations, diagnoses or a substitute for individual professional advice.
+            These are simple Waypoint suggestions based on information you recorded. They are not clinical recommendations, diagnoses or a substitute for individual professional advice.
           </p>
         </CardHeader>
       </div>
@@ -162,7 +162,7 @@ export default function SuggestedSkillsCard({ awareness, problems, weeklyCheckin
               <p className="text-xs text-muted-foreground mb-2 leading-relaxed">{suggestion.reason}</p>
               <p className="text-sm text-muted-foreground mb-4 text-pretty leading-relaxed flex-1">{suggestion.description}</p>
               <Link href={suggestion.link} className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:text-primary/80 transition-colors">
-                Explore this skill <ArrowRight className="w-3.5 h-3.5" />
+                Explore this module <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
           ))}
