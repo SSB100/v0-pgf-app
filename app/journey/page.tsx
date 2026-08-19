@@ -2,12 +2,94 @@ import { redirect } from "next/navigation"
 import { getSession } from "@/lib/session"
 import { sql } from "@/lib/db"
 import Image from "next/image"
+import Link from "next/link"
+import {
+  Brain,
+  CheckCircle2,
+  ChevronRight,
+  Circle,
+  Compass,
+  Heart,
+  MessageCircle,
+  Shield,
+  Sparkles,
+  Wrench,
+} from "lucide-react"
 import DashboardHeader from "@/components/dashboard/dashboard-header"
 import MobileNav from "@/components/dashboard/mobile-nav"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { CheckCircle2, Circle, Shield, ChevronRight, Eye, Heart, Wrench } from "lucide-react"
-import Link from "next/link"
+import {
+  JOURNEY_CATEGORY_ORDER,
+  JOURNEY_MODULES,
+  type JourneyCategory,
+  type JourneyModuleKind,
+} from "@/lib/journey-curriculum"
+
+const CATEGORY_META: Record<JourneyCategory, {
+  description: string
+  Icon: typeof Brain
+  borderClass: string
+  iconClass: string
+  progressClass: string
+}> = {
+  "Getting Started": {
+    description: "Understand the pattern, motivation and the wider change process before jumping straight to solutions.",
+    Icon: Compass,
+    borderClass: "border-sky-500/35 bg-sky-500/5",
+    iconClass: "bg-sky-500/15 border-sky-500/30 text-sky-500",
+    progressClass: "bg-sky-500",
+  },
+  "Mindfulness & Awareness": {
+    description: "Learn how to notice thoughts, emotions, urges and choice points before responding automatically.",
+    Icon: Brain,
+    borderClass: "border-blue-500/35 bg-blue-500/5",
+    iconClass: "bg-blue-500/15 border-blue-500/30 text-blue-500",
+    progressClass: "bg-blue-500",
+  },
+  "Emotions & Responses": {
+    description: "Understand emotional experience, check interpretations and practise different ways of responding.",
+    Icon: Sparkles,
+    borderClass: "border-violet-500/35 bg-violet-500/5",
+    iconClass: "bg-violet-500/15 border-violet-500/30 text-violet-500",
+    progressClass: "bg-violet-500",
+  },
+  "Values & Direction": {
+    description: "Reconnect with values and strengths, then turn them into realistic actions and support.",
+    Icon: Heart,
+    borderClass: "border-pink-500/35 bg-pink-500/5",
+    iconClass: "bg-pink-500/15 border-pink-500/30 text-pink-500",
+    progressClass: "bg-pink-500",
+  },
+  "Distress & Problem Solving": {
+    description: "Build options for intense moments, acceptance and problems that can be acted on.",
+    Icon: Wrench,
+    borderClass: "border-emerald-500/35 bg-emerald-500/5",
+    iconClass: "bg-emerald-500/15 border-emerald-500/30 text-emerald-500",
+    progressClass: "bg-emerald-500",
+  },
+  "Relationships & Connection": {
+    description: "Practise communication while balancing your objective, the relationship and self-respect.",
+    Icon: MessageCircle,
+    borderClass: "border-amber-500/35 bg-amber-500/5",
+    iconClass: "bg-amber-500/15 border-amber-500/30 text-amber-500",
+    progressClass: "bg-amber-500",
+  },
+  "Putting It Together": {
+    description: "Bring the learning into one practical plan for direction, skills, safeguards, resources and support.",
+    Icon: CheckCircle2,
+    borderClass: "border-primary/35 bg-primary/5",
+    iconClass: "bg-primary/15 border-primary/30 text-primary",
+    progressClass: "bg-primary",
+  },
+}
+
+const KIND_LABELS: Record<JourneyModuleKind, string> = {
+  foundation: "Foundation",
+  learning: "Learn",
+  skill: "Practice skill",
+  integration: "Put it together",
+}
 
 export default async function JourneyPage() {
   const user = await getSession()
@@ -26,10 +108,11 @@ export default async function JourneyPage() {
     FROM journey_completions
     WHERE user_id = ${user.id}
   `
-  const completedModules = completedResult.map((row) => row.module_slug)
+  const completedModules = new Set(completedResult.map((row) => row.module_slug))
+  const knownSlugs = new Set(JOURNEY_MODULES.map((module) => module.slug))
 
   const valuesResult = await sql`
-    SELECT value_name, category
+    SELECT value_name
     FROM user_values
     WHERE user_id = ${user.id} AND is_core_value = true
     ORDER BY rank
@@ -37,85 +120,60 @@ export default async function JourneyPage() {
   `
   const coreValues = valuesResult.map((v) => v.value_name)
 
-  const moduleCategories = [
-    {
-      name: "Awareness",
-      description: "Notice thoughts, feelings, urges and patterns with more curiosity",
-      Icon: Eye,
-      image: "/images/journey-awareness.jpg",
-      accentClass: "border-blue-500/40 bg-blue-500/5",
-      iconClass: "bg-blue-500/15 border-blue-500/30 text-blue-400",
-      progressClass: "bg-blue-500",
-      modules: [
-        { slug: "understanding-your-mind", title: "Understanding Your Mind", description: "Explore three mind states used in DBT-informed reflection", link: "/journey/understanding-your-mind" },
-        { slug: "building-awareness", title: "Building Daily Awareness", description: "Practise noticing emotions, thoughts and urges with less judgement", link: "/journey/building-awareness" },
-        { slug: "recognizing-triggers", title: "Recognising Your Triggers", description: "Notice situations, emotions and thoughts that tend to increase urges", link: "/journey/recognizing-triggers" },
-        { slug: "choice-points", title: "Your Choice Points", description: "Explore moments where you can choose an action that fits your values", link: "/journey/choice-points" },
-      ],
-    },
-    {
-      name: "Values",
-      description: "Explore what matters to you and how you want to act on it",
-      Icon: Heart,
-      image: "/images/journey-values.jpg",
-      accentClass: "border-primary/40 bg-primary/5",
-      iconClass: "bg-primary/15 border-primary/30 text-primary",
-      progressClass: "bg-primary",
-      modules: [
-        { slug: "discovering-values", title: "Discovering Your Values", description: "Explore what matters to you and the qualities you want to bring to your life", link: "/journey/discovering-values" },
-        { slug: "recognizing-strengths", title: "Recognising Your Strengths", description: "Notice strengths and resources you may be able to draw on", link: "/journey/recognizing-strengths" },
-      ],
-    },
-    {
-      name: "Skills",
-      description: "Practise skills for urges, difficult emotions and communication",
-      Icon: Wrench,
-      image: "/images/journey-skills.jpg",
-      accentClass: "border-emerald-500/40 bg-emerald-500/5",
-      iconClass: "bg-emerald-500/15 border-emerald-500/30 text-emerald-400",
-      progressClass: "bg-emerald-500",
-      modules: [
-        { slug: "stop-skill", title: "STOP Skill", description: "Practise pausing before deciding what to do next", link: "/journey/stop-skill" },
-        { slug: "distress-tolerance", title: "Distress Tolerance", description: "Explore ways to get through difficult moments without acting automatically", link: "/journey/distress-tolerance" },
-        { slug: "opposite-action", title: "Opposite Action", description: "Explore when acting differently from an emotional urge may be useful", link: "/journey/opposite-action" },
-        { slug: "dear-man", title: "DEAR MAN Communication", description: "Practise a structured approach to asking for what you need or setting a boundary", link: "/journey/dear-man" },
-        { slug: "reality-acceptance", title: "Reality Acceptance", description: "Explore acceptance when a situation cannot be changed right now", link: "/journey/reality-acceptance" },
-      ],
-    },
-  ]
-
-  const totalModules = moduleCategories.reduce((sum, cat) => sum + cat.modules.length, 0)
-  const completedCount = completedModules.length
+  const totalModules = JOURNEY_MODULES.length
+  const completedCount = Array.from(completedModules).filter((slug) => knownSlugs.has(slug)).length
 
   return (
     <div className="min-h-screen bg-background pb-24 lg:pb-6">
-      <DashboardHeader userName={user.full_name || "there"} userEmail={user.email} journeyProgress={{ completed: completedCount, total: totalModules }} />
+      <DashboardHeader
+        userName={user.full_name || "there"}
+        userEmail={user.email}
+        journeyProgress={{ completed: completedCount, total: totalModules }}
+      />
 
       <main className="max-w-4xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-6">
-        <div className="relative overflow-hidden rounded-2xl border border-primary/30 min-h-[200px] sm:min-h-[240px]">
+        <div className="relative overflow-hidden rounded-2xl border border-primary/30 min-h-[230px] sm:min-h-[260px]">
           <Image src="/images/journey-hero.jpg" alt="A path through a green valley representing personal growth" fill className="object-cover object-center" priority />
-          <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/80 to-background/40" />
-          <div className="relative p-6 sm:p-8 flex flex-col justify-center min-h-[200px] sm:min-h-[240px]">
-            <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-2">Your Living Well Plan</p>
-            <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-3 text-pretty leading-tight">Explore at your own pace</h1>
-            <p className="text-sm text-muted-foreground mb-3 max-w-xl">
-              These modules are self-guided learning and practice, informed by established therapeutic approaches. They are not a treatment programme or clinical assessment.
+          <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/82 to-background/45" />
+          <div className="relative p-6 sm:p-8 flex flex-col justify-center min-h-[230px] sm:min-h-[260px] max-w-2xl">
+            <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-2">Your Learning Journey</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-3 text-pretty leading-tight">Learn it. Check it. Practise it.</h1>
+            <p className="text-sm text-muted-foreground mb-3 leading-relaxed">
+              The Journey now brings the learning modules and practical skills into one sequence. Each module explains the idea, gives you a quick understanding check and finishes with a small exercise so you can practise what you have just learned.
+            </p>
+            <p className="text-xs text-muted-foreground mb-4">
+              The material is informed by established approaches including DBT, ACT, CBT, mindfulness and behaviour-change frameworks. It is self-guided learning, not a clinical assessment or replacement for treatment.
             </p>
             {coreValues.length > 0 && (
-              <p className="text-sm text-muted-foreground mb-4 text-pretty max-w-md">
-                Values you chose: <span className="text-foreground font-medium">{coreValues.join(", ")}</span>
+              <p className="text-sm text-muted-foreground mb-4 text-pretty">
+                Values you narrowed down during onboarding: <span className="text-foreground font-medium">{coreValues.join(", ")}</span>
               </p>
             )}
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 bg-card/80 backdrop-blur-sm rounded-lg px-3 py-2 border border-border/50">
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="flex items-center gap-2 bg-card/85 backdrop-blur-sm rounded-lg px-3 py-2 border border-border/50">
                 <CheckCircle2 className="w-4 h-4 text-emerald-500" />
                 <span className="text-sm font-semibold text-foreground">{completedCount} explored</span>
               </div>
-              <div className="flex items-center gap-2 bg-card/80 backdrop-blur-sm rounded-lg px-3 py-2 border border-border/50">
+              <div className="flex items-center gap-2 bg-card/85 backdrop-blur-sm rounded-lg px-3 py-2 border border-border/50">
                 <Circle className="w-4 h-4 text-primary" />
                 <span className="text-sm font-semibold text-foreground">{totalModules - completedCount} available</span>
               </div>
             </div>
+          </div>
+        </div>
+
+        <div className="grid sm:grid-cols-3 gap-3">
+          <div className="rounded-xl border border-border bg-card p-4">
+            <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-1">1. Learn</p>
+            <p className="text-sm text-muted-foreground">Short explanations rebuild the depth behind each concept rather than presenting only an acronym or tip.</p>
+          </div>
+          <div className="rounded-xl border border-border bg-card p-4">
+            <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-1">2. Check</p>
+            <p className="text-sm text-muted-foreground">A one-question knowledge check confirms the core idea before the activity is recorded.</p>
+          </div>
+          <div className="rounded-xl border border-border bg-card p-4">
+            <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-1">3. Practise</p>
+            <p className="text-sm text-muted-foreground">Every module ends with a small exercise. Personal details can be reflected on privately rather than typed.</p>
           </div>
         </div>
 
@@ -129,62 +187,62 @@ export default async function JourneyPage() {
               <Shield className="w-5 h-5 text-orange-500" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-foreground">Consider practical safeguards</p>
-              <p className="text-xs text-muted-foreground">Optional barriers, support and environment changes can add space between an urge and an action. Choose what fits your goals.</p>
+              <p className="text-sm font-semibold text-foreground">Learning works alongside practical safeguards</p>
+              <p className="text-xs text-muted-foreground">Environment changes, support and barriers can create extra space while you practise new responses.</p>
             </div>
             <Link href="/safeguards">
-              <Button variant="outline" size="sm" className="flex-shrink-0 border-orange-500/40 text-orange-400 hover:bg-orange-500/10">View options <ChevronRight className="w-3.5 h-3.5 ml-1" /></Button>
+              <Button variant="outline" size="sm" className="flex-shrink-0 border-orange-500/40 text-orange-400 hover:bg-orange-500/10">
+                View options <ChevronRight className="w-3.5 h-3.5 ml-1" />
+              </Button>
             </Link>
           </div>
         </div>
 
-        <div className="space-y-10">
-          {moduleCategories.map((category, categoryIndex) => {
-            const { Icon } = category
-            const completedInCategory = category.modules.filter((m) => completedModules.includes(m.slug)).length
-            const progressPct = (completedInCategory / category.modules.length) * 100
+        <div className="space-y-9">
+          {JOURNEY_CATEGORY_ORDER.map((category) => {
+            const modules = JOURNEY_MODULES.filter((module) => module.category === category)
+            const meta = CATEGORY_META[category]
+            const { Icon } = meta
+            const completedInCategory = modules.filter((module) => completedModules.has(module.slug)).length
+            const progressPct = modules.length > 0 ? (completedInCategory / modules.length) * 100 : 0
 
             return (
-              <div key={category.name} className="space-y-3">
-                <div className={`relative overflow-hidden rounded-xl border ${category.accentClass} min-h-[100px]`}>
-                  <div className="absolute right-0 top-0 bottom-0 w-48 sm:w-64">
-                    <Image src={category.image} alt="" fill className="object-cover object-center" />
-                    <div className="absolute inset-0 bg-gradient-to-r from-card via-card/60 to-transparent" />
+              <section key={category} className="space-y-3">
+                <div className={`rounded-xl border ${meta.borderClass} p-4 sm:p-5`}>
+                  <div className="flex items-start gap-3 mb-3">
+                    <div className={`w-10 h-10 rounded-lg border flex items-center justify-center flex-shrink-0 ${meta.iconClass}`}>
+                      <Icon className="w-5 h-5" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h2 className="text-lg sm:text-xl font-bold text-foreground">{category}</h2>
+                      <p className="text-xs sm:text-sm text-muted-foreground text-pretty leading-relaxed max-w-2xl">{meta.description}</p>
+                    </div>
+                    <span className="text-xs font-semibold text-muted-foreground whitespace-nowrap">{completedInCategory}/{modules.length}</span>
                   </div>
-                  <div className="relative p-4 sm:p-5">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className={`w-9 h-9 rounded-lg border flex items-center justify-center flex-shrink-0 ${category.iconClass}`}><Icon className="w-4 h-4" /></div>
-                      <div>
-                        <h2 className="text-lg font-bold text-foreground">{category.name}</h2>
-                        <p className="text-xs text-muted-foreground max-w-xs text-pretty">{category.description}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 max-w-xs">
-                      <div className="flex-1 bg-background/50 rounded-full h-1.5 overflow-hidden">
-                        <div className={`${category.progressClass} h-full transition-all duration-500`} style={{ width: `${progressPct}%` }} />
-                      </div>
-                      <span className="text-xs font-semibold text-muted-foreground whitespace-nowrap">{completedInCategory}/{category.modules.length}</span>
-                    </div>
+                  <div className="bg-background/50 rounded-full h-1.5 overflow-hidden">
+                    <div className={`${meta.progressClass} h-full transition-all duration-500`} style={{ width: `${progressPct}%` }} />
                   </div>
                 </div>
 
-                <div className="space-y-2 pl-0 sm:pl-3">
-                  {category.modules.map((module, moduleIndex) => {
-                    const isCompleted = completedModules.includes(module.slug)
-                    const globalIndex = moduleCategories.slice(0, categoryIndex).reduce((sum, cat) => sum + cat.modules.length, 0) + moduleIndex
+                <div className="space-y-2 sm:pl-3">
+                  {modules.map((module) => {
+                    const isCompleted = completedModules.has(module.slug)
+                    const globalIndex = JOURNEY_MODULES.findIndex((item) => item.slug === module.slug)
 
                     return (
-                      <Link key={module.slug} href={module.link} className="block">
-                        <div className={`flex items-center gap-4 p-4 rounded-xl border transition-all hover:border-primary/50 hover:bg-secondary/30 cursor-pointer ${isCompleted ? "border-emerald-500/30 bg-emerald-500/5" : "border-border/50 bg-card"}`}>
+                      <Link key={module.slug} href={`/journey/learn/${module.slug}`} className="block">
+                        <div className={`flex items-center gap-3 sm:gap-4 p-4 rounded-xl border transition-all hover:border-primary/50 hover:bg-secondary/30 cursor-pointer ${isCompleted ? "border-emerald-500/30 bg-emerald-500/5" : "border-border/50 bg-card"}`}>
                           <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${isCompleted ? "bg-emerald-500/20" : "bg-secondary/50"}`}>
                             {isCompleted ? <CheckCircle2 className="w-5 h-5 text-emerald-500" /> : <span className="text-sm font-bold text-muted-foreground">{globalIndex + 1}</span>}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-0.5">
+                            <div className="flex flex-wrap items-center gap-2 mb-1">
                               <h3 className="font-semibold text-sm sm:text-base text-foreground">{module.title}</h3>
-                              {isCompleted && <Badge className="flex-shrink-0 bg-emerald-500/15 text-emerald-500 border-emerald-500/30 text-xs py-0">Explored</Badge>}
+                              <Badge variant="outline" className="text-[10px] sm:text-xs py-0 font-normal">{KIND_LABELS[module.kind]}</Badge>
+                              {isCompleted && <Badge className="bg-emerald-500/15 text-emerald-500 border-emerald-500/30 text-[10px] sm:text-xs py-0">Explored</Badge>}
                             </div>
                             <p className="text-xs sm:text-sm text-muted-foreground text-pretty leading-relaxed">{module.description}</p>
+                            <p className="text-[11px] text-muted-foreground/80 mt-1">About {module.estimatedMinutes} min · {module.approaches.join(" · ")}</p>
                           </div>
                           <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                         </div>
@@ -192,7 +250,7 @@ export default async function JourneyPage() {
                     )
                   })}
                 </div>
-              </div>
+              </section>
             )
           })}
         </div>
@@ -200,7 +258,7 @@ export default async function JourneyPage() {
         <div className="relative overflow-hidden rounded-xl border border-primary/20 bg-card p-6 text-center">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5 pointer-events-none" />
           <p className="relative text-sm text-foreground/80 text-balance leading-relaxed">
-            There is no deadline for completing the modules, and taking a break does not undo what you have already learned. Use the parts that are helpful and return when it suits you.
+            The order is designed to build from understanding and awareness into emotion skills, values, distress tolerance and relationships, but you can revisit any module. Taking a break does not undo earlier learning.
           </p>
         </div>
       </main>
