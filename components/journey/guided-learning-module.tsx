@@ -6,10 +6,8 @@ import {
   ArrowLeft,
   BookOpen,
   CheckCircle2,
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
-  ChevronUp,
   Clock3,
   Lightbulb,
   PauseCircle,
@@ -40,16 +38,9 @@ const KIND_LABELS: Record<JourneyModuleDefinition["kind"], string> = {
   integration: "Put it together",
 }
 
-function splitFirstSentence(body: string) {
-  const match = body.match(/^([\s\S]*?[.!?])(?:\s+)([\s\S]+)$/)
-  if (!match) return { summary: body, detail: "" }
-  return { summary: match[1], detail: match[2] }
-}
-
 export default function GuidedLearningModule({ module, moduleNumber, coreValues = [] }: GuidedLearningModuleProps) {
   const [activeStep, setActiveStep] = useState(0)
   const [hasRestoredStep, setHasRestoredStep] = useState(false)
-  const [expandedSections, setExpandedSections] = useState<Record<number, boolean>>({})
   const [selectedCheck, setSelectedCheck] = useState("")
   const [practice, setPractice] = useState<Record<string, string>>({})
   const [reflectedPrivately, setReflectedPrivately] = useState(false)
@@ -91,6 +82,11 @@ export default function GuidedLearningModule({ module, moduleNumber, coreValues 
     const index = Number(selectedCheck)
     return Number.isInteger(index) && index >= 0 ? module.check.options[index] : undefined
   }, [module.check.options, selectedCheck])
+
+  const idealOption = useMemo(
+    () => module.check.options.find((option) => option.correct),
+    [module.check.options],
+  )
 
   const practiceComplete = reflectedPrivately || module.practicePrompts.every((prompt) => (practice[prompt.id] || "").trim().length > 0)
   const canComplete = Boolean(selectedOption) && practiceComplete
@@ -182,14 +178,14 @@ export default function GuidedLearningModule({ module, moduleNumber, coreValues 
                 <div className="flex gap-3">
                   <Lightbulb className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="font-semibold text-sm mb-1">Why this is worth learning</p>
+                    <p className="font-semibold text-sm mb-1">Why this might be useful</p>
                     <p className="text-sm text-foreground/85 leading-relaxed">{module.whyItMatters}</p>
                   </div>
                 </div>
                 <div className="rounded-lg bg-background/70 border border-border/60 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-primary mb-1">Keep it small</p>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-primary mb-1">Take it one piece at a time</p>
                   <p className="text-sm text-foreground/80 leading-relaxed">
-                    You will only see one idea at a time. There is a short check, then a small reflection. One or two sentences is enough, and you can reflect privately instead of typing personal details.
+                    You will move through one idea at a time, then a quick learning check and a short reflection. You do not need polished answers. A sentence or two is enough, and you can choose to reflect privately instead of typing personal details.
                   </p>
                 </div>
               </CardContent>
@@ -200,7 +196,7 @@ export default function GuidedLearningModule({ module, moduleNumber, coreValues 
                 <CardContent className="p-4">
                   <p className="text-xs font-semibold uppercase tracking-wider text-pink-500 mb-1">From your onboarding</p>
                   <p className="text-sm text-foreground/85">Values you narrowed down: <span className="font-semibold text-foreground">{coreValues.join(", ")}</span></p>
-                  <p className="text-xs text-muted-foreground mt-1">They are a starting point, not permanent labels.</p>
+                  <p className="text-xs text-muted-foreground mt-1">Use them if they still feel right. They are a starting point, not permanent labels.</p>
                 </CardContent>
               </Card>
             )}
@@ -223,8 +219,6 @@ export default function GuidedLearningModule({ module, moduleNumber, coreValues 
 
         {learningSectionIndex >= 0 && (() => {
           const section = module.sections[learningSectionIndex]
-          const { summary, detail } = splitFirstSentence(section.body)
-          const expanded = Boolean(expandedSections[learningSectionIndex])
 
           return (
             <Card>
@@ -233,24 +227,13 @@ export default function GuidedLearningModule({ module, moduleNumber, coreValues 
                 <CardTitle className="text-xl sm:text-2xl leading-tight">{section.title}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <p className="text-base sm:text-lg text-foreground/90 leading-relaxed">{summary}</p>
-
-                {detail && expanded && (
-                  <p className="text-sm text-foreground/75 leading-relaxed">{detail}</p>
-                )}
-
-                {detail && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="px-0 text-primary hover:bg-transparent"
-                    onClick={() => setExpandedSections((current) => ({ ...current, [learningSectionIndex]: !expanded }))}
-                  >
-                    {expanded ? <ChevronUp className="mr-1.5 h-4 w-4" /> : <ChevronDown className="mr-1.5 h-4 w-4" />}
-                    {expanded ? "Show less" : "More context"}
-                  </Button>
-                )}
+                <div className="space-y-3">
+                  {section.body.split("\n\n").map((paragraph, index) => (
+                    <p key={`${module.slug}-section-${learningSectionIndex}-paragraph-${index}`} className="text-base text-foreground/88 leading-7">
+                      {paragraph}
+                    </p>
+                  ))}
+                </div>
 
                 {section.bullets && section.bullets.length > 0 && (
                   <div className="rounded-lg bg-secondary/30 border border-border/60 p-4">
@@ -274,13 +257,13 @@ export default function GuidedLearningModule({ module, moduleNumber, coreValues 
         {activeStep === checkStep && (
           <Card className="border-primary/25">
             <CardHeader className="pb-3">
-              <p className="text-xs font-semibold uppercase tracking-wider text-primary">Check</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-primary">Quick check</p>
               <CardTitle className="flex items-center gap-2 text-xl sm:text-2xl">
                 <BookOpen className="h-5 w-5 text-primary" />
-                Check the idea
+                See if the idea landed
               </CardTitle>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                This is not a test. Pick the answer that seems closest. The feedback explains the important distinction, even if your first choice is different.
+                This is not a pass-or-fail test. Pick the answer that makes the most sense to you. Once you choose, Waypoint will explain your answer and show the answer we most want you to take away.
               </p>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -295,9 +278,17 @@ export default function GuidedLearningModule({ module, moduleNumber, coreValues 
               </RadioGroup>
 
               {selectedOption && (
-                <div className={`rounded-lg p-3 text-sm ${selectedOption.correct ? "bg-emerald-500/10 border border-emerald-500/25" : "bg-amber-500/10 border border-amber-500/25"}`}>
-                  <p className="font-semibold mb-1">{selectedOption.correct ? "That captures the key idea." : "Here is the distinction."}</p>
-                  <p className="text-foreground/80">{selectedOption.feedback}</p>
+                <div className={`rounded-lg p-4 text-sm ${selectedOption.correct ? "bg-emerald-500/10 border border-emerald-500/25" : "bg-amber-500/10 border border-amber-500/25"}`}>
+                  <p className="font-semibold mb-1">{selectedOption.correct ? "Yep — that is the idea." : "Not quite — here is what is different."}</p>
+                  <p className="text-foreground/80 leading-relaxed">{selectedOption.feedback}</p>
+                </div>
+              )}
+
+              {selectedOption && idealOption && !selectedOption.correct && (
+                <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/8 p-4 text-sm space-y-2">
+                  <p className="font-semibold text-emerald-700 dark:text-emerald-300">The answer to take with you</p>
+                  <p className="font-medium text-foreground">{idealOption.label}</p>
+                  <p className="text-foreground/80 leading-relaxed">{idealOption.feedback}</p>
                 </div>
               )}
 
@@ -309,13 +300,13 @@ export default function GuidedLearningModule({ module, moduleNumber, coreValues 
         {practicePromptIndex >= 0 && currentPracticePrompt && (
           <Card>
             <CardHeader className="pb-3">
-              <p className="text-xs font-semibold uppercase tracking-wider text-primary">Practise · reflection {practicePromptIndex + 1} of {module.practicePrompts.length}</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-primary">Try it · reflection {practicePromptIndex + 1} of {module.practicePrompts.length}</p>
               <CardTitle className="flex items-center gap-2 text-xl sm:text-2xl">
                 <Sparkles className="h-5 w-5 text-primary" />
-                {practicePromptIndex === 0 ? module.practiceTitle : "Keep the reflection brief"}
+                {practicePromptIndex === 0 ? module.practiceTitle : "Keep going with the same example"}
               </CardTitle>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                {practicePromptIndex === 0 ? module.practiceIntro : "You do not need a perfect answer. A sentence or two is enough to apply the idea."}
+                {practicePromptIndex === 0 ? module.practiceIntro : "You are not writing an assignment. A sentence or two is enough to connect the idea to real life."}
               </p>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -348,7 +339,7 @@ export default function GuidedLearningModule({ module, moduleNumber, coreValues 
                     className="mt-0.5"
                   />
                   <Label htmlFor="private-reflection" className="font-normal leading-relaxed cursor-pointer">
-                    I would rather reflect privately and not type the details into Waypoint.
+                    I would rather think this through privately and not type the details into Waypoint.
                   </Label>
                 </div>
               </div>
@@ -377,14 +368,14 @@ export default function GuidedLearningModule({ module, moduleNumber, coreValues 
                 <div className="flex items-start gap-3">
                   <CheckCircle2 className="h-6 w-6 text-emerald-500 mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-1">The main idea</p>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-1">What to take with you</p>
                     <p className="text-base text-foreground/90 leading-relaxed">{module.keyLearning}</p>
                   </div>
                 </div>
                 <div className="rounded-lg bg-background/70 border border-border/60 p-4 flex gap-3">
                   <PauseCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
                   <p className="text-sm text-foreground/80 leading-relaxed">
-                    You do not need to start another module now. Giving yourself time to notice or use this idea in ordinary life is part of the Journey too.
+                    You do not need to jump straight into another module. Sometimes the useful part is noticing this idea once in ordinary life before you learn another one.
                   </p>
                 </div>
               </CardContent>
@@ -392,7 +383,7 @@ export default function GuidedLearningModule({ module, moduleNumber, coreValues 
 
             {attemptedCompletion && !canComplete && (
               <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm">
-                {!selectedOption && <p>Complete the short idea check before recording the module.</p>}
+                {!selectedOption && <p>Choose an answer in the quick check before recording the module.</p>}
                 {!practiceComplete && <p>Complete the reflection, or choose the private-reflection option.</p>}
               </div>
             )}
@@ -411,12 +402,12 @@ export default function GuidedLearningModule({ module, moduleNumber, coreValues 
         <div className="rounded-lg border border-border/60 bg-muted/15 p-3 flex items-start gap-2.5">
           <PauseCircle className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
           <p className="text-xs text-muted-foreground leading-relaxed">
-            Pause whenever you need to. Waypoint remembers your place through the learning section on this device, but it does not save your knowledge-check choice or practice writing.
+            Stop whenever you have had enough for now. Waypoint remembers your place through the learning section on this device, but it does not save your knowledge-check choice or practice writing.
           </p>
         </div>
 
         <p className="text-xs text-center text-muted-foreground px-4">
-          Self-guided learning and practice, not a clinical assessment or a test of recovery.
+          Self-guided support and skills practice, not a clinical assessment or a test of recovery.
         </p>
       </main>
 
