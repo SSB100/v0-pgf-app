@@ -2,6 +2,7 @@ import { redirect } from "next/navigation"
 import { getSession } from "@/lib/session"
 import { sql } from "@/lib/db"
 import { addCalendarDays, differenceInCalendarDays, getAotearoaDateKey } from "@/lib/aotearoa-date"
+import { JOURNEY_MODULES } from "@/lib/journey-curriculum"
 import Image from "next/image"
 import DashboardHeader from "@/components/dashboard/dashboard-header"
 import CurrentStateCard from "@/components/dashboard/current-state-card"
@@ -59,13 +60,14 @@ export default async function DashboardPage() {
   if (!profileResult[0]?.onboarding_completed) redirect("/onboarding")
 
   const completedModulesResult = await sql`
-    SELECT COUNT(DISTINCT module_slug) as count
+    SELECT DISTINCT module_slug
     FROM journey_completions
     WHERE user_id = ${user.id}
   `
 
-  const completedModulesCount = Number(completedModulesResult[0]?.count || 0)
-  const totalModulesCount = 11
+  const knownJourneySlugs = new Set(JOURNEY_MODULES.map((module) => module.slug))
+  const completedModulesCount = completedModulesResult.filter((row: any) => knownJourneySlugs.has(row.module_slug)).length
+  const totalModulesCount = JOURNEY_MODULES.length
   const incompleteModulesCount = Math.max(0, totalModulesCount - completedModulesCount)
 
   const awarenessResult = await sql`
@@ -239,11 +241,11 @@ export default async function DashboardPage() {
               </div>
 
               <p className="text-sm text-muted-foreground leading-relaxed mb-4">
-                Journey modules provide self-guided learning and practice around awareness, urges, values, communication and coping. Use the ones that feel relevant to you at your own pace.
+                Journey modules provide self-guided learning and practice around awareness, emotions, values, urges, communication and coping. Each module teaches the idea, checks the key learning and finishes with a small practice exercise.
               </p>
 
               <div className="flex flex-wrap gap-2 mb-4">
-                {["Notice patterns", "Practise coping skills", "Explore values", "Reflect on choices"].map((label) => (
+                {["Understand patterns", "Practise coping skills", "Explore values", "Build action plans"].map((label) => (
                   <span key={label} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
                     <span className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
                     {label}
