@@ -1,8 +1,8 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname, useRouter } from "next/navigation"
-import { AlertTriangle, BookOpenCheck, BrainCircuit, CheckCircle2, Calendar, Shield, Users } from "lucide-react"
+import { usePathname } from "next/navigation"
+import { BookOpenCheck, CheckCircle2, Calendar, Home, Shield, Users } from "lucide-react"
 import { useState, useEffect } from "react"
 import useSWR from "swr"
 
@@ -10,8 +10,6 @@ const fetcher = (url: string) => fetch(url).then((r) => r.json())
 
 export default function MobileNav() {
   const pathname = usePathname()
-  const [sosLoading, setSosLoading] = useState(false)
-  const router = useRouter()
 
   // Fetch current user id from session, then check today's check-in
   const [userId, setUserId] = useState<string | null>(null)
@@ -38,43 +36,19 @@ export default function MobileNav() {
       : "/community/join"
 
   const navItems = [
-    { href: "/safeguards", icon: Shield, label: "Safety" },
-    { href: "/skills", icon: BookOpenCheck, label: "Skills" },
-    { href: "/training", icon: BrainCircuit, label: "Training" },
+    { href: "/dashboard", icon: Home, label: "Home" },
+    { href: "/journey", icon: BookOpenCheck, label: "Journey" },
     { href: "/check-in", icon: Calendar, label: "Check-in", isDone: checkInDone },
+    { href: "/safeguards", icon: Shield, label: "Safety" },
     { href: communityHref, icon: Users, label: "Community" },
   ]
-
-  async function handleSOS() {
-    setSosLoading(true)
-    try {
-      const response = await fetch("/api/sos/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      })
-
-      const data = await response.json()
-
-      if (data.needsSetup) {
-        // Redirect to setup page if not configured
-        router.push("/sos-setup")
-      } else if (response.ok) {
-        alert(data.message || "SOS sent. Support will reach out soon.")
-      } else {
-        alert("Failed to send SOS. Please try again.")
-      }
-    } catch (error) {
-      alert("Failed to send SOS. Please try again.")
-    } finally {
-      setSosLoading(false)
-    }
-  }
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-md border-t-2 border-primary/20 shadow-2xl lg:hidden">
       <div className="flex items-center justify-around px-1 py-2 max-w-lg mx-auto">
         {navItems.map((item) => {
-          const isActive = pathname === item.href
+          const isJourney = item.href === "/journey"
+          const isActive = isJourney ? pathname.startsWith("/journey") || pathname.startsWith("/skills") || pathname.startsWith("/training") : pathname === item.href
           const Icon = item.icon
           const isDone = "isDone" in item && item.isDone
 
@@ -102,15 +76,6 @@ export default function MobileNav() {
             </Link>
           )
         })}
-
-        <button
-          onClick={handleSOS}
-          disabled={sosLoading}
-          className="flex flex-col items-center gap-1 px-2 py-2 rounded-lg transition-all bg-destructive/90 text-white shadow-lg hover:bg-destructive"
-        >
-          <AlertTriangle className="w-6 h-6 stroke-[2.5]" />
-          <span className="text-xs font-bold">{sosLoading ? "..." : "SOS"}</span>
-        </button>
       </div>
     </nav>
   )
