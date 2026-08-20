@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { useEffect } from "react"
 import useSWR from "swr"
 import {
   BookOpenCheck,
@@ -46,6 +47,15 @@ export default function MobileDashboardHome({ userName, journeyProgress }: Mobil
     pathname === "/dashboard" && communityData?.profile ? "/api/community/group/join" : null,
     fetcher,
   )
+
+  useEffect(() => {
+    if (pathname !== "/dashboard") return
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = "hidden"
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
+  }, [pathname])
 
   if (pathname !== "/dashboard") return null
 
@@ -104,7 +114,7 @@ export default function MobileDashboardHome({ userName, journeyProgress }: Mobil
   ]
 
   return (
-    <div className="fixed inset-x-0 bottom-[76px] top-16 z-30 overflow-y-auto bg-background lg:hidden">
+    <div className="fixed inset-x-0 bottom-[76px] top-16 z-30 overflow-y-auto overscroll-contain bg-background lg:hidden">
       <main className="mx-auto flex min-h-full max-w-lg flex-col px-4 py-4 sm:px-5">
         <div className="mb-4">
           <p className="text-sm font-medium text-muted-foreground">Welcome back, {userName}</p>
