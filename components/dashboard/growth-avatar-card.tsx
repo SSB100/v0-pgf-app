@@ -105,71 +105,82 @@ export default function GrowthAvatarCard({ avatarType, level, levelCredits, stre
   }
 
   return (
-    <Card className="border-border/50 overflow-hidden">
-      <div className="relative h-24 overflow-hidden">
-        <Image src="/images/growth-journey.jpg" alt="" fill className="object-cover object-center" />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/40 to-card" />
-        <div className="absolute bottom-0 left-0 right-0 px-4 pb-3 flex items-end justify-between">
-          <div>
-            <p className="text-xs font-semibold text-primary/90 uppercase tracking-wider">Growth Companion</p>
-            <h3 className="text-base font-bold text-white leading-tight">Your {config.name}</h3>
+    <Card className="overflow-hidden border-primary/20 bg-card shadow-sm">
+      <div className="relative overflow-hidden border-b border-border/50 bg-gradient-to-br from-primary/10 via-background to-secondary/40">
+        <div className="absolute inset-0 pointer-events-none opacity-20">
+          <Image src="/images/growth-journey.jpg" alt="" fill className="object-cover object-center" priority />
+        </div>
+        <div className="absolute inset-0 bg-gradient-to-b from-background/20 via-background/55 to-card" />
+
+        <div className="relative grid gap-4 px-4 pb-5 pt-4 min-[380px]:px-5 sm:grid-cols-[minmax(190px,0.85fr)_minmax(0,1.15fr)] sm:items-center sm:gap-6 sm:px-6 sm:py-6 lg:grid-cols-[minmax(220px,0.8fr)_minmax(0,1.2fr)] lg:px-7 lg:py-7">
+          <div className="relative mx-auto aspect-square w-[min(58vw,210px)] overflow-hidden rounded-[1.75rem] border-2 border-primary/25 bg-background/80 shadow-lg sm:mx-0 sm:w-full sm:max-w-[230px] lg:max-w-[260px]">
+            <Image
+              id="growth-avatar-image"
+              src={avatar.image || "/placeholder.svg"}
+              alt={avatar.stage}
+              fill
+              sizes="(max-width: 639px) 58vw, (max-width: 1023px) 230px, 260px"
+              className="object-contain p-2 transition-all duration-700 ease-in-out"
+              priority
+            />
           </div>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild><button className="w-7 h-7 rounded-full bg-black/40 flex items-center justify-center"><Info className="w-3.5 h-3.5 text-white/70" /></button></TooltipTrigger>
-              <TooltipContent className="max-w-xs">
-                <p className="text-sm">Your companion changes as you complete selected Waypoint activities. Levels represent engagement with the app, not clinical recovery, health or personal worth.</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+
+          <div className="min-w-0 text-center sm:text-left">
+            <div className="flex items-center justify-center gap-2 sm:justify-start">
+              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-primary sm:text-xs">Your growth companion</p>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button className="flex size-7 items-center justify-center rounded-full border border-border/60 bg-background/70" aria-label="About your growth companion">
+                      <Info className="size-3.5 text-muted-foreground" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs">
+                    <p className="text-sm">Your companion changes as you complete selected Waypoint activities. Levels represent engagement with the app, not clinical recovery, health or personal worth.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+
+            <h2 className="mt-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">Your {config.name}</h2>
+            <div className={`mt-1 text-xl font-bold sm:text-2xl ${avatar.color}`}>{avatar.stage}</div>
+            <p className="mt-1 text-sm font-medium text-muted-foreground">Engagement level {currentLevel}</p>
+            <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-muted-foreground sm:mx-0">{avatar.description}</p>
+
+            <div className="mt-4 grid grid-cols-2 gap-2 sm:max-w-sm">
+              <div className="rounded-xl border border-border/60 bg-background/75 px-3 py-2.5">
+                <p className="text-[11px] font-medium text-muted-foreground">Current check-in run</p>
+                <p className="mt-0.5 text-xl font-bold text-primary">{streak} <span className="text-xs font-medium text-muted-foreground">days</span></p>
+              </div>
+              <div className="rounded-xl border border-border/60 bg-background/75 px-3 py-2.5">
+                <p className="text-[11px] font-medium text-muted-foreground">Longest recorded run</p>
+                <p className="mt-0.5 text-xl font-bold text-foreground">{longestStreak || 0} <span className="text-xs font-medium text-muted-foreground">days</span></p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      <CardContent className="space-y-4 pt-4">
-        <div className="flex items-center gap-4">
-          <div className="relative w-24 h-24 flex-shrink-0 rounded-xl overflow-hidden border-2 border-primary/30 bg-secondary/30">
-            <Image id="growth-avatar-image" src={avatar.image || "/placeholder.svg"} alt={avatar.stage} fill className="object-contain transition-all duration-700 ease-in-out p-1" priority />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className={`text-xl font-bold ${avatar.color}`}>{avatar.stage}</div>
-            <div className="text-sm font-medium text-muted-foreground">Engagement level {currentLevel}</div>
-            <div className="text-xs text-muted-foreground mt-0.5 text-pretty leading-snug">{avatar.description}</div>
-          </div>
-        </div>
-
-        <div className="rounded-xl bg-secondary/30 border border-border/50 px-4 py-3 flex items-center justify-between gap-3">
-          <div>
-            <div className="text-xs text-muted-foreground font-medium mb-0.5">Current check-in run</div>
-            <p className="text-xs text-muted-foreground text-pretty leading-snug">
-              This counts consecutive recorded check-ins. Missing a day does not erase earlier entries or mean you have failed.
-            </p>
-          </div>
-          <div className="text-right flex-shrink-0">
-            <div className="text-2xl font-bold text-primary">{streak}</div>
-            <div className="text-xs text-muted-foreground">days</div>
-            {longestStreak > 0 && <div className="text-[10px] text-muted-foreground">Longest recorded run: {longestStreak}</div>}
-          </div>
-        </div>
-
+      <CardContent className="space-y-4 p-4 min-[380px]:p-5 sm:p-6">
         {credits > 0 && (
-          <div className="rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 border border-primary/25 p-4">
-            <div className="flex items-center justify-between mb-3">
-              <div>
+          <div className="rounded-xl border border-primary/25 bg-primary/5 p-4 sm:flex sm:items-center sm:justify-between sm:gap-4">
+            <div>
+              <div className="flex items-center gap-2">
                 <div className="text-sm font-semibold text-foreground">Growth Credits</div>
-                <div className="text-xs text-muted-foreground">Credits earned through selected Waypoint activities</div>
+                <div className="flex size-8 items-center justify-center rounded-full border border-primary/30 bg-primary/15 text-sm font-bold text-primary">{credits}</div>
               </div>
-              <div className="w-10 h-10 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center"><span className="text-lg font-bold text-primary">{credits}</span></div>
+              <div className="mt-1 text-xs text-muted-foreground">Credits earned through selected Waypoint activities</div>
             </div>
-            <Button onClick={handleLevelUp} disabled={isLevelingUp} className="w-full bg-primary hover:bg-primary/90 font-semibold" size="sm">
-              <Sparkles className="w-4 h-4 mr-2" />
+            <Button onClick={handleLevelUp} disabled={isLevelingUp} className="mt-3 w-full font-semibold sm:mt-0 sm:w-auto" size="sm">
+              <Sparkles className="mr-2 size-4" />
               {isLevelingUp ? "Applying credit..." : "Apply a Growth Credit"}
             </Button>
           </div>
         )}
 
-        <div className="text-xs text-center text-muted-foreground text-pretty">
-          Growth Companion stages are a visual record of Waypoint engagement only. They do not measure recovery, wellbeing or treatment outcomes.
-        </div>
+        <p className="text-center text-[11px] leading-relaxed text-muted-foreground sm:text-left sm:text-xs">
+          Your companion is a visual record of Waypoint engagement. Missing a check-in or having a difficult day does not remove earlier progress or measure recovery, wellbeing or personal worth.
+        </p>
       </CardContent>
     </Card>
   )

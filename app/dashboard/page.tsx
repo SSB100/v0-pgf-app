@@ -203,24 +203,46 @@ export default async function DashboardPage() {
         journeyProgress={{ completed: completedModulesCount, total: totalModulesCount }}
       />
 
-      <main className="mx-auto max-w-[1440px] space-y-6 px-4 py-5 sm:px-6 sm:py-7 lg:px-8 lg:py-8">
-        <section className="space-y-3 sm:space-y-4" aria-labelledby="today-heading">
-          <div className="flex items-end justify-between gap-4">
+      <main className="mx-auto max-w-[1440px] space-y-6 px-3 py-3 min-[380px]:px-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
+        <section className="space-y-3 sm:space-y-4" aria-labelledby="companion-heading">
+          <div className="flex items-end justify-between gap-4 px-1 sm:px-0">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Today</p>
-              <h1 id="today-heading" className="mt-1 text-xl font-bold tracking-tight text-foreground sm:text-2xl">
-                Pick up where you left off
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary sm:text-xs">Your Waypoint</p>
+              <h1 id="companion-heading" className="mt-1 text-xl font-bold tracking-tight text-foreground sm:text-2xl">
+                Start with you
               </h1>
             </div>
             <p className="hidden max-w-md text-right text-sm text-muted-foreground md:block">
-              Your next useful action first, with the rest of your information kept close without competing for attention.
+              Your companion stays visible as a simple record of your activity and progress in Waypoint.
+            </p>
+          </div>
+
+          <GrowthAvatarCard
+            avatarType={profile.growth_avatar || "growth_tree"}
+            level={profile.tree_growth_level}
+            levelCredits={profile.level_credits || 0}
+            streak={profile.check_in_streak || 0}
+            longestStreak={profile.longest_streak || 0}
+          />
+        </section>
+
+        <section className="space-y-3 sm:space-y-4" aria-labelledby="today-heading">
+          <div className="flex items-end justify-between gap-4 px-1 sm:px-0">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary sm:text-xs">Today</p>
+              <h2 id="today-heading" className="mt-1 text-xl font-bold tracking-tight text-foreground sm:text-2xl">
+                What would help next?
+              </h2>
+            </div>
+            <p className="hidden max-w-md text-right text-sm text-muted-foreground md:block">
+              One useful next action first. Everything else can wait until you need it.
             </p>
           </div>
 
           <div className="grid gap-4 xl:grid-cols-[minmax(0,1.65fr)_minmax(320px,0.85fr)]">
             {nextJourneyModule ? (
               <div className="relative min-h-[250px] overflow-hidden rounded-2xl border border-primary/25 bg-card shadow-sm sm:min-h-[270px]">
-                <div className="absolute inset-0 pointer-events-none">
+                <div className="pointer-events-none absolute inset-0">
                   <Image src="/images/growth-journey.jpg" alt="" fill className="object-cover object-center opacity-20" priority />
                   <div className="absolute inset-0 bg-gradient-to-r from-card via-card/95 to-card/65" />
                 </div>
@@ -237,9 +259,9 @@ export default async function DashboardPage() {
                       </span>
                     </div>
 
-                    <h2 className="max-w-2xl text-2xl font-bold leading-tight tracking-tight text-foreground sm:text-3xl">
+                    <h3 className="max-w-2xl text-2xl font-bold leading-tight tracking-tight text-foreground sm:text-3xl">
                       {nextJourneyModule.title}
-                    </h2>
+                    </h3>
                     <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
                       {nextJourneyModule.description}
                     </p>
@@ -272,7 +294,7 @@ export default async function DashboardPage() {
                     <CheckCircle2 className="size-3.5" />
                     Journey explored
                   </span>
-                  <h2 className="mt-5 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">You have explored every current module</h2>
+                  <h3 className="mt-5 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">You have explored every current module</h3>
                   <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
                     Revisit any module when a skill or idea would be useful. Completing the library is an app milestone, not a measure of recovery or wellbeing.
                   </p>
@@ -293,9 +315,9 @@ export default async function DashboardPage() {
                 </span>
               </div>
 
-              <h2 className="mt-5 text-xl font-bold tracking-tight text-foreground">
+              <h3 className="mt-5 text-xl font-bold tracking-tight text-foreground">
                 {todayCheckIn ? "Today's check-in is done" : "How are things today?"}
-              </h2>
+              </h3>
               <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
                 {todayCheckIn
                   ? "Your entry is saved. Use the snapshot below to see what you recorded and the weekly view to notice patterns over time."
@@ -350,15 +372,7 @@ export default async function DashboardPage() {
             <SuggestedSkillsCard awareness={latestAwareness} problems={primaryProblem} values={values} weeklyCheckins={weeklyCheckins} />
           </div>
 
-          <aside className="space-y-5 xl:col-span-4 xl:space-y-6" aria-label="Growth and values">
-            <GrowthAvatarCard
-              avatarType={profile.growth_avatar || "growth_tree"}
-              level={profile.tree_growth_level}
-              levelCredits={profile.level_credits || 0}
-              streak={profile.check_in_streak || 0}
-              longestStreak={profile.longest_streak || 0}
-            />
-
+          <aside className="xl:col-span-4" aria-label="Your values">
             <CoreValuesCard values={values} />
           </aside>
         </section>
