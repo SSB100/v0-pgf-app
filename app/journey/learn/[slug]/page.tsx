@@ -4,7 +4,7 @@ import { sql } from "@/lib/db"
 import GuidedLearningModule from "@/components/journey/guided-learning-module"
 import { JOURNEY_MODULE_BY_SLUG, JOURNEY_MODULES } from "@/lib/journey-curriculum"
 import { prepareJourneyModuleForSelfGuidedUse } from "@/lib/journey-self-guided-presentation"
-import { prepareRemainingJourneyModuleForSelfGuidedUse } from "@/lib/journey-self-guided-presentation-remaining"
+import { prepareJourneyModuleForFlexibleDepth } from "@/lib/journey-learning-depth"
 
 interface GuidedModulePageProps {
   params: Promise<{ slug: string }>
@@ -17,7 +17,8 @@ export default async function GuidedModulePage({ params }: GuidedModulePageProps
   const { slug } = await params
   const sourceModule = JOURNEY_MODULE_BY_SLUG[slug]
   if (!sourceModule) notFound()
-  const module = prepareRemainingJourneyModuleForSelfGuidedUse(
+
+  const module = prepareJourneyModuleForFlexibleDepth(
     prepareJourneyModuleForSelfGuidedUse(sourceModule),
   )
 
