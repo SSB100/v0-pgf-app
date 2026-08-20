@@ -79,6 +79,34 @@ const MODULE_IMAGES: Record<string, { src: string; alt: string }> = {
     src: "/images/journey/accepts-improve.svg",
     alt: "An open coping toolbox contains several different ways to get through a difficult period.",
   },
+  "reality-acceptance": {
+    src: "/images/journey/reality-acceptance.svg",
+    alt: "A map pin marks the place someone is actually standing before a path continues forward from that real starting point.",
+  },
+  "problem-solving": {
+    src: "/images/journey/problem-solving.svg",
+    alt: "A tangled line becomes one clear workable strand, showing how a large problem can be reduced to one solvable piece.",
+  },
+  "interpersonal-effectiveness": {
+    src: "/images/journey/interpersonal-effectiveness.svg",
+    alt: "A person balances three communication priorities: the outcome they want, the relationship and their self-respect.",
+  },
+  "dear-man": {
+    src: "/images/journey/dear-man.svg",
+    alt: "Two speech bubbles are connected by a simple four-step scaffold, representing a clear structure for asking or saying no.",
+  },
+  "give-skill": {
+    src: "/images/journey/give-skill.svg",
+    alt: "Two people stay connected through a warm conversation, representing attention, validation and an easier tone.",
+  },
+  "fast-skill": {
+    src: "/images/journey/fast-skill.svg",
+    alt: "A protective shield and compass represent keeping self-respect and values in view during a difficult conversation.",
+  },
+  "personal-commitment-plan": {
+    src: "/images/journey/personal-commitment-plan.svg",
+    alt: "A person follows a path through early warning, first action, support, environment change and a backup step.",
+  },
 }
 
 export default function JourneyModuleHeroImage({ moduleSlug }: { moduleSlug: string }) {
