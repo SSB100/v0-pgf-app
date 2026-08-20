@@ -26,7 +26,7 @@ export default function MobileNav() {
       : "/community/join"
 
   const navItems = [
-    { href: "/dashboard", icon: Home, label: "Home", active: pathname === "/dashboard" },
+    { href: "/dashboard", icon: Home, label: "Home", active: pathname.startsWith("/dashboard") },
     {
       href: "/journey",
       icon: BookOpenCheck,
