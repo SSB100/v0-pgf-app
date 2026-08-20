@@ -1,10 +1,11 @@
 import { notFound, redirect } from "next/navigation"
 import { getSession } from "@/lib/session"
 import { sql } from "@/lib/db"
-import GuidedLearningModule from "@/components/journey/guided-learning-module"
+import GuidedLearningModule from "@/components/journey/guided-learning-module-v2"
 import { JOURNEY_MODULE_BY_SLUG, JOURNEY_MODULES } from "@/lib/journey-curriculum"
 import { prepareJourneyModuleForSelfGuidedUse } from "@/lib/journey-self-guided-presentation"
 import { prepareJourneyModuleForFlexibleDepth } from "@/lib/journey-learning-depth"
+import { prepareJourneyModuleForPlainLanguage } from "@/lib/journey-plain-language-review"
 
 interface GuidedModulePageProps {
   params: Promise<{ slug: string }>
@@ -18,8 +19,10 @@ export default async function GuidedModulePage({ params }: GuidedModulePageProps
   const sourceModule = JOURNEY_MODULE_BY_SLUG[slug]
   if (!sourceModule) notFound()
 
-  const module = prepareJourneyModuleForFlexibleDepth(
-    prepareJourneyModuleForSelfGuidedUse(sourceModule),
+  const module = prepareJourneyModuleForPlainLanguage(
+    prepareJourneyModuleForFlexibleDepth(
+      prepareJourneyModuleForSelfGuidedUse(sourceModule),
+    ),
   )
 
   const profileResult = await sql`
