@@ -22,6 +22,7 @@ import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Textarea } from "@/components/ui/textarea"
 import { ModuleCompletionDialog } from "@/components/journey/module-completion-dialog"
+import JourneyConceptVisual from "@/components/journey/journey-concept-visual"
 import type { JourneyModuleDefinition } from "@/lib/journey-curriculum"
 
 interface GuidedLearningModuleProps {
@@ -79,6 +80,7 @@ export default function GuidedLearningModule({ module, moduleNumber, coreValues 
   }, [activeStep, checkStep, hasRestoredStep, storageKey])
 
   const selectedOption = useMemo(() => {
+    if (selectedCheck === "") return undefined
     const index = Number(selectedCheck)
     return Number.isInteger(index) && index >= 0 ? module.check.options[index] : undefined
   }, [module.check.options, selectedCheck])
@@ -183,9 +185,9 @@ export default function GuidedLearningModule({ module, moduleNumber, coreValues 
                   </div>
                 </div>
                 <div className="rounded-lg bg-background/70 border border-border/60 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-primary mb-1">Take it one piece at a time</p>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-primary mb-1">Go at the pace the idea needs</p>
                   <p className="text-sm text-foreground/80 leading-relaxed">
-                    You will move through one idea at a time, then a quick learning check and a short reflection. You do not need polished answers. A sentence or two is enough, and you can choose to reflect privately instead of typing personal details.
+                    Some Journey modules are short and some need more room. You will move through the teaching in small pieces, then a learning check and reflection. There is no prize for rushing, and you can pause whenever you have had enough for now.
                   </p>
                 </div>
               </CardContent>
@@ -235,6 +237,8 @@ export default function GuidedLearningModule({ module, moduleNumber, coreValues 
                   ))}
                 </div>
 
+                <JourneyConceptVisual moduleSlug={module.slug} sectionIndex={learningSectionIndex} />
+
                 {section.bullets && section.bullets.length > 0 && (
                   <div className="rounded-lg bg-secondary/30 border border-border/60 p-4">
                     <ul className="space-y-2 text-sm text-foreground/80">
@@ -263,7 +267,7 @@ export default function GuidedLearningModule({ module, moduleNumber, coreValues 
                 See if the idea landed
               </CardTitle>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                This is not a pass-or-fail test. Pick the answer that makes the most sense to you. Once you choose, Waypoint will explain your answer and show the answer we most want you to take away.
+                This is not a pass-or-fail test. Pick the answer that makes the most sense to you. Waypoint will only show the explanation after you make a choice, and if your choice is not the best fit it will also show the answer we most want you to take away.
               </p>
             </CardHeader>
             <CardContent className="space-y-4">
