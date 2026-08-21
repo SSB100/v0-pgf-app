@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import useSWR from "swr"
 import {
   BookOpenCheck,
@@ -37,25 +37,40 @@ interface HubItem {
 
 export default function MobileDashboardHome({ userName, journeyProgress }: MobileDashboardHomeProps) {
   const pathname = usePathname()
+  const [isMobileViewport, setIsMobileViewport] = useState(false)
 
-  const { data: checkInData } = useSWR(pathname === "/dashboard" ? "/api/check-in/check-today" : null, fetcher, {
+  useEffect(() => {
+    const mobileQuery = window.matchMedia("(max-width: 1023px)")
+    const syncViewport = () => setIsMobileViewport(mobileQuery.matches)
+
+    syncViewport()
+    mobileQuery.addEventListener("change", syncViewport)
+
+    return () => mobileQuery.removeEventListener("change", syncViewport)
+  }, [])
+
+  const shouldLoadMobileData = pathname === "/dashboard" && isMobileViewport
+
+  const { data: checkInData } = useSWR(shouldLoadMobileData ? "/api/check-in/check-today" : null, fetcher, {
     refreshInterval: 60000,
   })
 
-  const { data: communityData } = useSWR(pathname === "/dashboard" ? "/api/community/profile" : null, fetcher)
+  const { data: communityData } = useSWR(shouldLoadMobileData ? "/api/community/profile" : null, fetcher)
   const { data: membershipData } = useSWR(
-    pathname === "/dashboard" && communityData?.profile ? "/api/community/group/join" : null,
+    shouldLoadMobileData && communityData?.profile ? "/api/community/group/join" : null,
     fetcher,
   )
 
   useEffect(() => {
-    if (pathname !== "/dashboard") return
+    if (pathname !== "/dashboard" || !isMobileViewport) return
+
     const previousOverflow = document.body.style.overflow
     document.body.style.overflow = "hidden"
+
     return () => {
       document.body.style.overflow = previousOverflow
     }
-  }, [pathname])
+  }, [pathname, isMobileViewport])
 
   if (pathname !== "/dashboard") return null
 
