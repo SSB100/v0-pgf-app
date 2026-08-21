@@ -1,4 +1,19 @@
-const MODULE_IMAGES: Record<string, { src: string; alt: string }> = {
+"use client"
+
+import { useEffect, useState } from "react"
+
+type StaticModuleImage = {
+  src: string
+  alt: string
+}
+
+type GeneratedModuleImage = {
+  alt: string
+  x: string
+  y: string
+}
+
+const STATIC_MODULE_IMAGES: Record<string, StaticModuleImage> = {
   "understanding-the-pattern": {
     src: "/images/journey/understanding-the-pattern.svg",
     alt: "A person reflecting on a repeating cycle of pressure, quick relief and later consequences.",
@@ -39,91 +54,183 @@ const MODULE_IMAGES: Record<string, { src: string; alt: string }> = {
     src: "/images/journey/choice-points.svg",
     alt: "A person at a fork between a darker familiar path and a brighter path toward connection and growth.",
   },
+}
+
+const GENERATED_MODULE_IMAGES: Record<string, GeneratedModuleImage> = {
   "understanding-emotions": {
-    src: "/images/journey/understanding-emotions.svg",
-    alt: "A person calmly noticing several different emotions as signals around them rather than commands they must follow.",
+    x: "0%",
+    y: "0%",
+    alt: "A person noticing several different emotions with curiosity while reflecting in a journal.",
   },
   "check-the-facts": {
-    src: "/images/journey/check-the-facts.svg",
-    alt: "A camera represents what can be observed while a thought cloud represents the story the mind may add.",
+    x: "25%",
+    y: "0%",
+    alt: "A person looking closely at what happened while separating confusing thoughts from clearer observations.",
   },
   "opposite-action": {
-    src: "/images/journey/opposite-action.svg",
-    alt: "A strong pull points one way while a person takes a small deliberate step toward a more helpful direction.",
+    x: "50%",
+    y: "0%",
+    alt: "A person choosing a brighter path instead of following a familiar difficult pull.",
   },
   "abc-please": {
-    src: "/images/journey/abc-please.svg",
-    alt: "A rechargeable battery is supported by symbols for sleep, food, movement and connection.",
+    x: "75%",
+    y: "0%",
+    alt: "A battery surrounded by sleep, food, movement, rest and health supports that can help restore capacity.",
   },
   "coping-ahead": {
-    src: "/images/journey/coping-ahead.svg",
-    alt: "A person stands prepared beneath an umbrella before a storm with a practical coping kit nearby.",
+    x: "100%",
+    y: "0%",
+    alt: "A person carrying an umbrella and practical supplies while preparing to move from stormy weather toward clearer skies.",
   },
   "discovering-values": {
-    src: "/images/journey/discovering-values.svg",
-    alt: "A compass is surrounded by symbols of connection, growth, self-respect and meaningful direction.",
+    x: "0%",
+    y: "33.333333%",
+    alt: "A person holding a compass while considering meaningful parts of life such as connection, growth and creativity.",
   },
   "recognizing-strengths": {
-    src: "/images/journey/recognizing-strengths.svg",
-    alt: "A person looks back over difficult terrain while carrying strengths and tools they have already built.",
+    x: "25%",
+    y: "33.333333%",
+    alt: "A person noticing past experiences and abilities that have helped them move forward.",
   },
   "values-to-action": {
-    src: "/images/journey/values-to-action.svg",
-    alt: "A compass leads into a path of small stepping stones toward a growing tree.",
+    x: "50%",
+    y: "33.333333%",
+    alt: "A person following small stepping stones from a compass toward a meaningful destination.",
   },
   "stop-skill": {
-    src: "/images/journey/stop-skill.svg",
-    alt: "A person pauses inside a calm space before choosing between two possible next actions.",
+    x: "75%",
+    y: "33.333333%",
+    alt: "A person pausing calmly before moving from a stressful moment toward a clearer next step.",
   },
   "accepts-improve": {
-    src: "/images/journey/accepts-improve.svg",
-    alt: "An open coping toolbox contains several different ways to get through a difficult period.",
+    x: "100%",
+    y: "33.333333%",
+    alt: "A practical comfort toolkit sits between a difficult moment and a calmer one, showing different ways to get through a rough period.",
   },
   "reality-acceptance": {
-    src: "/images/journey/reality-acceptance.svg",
-    alt: "A map pin marks the place someone is actually standing before a path continues forward from that real starting point.",
+    x: "0%",
+    y: "66.666667%",
+    alt: "A person stands with the rain that is already falling while a brighter path remains visible ahead.",
   },
   "problem-solving": {
-    src: "/images/journey/problem-solving.svg",
-    alt: "A tangled line becomes one clear workable strand, showing how a large problem can be reduced to one solvable piece.",
+    x: "25%",
+    y: "66.666667%",
+    alt: "A person untangles one strand from a confusing knot while a clearer path appears ahead.",
   },
   "interpersonal-effectiveness": {
-    src: "/images/journey/interpersonal-effectiveness.svg",
-    alt: "A person balances three communication priorities: the outcome they want, the relationship and their self-respect.",
+    x: "50%",
+    y: "66.666667%",
+    alt: "A person considers relationship, self-respect and what they want from a conversation before deciding how to respond.",
   },
   "dear-man": {
-    src: "/images/journey/dear-man.svg",
-    alt: "Two speech bubbles are connected by a simple four-step scaffold, representing a clear structure for asking or saying no.",
+    x: "75%",
+    y: "66.666667%",
+    alt: "Two people have a clear, structured conversation while simple visual cues show listening, meaning and agreement.",
   },
   "give-skill": {
-    src: "/images/journey/give-skill.svg",
-    alt: "Two people stay connected through a warm conversation, representing attention, validation and an easier tone.",
+    x: "100%",
+    y: "66.666667%",
+    alt: "Two people stay warmly connected during a thoughtful conversation.",
   },
   "fast-skill": {
-    src: "/images/journey/fast-skill.svg",
-    alt: "A protective shield and compass represent keeping self-respect and values in view during a difficult conversation.",
+    x: "0%",
+    y: "100%",
+    alt: "A person stands protected by their values and self-respect while leaving an unhelpful argument behind.",
   },
   "personal-commitment-plan": {
-    src: "/images/journey/personal-commitment-plan.svg",
-    alt: "A person follows a path through early warning, first action, support, environment change and a backup step.",
+    x: "25%",
+    y: "100%",
+    alt: "A person follows a planned path of practical steps, support and meaningful actions toward a steadier future.",
   },
 }
 
+const GENERATED_SPRITE_PARTS = [
+  "/images/journey/generated-11-27-part-1.b64",
+  "/images/journey/generated-11-27-part-2.b64",
+  "/images/journey/generated-11-27-part-3.b64",
+]
+
+let generatedSpritePromise: Promise<string> | null = null
+
+function loadGeneratedSprite() {
+  if (!generatedSpritePromise) {
+    generatedSpritePromise = Promise.all(
+      GENERATED_SPRITE_PARTS.map(async (src) => {
+        const response = await fetch(src, { cache: "force-cache" })
+        if (!response.ok) {
+          throw new Error(`Could not load Journey artwork: ${src}`)
+        }
+        return (await response.text()).trim()
+      }),
+    ).then((parts) => `data:image/webp;base64,${parts.join("")}`)
+  }
+
+  return generatedSpritePromise
+}
+
 export default function JourneyModuleHeroImage({ moduleSlug }: { moduleSlug: string }) {
-  const image = MODULE_IMAGES[moduleSlug]
-  if (!image) return null
+  const staticImage = STATIC_MODULE_IMAGES[moduleSlug]
+  const generatedImage = GENERATED_MODULE_IMAGES[moduleSlug]
+  const [spriteUrl, setSpriteUrl] = useState<string | null>(null)
+  const [spriteFailed, setSpriteFailed] = useState(false)
+
+  useEffect(() => {
+    if (!generatedImage) return
+
+    let cancelled = false
+    setSpriteUrl(null)
+    setSpriteFailed(false)
+
+    loadGeneratedSprite()
+      .then((url) => {
+        if (!cancelled) setSpriteUrl(url)
+      })
+      .catch(() => {
+        if (!cancelled) setSpriteFailed(true)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [generatedImage, moduleSlug])
+
+  if (!staticImage && !generatedImage) return null
 
   return (
     <figure className="overflow-hidden rounded-2xl border border-border/60 bg-secondary/20 shadow-sm">
       <div className="aspect-[16/9] w-full overflow-hidden">
-        <img
-          src={image.src}
-          alt={image.alt}
-          className="h-full w-full object-cover"
-          width={640}
-          height={360}
-          loading="eager"
-        />
+        {staticImage ? (
+          <img
+            src={staticImage.src}
+            alt={staticImage.alt}
+            className="h-full w-full object-cover"
+            width={640}
+            height={360}
+            loading="eager"
+          />
+        ) : spriteUrl && generatedImage ? (
+          <div
+            role="img"
+            aria-label={generatedImage.alt}
+            className="h-full w-full bg-no-repeat"
+            style={{
+              backgroundImage: `url(${spriteUrl})`,
+              backgroundPosition: `${generatedImage.x} ${generatedImage.y}`,
+              backgroundSize: "500% 400%",
+            }}
+          />
+        ) : spriteFailed ? (
+          <img
+            src={`/images/journey/${moduleSlug}.svg`}
+            alt={generatedImage?.alt ?? "Journey module illustration"}
+            className="h-full w-full object-cover"
+            width={640}
+            height={360}
+            loading="eager"
+          />
+        ) : (
+          <div className="h-full w-full animate-pulse bg-secondary/40" aria-hidden="true" />
+        )}
       </div>
     </figure>
   )
