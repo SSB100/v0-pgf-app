@@ -8,6 +8,12 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 
+function safeReturnPath() {
+  if (typeof window === "undefined") return null
+  const value = new URLSearchParams(window.location.search).get("from")
+  return value && value.startsWith("/") && !value.startsWith("//") ? value : null
+}
+
 export default function SignInForm() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -35,7 +41,8 @@ export default function SignInForm() {
       }
 
       await new Promise((resolve) => setTimeout(resolve, 100))
-      window.location.href = data.redirectTo || (data.onboardingComplete ? "/dashboard" : "/onboarding")
+      const returnPath = safeReturnPath()
+      window.location.href = returnPath || data.redirectTo || (data.onboardingComplete ? "/dashboard" : "/onboarding")
     } catch (err) {
       console.error("[waypoint] Sign in form error", err)
       setError("Unable to sign in. Please try again.")
