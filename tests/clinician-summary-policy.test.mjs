@@ -1,0 +1,86 @@
+import test from "node:test"
+import assert from "node:assert/strict"
+import {
+  PROFESSIONAL_SUMMARY_BOUNDARY,
+  PROFESSIONAL_SUMMARY_SCHEMA_VERSION,
+  sanitizeProfessionalSummarySection,
+} from "../lib/clinician-summary-policy.mjs"
+
+test("professional summary boundary remains explicitly non-clinical and excludes free text", () => {
+  assert.equal(PROFESSIONAL_SUMMARY_SCHEMA_VERSION, "professional-summary-v1")
+  assert.equal(PROFESSIONAL_SUMMARY_BOUNDARY.freeTextIncluded, false)
+  assert.equal(PROFESSIONAL_SUMMARY_BOUNDARY.clinicalRecord, false)
+  assert.equal(PROFESSIONAL_SUMMARY_BOUNDARY.liveMonitoring, false)
+  assert.equal(PROFESSIONAL_SUMMARY_BOUNDARY.riskScoreGenerated, false)
+})
+
+test("daily check-in summary strips narrative and unapproved fields", () => {
+  const result = sanitizeProfessionalSummarySection("daily_checkins_summary", {
+    period: { basis: "rolling_days", days: 14, secret: "no" },
+    summary: { checkin_count: 3, average_mood: 6, reflection: "private", suicide_risk: true },
+    trend: [{ date: "2026-08-25", mood_rating: 6, notes: "private", reflection_text: "private" }],
+  })
+
+  assert.deepEqual(result, {
+    period: { basis: "rolling_days", days: 14 },
+    summary: { checkin_count: 3, average_mood: 6 },
+    trend: [{ date: "2026-08-25", mood_rating: 6 }],
+  })
+})
+
+test("Journey progress never includes exercise or check responses", () => {
+  const result = sanitizeProfessionalSummarySection("journey_progress", {
+    period: { basis: "all_time" },
+    completed_modules: 2,
+    latest_completion: "2026-08-25",
+    answers: { trigger: "private" },
+    recentModules: [
+      {
+        module_slug: "understanding-the-pattern",
+        module_name: "Understanding the Pattern",
+        completed_at: "2026-08-25",
+        content_version: "1.0.0",
+        exercise_response: "private",
+        quick_check_answer: "private",
+      },
+    ],
+  })
+
+  assert.deepEqual(result, {
+    period: { basis: "all_time" },
+    completed_modules: 2,
+    latest_completion: "2026-08-25",
+    recentModules: [
+      {
+        module_slug: "understanding-the-pattern",
+        module_name: "Understanding the Pattern",
+        completed_at: "2026-08-25",
+        content_version: "1.0.0",
+      },
+    ],
+  })
+})
+
+test("skills and values expose only whitelisted fields", () => {
+  const skills = sanitizeProfessionalSummarySection("skills_practice", {
+    period: { basis: "all_time" },
+    practice_count: 1,
+    helpful_count: 1,
+    recentSkills: [{ skill_name: "STOP", was_helpful: true, notes: "private" }],
+  })
+  assert.deepEqual(skills, {
+    period: { basis: "all_time" },
+    practice_count: 1,
+    helpful_count: 1,
+    recentSkills: [{ skill_name: "STOP", was_helpful: true }],
+  })
+
+  const values = sanitizeProfessionalSummarySection("core_values", {
+    period: { basis: "current" },
+    values: [{ value_name: "Family", category: "Relationships", rank: 1, private_note: "private" }],
+  })
+  assert.deepEqual(values, {
+    period: { basis: "current" },
+    values: [{ value_name: "Family", category: "Relationships", rank: 1 }],
+  })
+})

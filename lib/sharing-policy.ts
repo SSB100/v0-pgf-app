@@ -6,25 +6,25 @@ export const PROFESSIONAL_SHARE_SCOPES = [
   {
     id: "journey_progress",
     label: "Journey progress",
-    description: "Modules completed and overall learning progress.",
+    description: "Modules completed and overall learning progress. Journey exercise answers and quick-check responses are not included.",
     sensitivity: "standard" as ProfessionalSensitivity,
   },
   {
     id: "daily_checkins_summary",
     label: "Daily check-in summaries",
-    description: "Selected trend and summary information from daily check-ins. Free-text reflections are excluded.",
+    description: "Selected trend and summary information from daily check-ins. Free-text reflections and private notes are excluded.",
     sensitivity: "sensitive" as ProfessionalSensitivity,
   },
   {
     id: "skills_practice",
     label: "Skills practice",
-    description: "Skills and tools completed in Waypoint, including whether the user found them helpful where available.",
+    description: "Skills and tools recorded in Waypoint, including whether the user found them helpful where available. Practice notes are excluded.",
     sensitivity: "standard" as ProfessionalSensitivity,
   },
   {
     id: "core_values",
     label: "Core values",
-    description: "Core values the user has chosen to record and explicitly share.",
+    description: "Core values the user has chosen to record and explicitly share. Private reflections about those values are excluded.",
     sensitivity: "sensitive" as ProfessionalSensitivity,
   },
 ] as const
@@ -43,7 +43,8 @@ export function normaliseProfessionalShareScopes(values: unknown): ProfessionalS
 }
 
 // Only categories with an explicit, permission-scoped professional summary are
-// selectable. Safeguards and private reflections remain reserved for later work.
+// selectable. Safeguards, Journey response content and private reflections remain
+// outside the professional summary unless a future separately consented policy is added.
 export const PROFESSIONAL_REQUESTABLE_SCOPES: ProfessionalShareScope[] = [
   "journey_progress",
   "daily_checkins_summary",
