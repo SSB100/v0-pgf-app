@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ArrowLeft, HeartHandshake, Lock, User } from "lucide-react"
+import { ArrowLeft, HeartHandshake, Lock, ShieldCheck, User } from "lucide-react"
 import MobileNav from "@/components/dashboard/mobile-nav"
 
 export default function SettingsPage() {
@@ -96,7 +96,7 @@ export default function SettingsPage() {
             Back to Dashboard
           </Button>
           <h1 className="text-3xl font-bold">Settings</h1>
-          <p className="text-muted-foreground mt-2">Manage your account and support options.</p>
+          <p className="text-muted-foreground mt-2">Manage your account, privacy and support options.</p>
         </div>
 
         <div className="space-y-6">
@@ -120,6 +120,21 @@ export default function SettingsPage() {
                 <Label className="text-sm font-medium">Email Address</Label>
                 <p className="text-base mt-1">{email}</p>
               </div>
+            </div>
+          </Card>
+
+          <Card className="p-6 border-primary/20 bg-primary/[0.03]">
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-start gap-3">
+                <div className="p-2 bg-primary/10 rounded-lg">
+                  <ShieldCheck className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-semibold">Privacy &amp; Sharing</h2>
+                  <p className="text-sm text-muted-foreground mt-1 max-w-xl">See what Waypoint holds, manage future research interest, control professional sharing, review access history and download or request changes to your data.</p>
+                </div>
+              </div>
+              <Button onClick={() => router.push("/privacy")} className="shrink-0">Manage privacy</Button>
             </div>
           </Card>
 
