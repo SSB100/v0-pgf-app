@@ -16,7 +16,7 @@ export const PROFESSIONAL_SHARE_SCOPES = [
   {
     id: "skills_practice",
     label: "Skills practice",
-    description: "Skills and tools practised in Waypoint, including completion and effectiveness ratings where available.",
+    description: "Skills and tools practised in Waypoint, including completion and helpfulness ratings where available.",
     sensitivity: "standard",
   },
   {
@@ -52,7 +52,19 @@ export function normaliseProfessionalShareScopes(values: unknown): ProfessionalS
   return [...new Set(values.filter(isProfessionalShareScope))]
 }
 
-// Nothing beyond high-level Journey progress is assumed to be shareable by default.
-// Every other category requires an explicit user action after a verified professional
-// relationship exists.
+// Phase 2 intentionally exposes only data domains that have a safe summary implementation.
+// Personal safeguard plans and user-selected reflection sharing will be added only after
+// their underlying storage and selection workflows are explicit and auditable.
+export const PROFESSIONAL_REQUESTABLE_SCOPES: ProfessionalShareScope[] = [
+  "journey_progress",
+  "daily_checkins_summary",
+  "skills_practice",
+  "core_values",
+]
+
+export function normaliseRequestableProfessionalScopes(values: unknown): ProfessionalShareScope[] {
+  const requestable = new Set<string>(PROFESSIONAL_REQUESTABLE_SCOPES)
+  return normaliseProfessionalShareScopes(values).filter((scope) => requestable.has(scope))
+}
+
 export const DEFAULT_PROFESSIONAL_SHARE_SCOPES: ProfessionalShareScope[] = ["journey_progress"]
