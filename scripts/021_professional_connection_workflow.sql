@@ -18,7 +18,9 @@ CREATE TABLE IF NOT EXISTS professional_invitations (
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   used_at TIMESTAMP,
   used_by_user_id UUID REFERENCES users(id) ON DELETE SET NULL,
-  CHECK (jsonb_typeof(requested_scopes) = 'array')
+  CHECK (jsonb_typeof(requested_scopes) = 'array'),
+  CHECK (requested_scopes <@ '["journey_progress","daily_checkins_summary","skills_practice","core_values"]'::jsonb),
+  CHECK (expires_at > created_at)
 );
 
 CREATE INDEX IF NOT EXISTS idx_professional_invitations_professional
