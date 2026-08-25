@@ -61,13 +61,13 @@ export default function WelcomeStep({ userName, onNext }: WelcomeStepProps) {
 
         <div className="bg-secondary/50 rounded-xl p-5 space-y-3">
           <h2 className="text-base font-semibold text-foreground">What happens next</h2>
-          <p className="text-sm text-muted-foreground">We'll ask questions about the areas you choose, your current patterns, values and strengths. These questions personalise Waypoint; they are not a diagnosis or clinical assessment.</p>
+          <p className="text-sm text-muted-foreground">We&apos;ll ask about the areas you want support with, your current patterns, values and strengths, then guide you through your first Daily Check-in. These questions personalise Waypoint; they are not a diagnosis or clinical assessment.</p>
           <div className="space-y-2">
             {[
               ["1", "Your focus", "Choose the areas you want to work on"],
-              ["2", "Awareness", "Reflect on emotions, situations and patterns"],
+              ["2", "Your patterns", "Describe the behaviours and situations that are relevant to your goals"],
               ["3", "Values and strengths", "Identify what matters to you and resources you can draw on"],
-              ["4", "Practical tools", "Explore self-guided skills for urges, emotions and everyday situations"],
+              ["4", "Daily Check-in", "Record mood, emotions, urges and what happened today in one place"],
             ].map(([number, title, description]) => (
               <div key={number} className="flex gap-3">
                 <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-primary text-xs font-bold">{number}</div>

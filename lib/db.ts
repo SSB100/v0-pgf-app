@@ -46,3 +46,8 @@ export async function dbColumnExists(tableName: string, columnName: string) {
   `
   return result[0]?.column_exists === true
 }
+
+export async function dbTableExists(tableName: string) {
+  const result = await sql`SELECT to_regclass(${`public.${tableName}`}) AS relation_name`
+  return Boolean(result[0]?.relation_name)
+}

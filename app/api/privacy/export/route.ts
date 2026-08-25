@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { getSession } from "@/lib/session"
-import { sql } from "@/lib/db"
+import { dbTableExists, sql } from "@/lib/db"
 import { governanceTableExists, recordAccessAuditEvent } from "@/lib/governance"
 
 export async function GET() {
@@ -8,13 +8,15 @@ export async function GET() {
     const user = await getSession()
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
+    const demographicsReady = await dbTableExists("user_demographics")
+
     const [
       account,
+      demographics,
       profile,
       values,
       awarenessCheckins,
       skillsPractice,
-      skillsCompleted,
       problemAreas,
       dailyCheckins,
       journeyCompletions,
@@ -30,14 +32,17 @@ export async function GET() {
       sql`
         SELECT id, email, full_name, role, created_at, updated_at,
           data_consent, data_consent_date, terms_accepted, terms_accepted_date,
-          date_of_birth, country, gender
+          date_of_birth, age_verified_18_plus, age_verified_at, age_band,
+          country, gender
         FROM users WHERE id = ${user.id}
       `,
+      demographicsReady
+        ? sql`SELECT * FROM user_demographics WHERE user_id = ${user.id}`
+        : Promise.resolve([]),
       sql`SELECT * FROM user_profiles WHERE user_id = ${user.id}`,
       sql`SELECT * FROM user_values WHERE user_id = ${user.id} ORDER BY created_at`,
       sql`SELECT * FROM awareness_checkins WHERE user_id = ${user.id} ORDER BY created_at`,
       sql`SELECT * FROM skills_practice WHERE user_id = ${user.id} ORDER BY practiced_at`,
-      sql`SELECT * FROM skills_completed WHERE user_id = ${user.id} ORDER BY completed_at`,
       sql`SELECT * FROM problem_areas WHERE user_id = ${user.id} ORDER BY identified_at`,
       sql`SELECT * FROM daily_checkins WHERE user_id = ${user.id} ORDER BY date`,
       sql`SELECT * FROM journey_completions WHERE user_id = ${user.id} ORDER BY completed_at`,
@@ -112,22 +117,22 @@ export async function GET() {
       eventType: "user_data_export",
       resourceScope: "user_owned_waypoint_data",
       purpose: "User requested a copy of their Waypoint information",
-      metadata: { format: "json", initiatedBy: "user" },
+      metadata: { format: "json", formatVersion: "1.1", initiatedBy: "user" },
     })
 
     const exportData = {
       export: {
         generatedAt: new Date().toISOString(),
-        formatVersion: "1.0",
+        formatVersion: "1.1",
         note: "This export contains user-owned Waypoint data available through the current MVP. Reports made by other community members about the user are not automatically included because they may contain another person's confidential information and require a reviewed access process.",
       },
       identityAndAccount: account[0] ?? null,
+      demographics: demographics[0] ?? null,
       privateWaypoint: {
         profile: profile[0] ?? null,
         values,
         awarenessCheckins,
         skillsPractice,
-        skillsCompleted,
         problemAreas,
         dailyCheckins,
         journeyCompletions,
