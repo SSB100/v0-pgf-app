@@ -4,11 +4,11 @@ import { getProfessionalSession, professionalCanAccessClientData } from "@/lib/p
 
 export async function GET() {
   try {
-    const { user, professional } = await getProfessionalSession()
+    const { user, professional, mfaVerified } = await getProfessionalSession()
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     if (!professional) return NextResponse.json({ error: "Professional account not found" }, { status: 404 })
-    if (!professionalCanAccessClientData(professional)) {
-      return NextResponse.json({ error: "Verified professional and organisation access is required" }, { status: 403 })
+    if (!professionalCanAccessClientData(professional, mfaVerified)) {
+      return NextResponse.json({ error: "Verified professional, organisation and MFA access are required" }, { status: 403 })
     }
 
     const clients = await sql`
@@ -35,7 +35,7 @@ export async function GET() {
       ORDER BY u.full_name NULLS LAST, l.accepted_at DESC
     `
 
-    return NextResponse.json({ clients })
+    return NextResponse.json({ clients }, { headers: { "Cache-Control": "private, no-store, max-age=0" } })
   } catch (error) {
     console.error("[waypoint] Unable to load professional clients", error)
     return NextResponse.json({ error: "Unable to load connected clients" }, { status: 500 })
