@@ -2,17 +2,14 @@ import { type NextRequest, NextResponse } from "next/server"
 import { getUserByEmail, verifyPassword, hashPassword, isLegacyPasswordHash } from "@/lib/auth"
 import { createMfaChallengeToken, encrypt } from "@/lib/session"
 import { sql } from "@/lib/db"
-
-function safeReturnPath(value: unknown) {
-  return typeof value === "string" && value.startsWith("/") && !value.startsWith("//") ? value : null
-}
+import { canonicalReturnPath } from "@/lib/route-paths"
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : ""
     const password = typeof body.password === "string" ? body.password : ""
-    const returnTo = safeReturnPath(body.returnTo)
+    const returnTo = canonicalReturnPath(body.returnTo, null)
 
     if (!email || !password) {
       return NextResponse.json({ error: "Email and password are required" }, { status: 400 })

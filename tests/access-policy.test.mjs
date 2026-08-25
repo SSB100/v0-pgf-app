@@ -1,6 +1,7 @@
 import test from "node:test"
 import assert from "node:assert/strict"
 import {
+  canAdminActOnProfessionalTarget,
   canAdminManageProfessionals,
   canProfessionalAccessClientData,
   canProfessionalViewClientSummary,
@@ -33,4 +34,10 @@ test("administrative verification requires admin role and strong authentication"
   assert.equal(canAdminManageProfessionals({ role: "admin", mfaStatus: "active", sessionMfaVerified: true }), true)
   assert.equal(canAdminManageProfessionals({ role: "admin", mfaStatus: "active", sessionMfaVerified: false }), false)
   assert.equal(canAdminManageProfessionals({ role: "professional", mfaStatus: "active", sessionMfaVerified: true }), false)
+})
+
+test("administrator cannot act on their own professional account", () => {
+  assert.equal(canAdminActOnProfessionalTarget({ actorUserId: "user-1", targetUserId: "user-1" }), false)
+  assert.equal(canAdminActOnProfessionalTarget({ actorUserId: "user-1", targetUserId: "user-2" }), true)
+  assert.equal(canAdminActOnProfessionalTarget({ actorUserId: null, targetUserId: "user-2" }), false)
 })

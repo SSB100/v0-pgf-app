@@ -4,21 +4,39 @@ import { canAdminManageProfessionals } from "@/lib/access-policy.mjs"
 
 export async function getAdminSession() {
   const session = await getSessionContext()
-  if (!session.user) return { user: null, authorised: false, mfaStatus: null as string | null }
+  if (!session.user) {
+    return {
+      user: null,
+      authorised: false,
+      mfaStatus: null as string | null,
+      hasProfessionalAccount: false,
+    }
+  }
 
-  const rows = await sql`
-    SELECT status
-    FROM mfa_factors
-    WHERE user_id = ${session.user.id}
-      AND factor_type = 'totp'
-    LIMIT 1
-  `
-  const mfaStatus = (rows[0]?.status as string | undefined) ?? null
+  const [mfaRows, professionalRows] = await Promise.all([
+    sql`
+      SELECT status
+      FROM mfa_factors
+      WHERE user_id = ${session.user.id}
+        AND factor_type = 'totp'
+      LIMIT 1
+    `,
+    sql`
+      SELECT id
+      FROM professional_accounts
+      WHERE user_id = ${session.user.id}
+      LIMIT 1
+    `,
+  ])
+
+  const mfaStatus = (mfaRows[0]?.status as string | undefined) ?? null
+  const hasProfessionalAccount = professionalRows.length > 0
 
   return {
     user: session.user,
     mfaStatus,
-    authorised: canAdminManageProfessionals({
+    hasProfessionalAccount,
+    authorised: !hasProfessionalAccount && canAdminManageProfessionals({
       role: session.user.role,
       mfaStatus,
       sessionMfaVerified: session.mfaVerified,
