@@ -5,14 +5,12 @@ import { getUserById } from "@/lib/auth"
 import { createSession, deleteMfaChallenge, readMfaChallengeToken } from "@/lib/session"
 import { decryptMfaSecret, hashRecoveryCode, looksLikeTotp, verifyTotpCode } from "@/lib/mfa"
 import { recordAccessAuditEvent } from "@/lib/governance"
+import { canonicalReturnPath } from "@/lib/route-paths"
 
 export const runtime = "nodejs"
 
 function safeReturnPath(value: unknown, role: string) {
-  if (typeof value !== "string" || !value.startsWith("/") || value.startsWith("//")) {
-    return role === "admin" ? "/admin/professionals" : "/professional"
-  }
-  return value
+  return canonicalReturnPath(value, role === "admin" ? "/admin/professionals" : "/professional")
 }
 
 export async function POST(request: NextRequest) {
