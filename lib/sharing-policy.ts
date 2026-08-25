@@ -4,7 +4,7 @@ export const PROFESSIONAL_SHARE_SCOPES = [
   {
     id: "journey_progress",
     label: "Journey progress",
-    description: "Modules completed, current module and overall learning progress.",
+    description: "Modules completed and overall learning progress.",
     sensitivity: "standard",
   },
   {
@@ -16,26 +16,14 @@ export const PROFESSIONAL_SHARE_SCOPES = [
   {
     id: "skills_practice",
     label: "Skills practice",
-    description: "Skills and tools practised in Waypoint, including completion and helpfulness ratings where available.",
+    description: "Skills and tools completed in Waypoint, including whether the user found them helpful where available.",
     sensitivity: "standard",
   },
   {
     id: "core_values",
     label: "Core values",
-    description: "Values the user has chosen to record and explicitly share.",
+    description: "Core values the user has chosen to record and explicitly share.",
     sensitivity: "sensitive",
-  },
-  {
-    id: "safeguards",
-    label: "Safeguards",
-    description: "Selected support and safeguard information the user chooses to make available.",
-    sensitivity: "high",
-  },
-  {
-    id: "selected_reflections",
-    label: "Selected reflections",
-    description: "Only reflections the user deliberately selects for professional sharing. Private free text is never included by default.",
-    sensitivity: "high",
   },
 ] as const
 
@@ -52,9 +40,8 @@ export function normaliseProfessionalShareScopes(values: unknown): ProfessionalS
   return [...new Set(values.filter(isProfessionalShareScope))]
 }
 
-// Phase 2 intentionally exposes only data domains that have a safe summary implementation.
-// Personal safeguard plans and user-selected reflection sharing will be added only after
-// their underlying storage and selection workflows are explicit and auditable.
+// Only categories with an explicit, permission-scoped professional summary are
+// selectable. Safeguards and private reflections remain reserved for later work.
 export const PROFESSIONAL_REQUESTABLE_SCOPES: ProfessionalShareScope[] = [
   "journey_progress",
   "daily_checkins_summary",
