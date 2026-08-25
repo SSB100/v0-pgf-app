@@ -1,6 +1,5 @@
 -- Phase 4A: versioned clinical content provenance
--- Historical activity is deliberately labelled legacy-unversioned. This migration
--- does not claim that earlier users received the current curriculum version.
+-- Historical activity is deliberately labelled legacy-unversioned.
 
 ALTER TABLE journey_completions
   ADD COLUMN IF NOT EXISTS content_id VARCHAR(255),
@@ -85,13 +84,3 @@ CREATE INDEX IF NOT EXISTS idx_skills_practice_slug
 CREATE UNIQUE INDEX IF NOT EXISTS ux_skills_practice_page_feedback
   ON skills_practice(user_id, skill_slug)
   WHERE practice_source = 'skill_page_feedback' AND skill_slug IS NOT NULL;
-
-COMMENT ON COLUMN journey_completions.content_id IS 'Stable Waypoint content identifier for the Journey module.';
-COMMENT ON COLUMN journey_completions.content_version IS 'Content version completed by the user; historical rows are legacy-unversioned.';
-COMMENT ON COLUMN journey_completions.content_registry_revision IS 'Registry revision that supplied provenance metadata when the activity was recorded.';
-COMMENT ON COLUMN skills_practice.skill_slug IS 'Stable Waypoint skill slug when the practice maps to a governed skill; may be null for free-form self-reported skills.';
-COMMENT ON COLUMN skills_practice.content_id IS 'Stable Waypoint content identifier when the practice maps to governed content.';
-COMMENT ON COLUMN skills_practice.content_version IS 'Content version associated with the governed skill; historical mapped rows are legacy-unversioned.';
-COMMENT ON COLUMN skills_practice.content_registry_revision IS 'Registry revision that supplied provenance metadata when the activity was recorded.';
-COMMENT ON COLUMN skills_practice.practice_source IS 'Origin of the practice record, such as legacy, daily_checkin_self_report or skill_page_feedback.';
-COMMENT ON COLUMN skills_practice.was_helpful IS 'Optional user feedback from a skill page; this is user experience feedback, not a clinical outcome measure.';
