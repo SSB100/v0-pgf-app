@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -18,11 +17,21 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import DemographicsFields, { type DemographicsFormValue } from "@/components/auth/demographics-fields"
 
 function latestEligibleBirthDate() {
   const today = new Date()
   const eligible = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate())
   return eligible.toISOString().split("T")[0]
+}
+
+const INITIAL_DEMOGRAPHICS: DemographicsFormValue = {
+  ethnicities: [],
+  otherEthnicities: "",
+  ethnicityPreferNotToSay: false,
+  iwiAffiliations: [],
+  otherIwi: [],
+  iwiResponseStatus: "not_stated",
 }
 
 export default function SignUpForm() {
@@ -33,6 +42,7 @@ export default function SignUpForm() {
   const [dateOfBirth, setDateOfBirth] = useState("")
   const [country, setCountry] = useState("")
   const [gender, setGender] = useState("")
+  const [demographics, setDemographics] = useState<DemographicsFormValue>(INITIAL_DEMOGRAPHICS)
   const [termsAccepted, setTermsAccepted] = useState(false)
   const [dataConsent, setDataConsent] = useState(false)
   const [error, setError] = useState("")
@@ -68,7 +78,17 @@ export default function SignUpForm() {
       const response = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, fullName, dateOfBirth, country, gender, termsAccepted, dataConsent }),
+        body: JSON.stringify({
+          email,
+          password,
+          fullName,
+          dateOfBirth,
+          country,
+          gender,
+          termsAccepted,
+          dataConsent,
+          ...demographics,
+        }),
         credentials: "include",
       })
 
@@ -116,7 +136,7 @@ export default function SignUpForm() {
           <div className="space-y-2">
             <Label htmlFor="dateOfBirth" className="text-foreground font-medium">Date of birth</Label>
             <Input id="dateOfBirth" type="date" value={dateOfBirth} onChange={(e) => setDateOfBirth(e.target.value)} required disabled={loading} max={latestEligibleBirthDate()} className="border-input focus:border-primary focus:ring-primary" />
-            <p className="text-xs text-muted-foreground">Used to confirm that you meet the current 18+ age requirement. Waypoint is reviewing whether the final product needs to retain the exact date after verification.</p>
+            <p className="text-xs text-muted-foreground">Used to confirm that you meet the current 18+ age requirement. The exact date is not retained after age verification.</p>
           </div>
 
           <div className="space-y-2">
@@ -136,6 +156,8 @@ export default function SignUpForm() {
               </SelectContent>
             </Select>
           </div>
+
+          <DemographicsFields value={demographics} onChange={setDemographics} disabled={loading} />
 
           <div className="space-y-2">
             <Label htmlFor="password" className="text-foreground font-medium">Password</Label>
@@ -176,15 +198,9 @@ export default function SignUpForm() {
                   <DialogHeader>
                     <DialogTitle>Future Research Preference</DialogTitle>
                     <DialogDescription className="space-y-3 pt-4 text-foreground/80">
-                      <p>
-                        This optional setting records your interest in contributing Waypoint activity data to future research. It does not enrol you in a research study and is not, by itself, consent for a future formal study.
-                      </p>
-                      <p>
-                        Any formal research project would need its own approved participant information, consent process, data rules and governance before your information could be used under that study.
-                      </p>
-                      <p>
-                        The way information is de-identified, accessed, retained and used would need to be defined in that study&apos;s approved documents and systems before any research use occurs.
-                      </p>
+                      <p>This optional setting records your interest in contributing Waypoint activity data to future research. It does not enrol you in a research study and is not, by itself, consent for a future formal study.</p>
+                      <p>Any formal research project would need its own approved participant information, consent process, data rules and governance before your information could be used under that study.</p>
+                      <p>The way information is de-identified, accessed, retained and used would need to be defined in that study&apos;s approved documents and systems before any research use occurs.</p>
                     </DialogDescription>
                   </DialogHeader>
                 </DialogContent>
