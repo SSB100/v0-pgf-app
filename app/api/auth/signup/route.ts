@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
           INSERT INTO policy_acceptances (user_id, policy_type, policy_version, action, occurred_at, metadata)
           VALUES
             (${user.id}, 'terms', ${TERMS_VERSION}, 'accepted', ${now}, '{"source":"signup"}'::jsonb),
-            (${user.id}, 'privacy_policy', ${PRIVACY_POLICY_VERSION}, 'accepted', ${now}, '{"source":"signup","acknowledgement":true}'::jsonb)
+            (${user.id}, 'privacy_policy', ${PRIVACY_POLICY_VERSION}, 'acknowledged', ${now}, '{"source":"signup","acknowledgement":true}'::jsonb)
         `
       }
 
