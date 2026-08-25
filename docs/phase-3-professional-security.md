@@ -77,6 +77,18 @@ Environment-variable changes must be followed by a fresh deployment so the new d
 
 These policy tests supplement, rather than replace, integration and penetration testing.
 
+## Database lifecycle validation
+
+Migration 022 is validated on an isolated Neon branch with disposable records. The successful lifecycle covers:
+
+- active MFA for administrator and professional accounts;
+- administrator verification of a professional and organisation;
+- active client relationship and user-authorised sharing grant;
+- suspension revoking invitations, pausing the professional relationship and invalidating existing sessions;
+- offboarding revoking active sharing, ending the relationship, disabling professional MFA and invalidating sessions again;
+- administrative and professional-verification events being retained through the lifecycle;
+- complete cleanup of all disposable validation records.
+
 ## Deliberate remaining boundaries
 
 Phase 3 does not claim the professional portal is ready for a clinical pilot by itself. The following remain required before live pilot use:
