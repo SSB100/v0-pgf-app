@@ -14,8 +14,6 @@ import PersonalGrowthStep from "./steps/personal-growth-step"
 import PhysicalHarmStep from "./steps/physical-harm-step"
 import SubstanceUseStep from "./steps/substance-use-step"
 import GamingStep from "./steps/gaming-step"
-import AwarenessIntroStep from "./steps/awareness-intro-step"
-import AwarenessStep from "./steps/awareness-step"
 import ValuesIntroStep from "./steps/values-intro-step"
 import ValuesSelectionStep from "./steps/values-selection-step"
 import ValuesRankingStep from "./steps/values-ranking-step"
@@ -55,17 +53,18 @@ export type OnboardingData = {
   journeyTypes?: string[]
   growthAvatar?: string
 
-  // Awareness data
+  // Legacy awareness fields are retained in the saved-data shape so an older
+  // partially completed onboarding session can still be read safely. The
+  // separate awareness/emotion step is no longer part of the active flow;
+  // Daily Check-in is the single onboarding place for emotion capture.
   currentEmotions?: string[]
   strongestEmotion?: string
   situationDescription?: string
   selfTalk?: string
   stillExperiencing?: boolean | null
 
-  // Choice points
   recognizedChoicePoints?: string[]
 
-  // Values and strengths
   selectedValues: Array<{
     name: string
     importance: number
@@ -76,10 +75,8 @@ export type OnboardingData = {
   perceivedStrengths?: string[]
   identifiedStrengths?: string[]
 
-  // First daily check-in
   initialDailyCheckIn?: InitialDailyCheckIn
 
-  // Gambling-specific
   gamblingFrequency?: string
   lastBetDate?: string
   gamblingForms?: string[]
@@ -89,45 +86,38 @@ export type OnboardingData = {
   impactAreas: string[]
   seekingHelp?: string
 
-  // Alcohol-specific
   alcoholFrequency?: string
   lastDrinkDate?: string
   drinkingTypes?: string[]
   alcoholTriggers?: string[]
   alcoholImpactAreas?: string[]
 
-  // Substance-specific
   substanceFrequency?: string
   lastSubstanceDate?: string
   substanceTypes?: string[]
   substanceTriggers?: string[]
   substanceImpactAreas?: string[]
 
-  // Gaming / internet
   playsVideoGames?: boolean
   gamingFrequency?: string
   gamingImpact?: string
   lootBoxExposure?: string
   inGamePurchases?: string
 
-  // Mental wellbeing
   mentalHealthAreas?: string[]
   mentalHealthFrequency?: string
   currentCopingMethods?: string[]
   mentalHealthSupportNeeds?: string[]
   receivingMentalHealthTreatment?: string
 
-  // Personal growth
   growthGoals?: string[]
   growthMotivation?: string
   growthChallenges?: string[]
 
-  // Physical harm / safety
   selfHarmThoughts?: string
   selfHarmActions?: string
   suicidalThoughts?: string
 
-  // Substance use (legacy)
   alcoholUse?: string
   drugUse?: string
   substanceGamblingLink?: string
@@ -145,8 +135,6 @@ type StepType =
   | "gaming"
   | "physical_harm"
   | "substance_use"
-  | "awareness_intro"
-  | "awareness"
   | "values_intro"
   | "values_selection"
   | "values_ranking"
@@ -185,8 +173,6 @@ export default function OnboardingFlow({ userId, userName, initialStep = 1, init
     if (hasAddiction || journeyTypes.includes("mental_health")) baseSteps.push("physical_harm")
 
     baseSteps.push(
-      "awareness_intro",
-      "awareness",
       "values_intro",
       "values_selection",
       "values_ranking",
@@ -209,6 +195,9 @@ export default function OnboardingFlow({ userId, userName, initialStep = 1, init
 
   useEffect(() => {
     if (initialStep > 1 && initialData) {
+      // Saved step numbers from the previous flow can be ahead by up to two
+      // because the duplicate awareness intro + awareness screens were removed.
+      // Clamp to a valid current step rather than losing saved onboarding data.
       const targetIndex = Math.min(initialStep - 1, stepList.length - 1)
       setCurrentStepIndex(targetIndex)
     }
@@ -294,10 +283,6 @@ export default function OnboardingFlow({ userId, userName, initialStep = 1, init
         return <PhysicalHarmStep data={data} updateData={updateData} onNext={nextStep} onBack={prevStep} />
       case "substance_use":
         return <SubstanceUseStep data={data} updateData={updateData} onNext={nextStep} onBack={prevStep} />
-      case "awareness_intro":
-        return <AwarenessIntroStep onNext={nextStep} onBack={prevStep} />
-      case "awareness":
-        return <AwarenessStep data={data} updateData={updateData} onNext={nextStep} onBack={prevStep} />
       case "values_intro":
         return <ValuesIntroStep onNext={nextStep} onBack={prevStep} />
       case "values_selection":
