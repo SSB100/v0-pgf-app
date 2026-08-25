@@ -2,6 +2,7 @@ export type ProfessionalAccessPolicyInput = {
   professionalStatus: string | null
   organisationId: string | null
   organisationStatus: string | null
+  membershipStatus: string | null
   mfaStatus: string | null
   sessionMfaVerified: boolean
 }

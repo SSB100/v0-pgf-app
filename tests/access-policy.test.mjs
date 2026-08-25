@@ -11,15 +11,18 @@ const baseProfessional = {
   professionalStatus: "verified",
   organisationId: "org-1",
   organisationStatus: "verified",
+  membershipStatus: "active",
   mfaStatus: "active",
   sessionMfaVerified: true,
 }
 
-test("professional access requires every trust gate", () => {
+test("professional access requires every trust gate including active organisation membership", () => {
   assert.equal(canProfessionalAccessClientData(baseProfessional), true)
   assert.equal(canProfessionalAccessClientData({ ...baseProfessional, professionalStatus: "pending" }), false)
   assert.equal(canProfessionalAccessClientData({ ...baseProfessional, organisationId: null }), false)
   assert.equal(canProfessionalAccessClientData({ ...baseProfessional, organisationStatus: "pending" }), false)
+  assert.equal(canProfessionalAccessClientData({ ...baseProfessional, membershipStatus: "suspended" }), false)
+  assert.equal(canProfessionalAccessClientData({ ...baseProfessional, membershipStatus: null }), false)
   assert.equal(canProfessionalAccessClientData({ ...baseProfessional, mfaStatus: "disabled" }), false)
   assert.equal(canProfessionalAccessClientData({ ...baseProfessional, sessionMfaVerified: false }), false)
 })

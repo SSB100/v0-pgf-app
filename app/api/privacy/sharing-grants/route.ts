@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { getSession } from "@/lib/session"
 import { sql } from "@/lib/db"
 import { governanceTableExists, recordConsentEvent } from "@/lib/governance"
+import { hasCurrentProfessionalAffiliation } from "@/lib/organisation-lifecycle-policy.mjs"
 import {
   normaliseProfessionalShareScopes,
   PROFESSIONAL_SHARING_CONSENT_VERSION,
@@ -35,12 +36,18 @@ export async function PATCH(request: NextRequest) {
       SELECT
         l.id,
         l.status,
+        p.id AS professional_account_id,
         p.organisation_id,
         p.verification_status AS professional_verification_status,
-        o.verification_status AS organisation_verification_status
+        o.verification_status AS organisation_verification_status,
+        om.status AS membership_status
       FROM client_professional_links l
       JOIN professional_accounts p ON p.id = l.professional_account_id
       LEFT JOIN organisations o ON o.id = p.organisation_id
+      LEFT JOIN organisation_memberships om
+        ON om.professional_account_id = p.id
+        AND om.organisation_id = p.organisation_id
+        AND om.status IN ('active', 'suspended')
       WHERE l.id = ${body.linkId}
         AND l.client_user_id = ${user.id}
       LIMIT 1
@@ -48,14 +55,32 @@ export async function PATCH(request: NextRequest) {
 
     const link = linkRows[0]
     if (!link) return NextResponse.json({ error: "Professional connection not found" }, { status: 404 })
-    if (!['active', 'paused'].includes(link.status)) {
+    if (!["active", "paused"].includes(link.status)) {
       return NextResponse.json({ error: "Sharing cannot be changed for an ended professional connection" }, { status: 409 })
     }
-    if (link.professional_verification_status !== "verified") {
-      return NextResponse.json({ error: "This professional is not currently verified for data access" }, { status: 409 })
-    }
-    if (!link.organisation_id || link.organisation_verification_status !== "verified") {
-      return NextResponse.json({ error: "This professional's organisation is not currently verified for data access" }, { status: 409 })
+
+    const currentAffiliation = hasCurrentProfessionalAffiliation({
+      professionalStatus: link.professional_verification_status,
+      organisationId: link.organisation_id,
+      organisationStatus: link.organisation_verification_status,
+      membershipStatus: link.membership_status,
+    })
+
+    const currentRows = await sql`
+      SELECT data_scope
+      FROM sharing_grants
+      WHERE link_id = ${body.linkId} AND status = 'active'
+    `
+    const currentScopes = new Set(currentRows.map((row: any) => row.data_scope))
+
+    // A client must always be able to reduce or revoke sharing. When the
+    // professional's affiliation is no longer current, however, Waypoint must
+    // not allow a new category to be granted or an old category to be restored.
+    if (!currentAffiliation && scopes.some((scope) => !currentScopes.has(scope))) {
+      return NextResponse.json(
+        { error: "New sharing cannot be granted until the professional's current organisation affiliation is verified" },
+        { status: 409 },
+      )
     }
 
     const selectedScopesJson = JSON.stringify(scopes)
@@ -71,17 +96,19 @@ export async function PATCH(request: NextRequest) {
         )
     `
 
-    await sql`
-      INSERT INTO sharing_grants (link_id, data_scope, status, consent_version, granted_at)
-      SELECT ${body.linkId}, selected.scope, 'active', ${PROFESSIONAL_SHARING_CONSENT_VERSION}, CURRENT_TIMESTAMP
-      FROM jsonb_array_elements_text(${selectedScopesJson}::jsonb) AS selected(scope)
-      WHERE NOT EXISTS (
-        SELECT 1 FROM sharing_grants existing
-        WHERE existing.link_id = ${body.linkId}
-          AND existing.data_scope = selected.scope
-          AND existing.status = 'active'
-      )
-    `
+    if (scopes.length > 0) {
+      await sql`
+        INSERT INTO sharing_grants (link_id, data_scope, status, consent_version, granted_at)
+        SELECT ${body.linkId}, selected.scope, 'active', ${PROFESSIONAL_SHARING_CONSENT_VERSION}, CURRENT_TIMESTAMP
+        FROM jsonb_array_elements_text(${selectedScopesJson}::jsonb) AS selected(scope)
+        WHERE NOT EXISTS (
+          SELECT 1 FROM sharing_grants existing
+          WHERE existing.link_id = ${body.linkId}
+            AND existing.data_scope = selected.scope
+            AND existing.status = 'active'
+        )
+      `
+    }
 
     await recordConsentEvent({
       subjectUserId: user.id,
@@ -90,9 +117,13 @@ export async function PATCH(request: NextRequest) {
       action: "updated",
       targetType: "client_professional_link",
       targetId: body.linkId,
-      scope: { scopes, connectionStatus: link.status },
+      scope: { scopes, connectionStatus: link.status, organisationId: link.organisation_id },
       documentVersion: PROFESSIONAL_SHARING_CONSENT_VERSION,
-      metadata: { source: "privacy_centre" },
+      metadata: {
+        source: "privacy_centre",
+        organisationId: link.organisation_id,
+        currentAffiliation,
+      },
     })
 
     return NextResponse.json({ linkId: body.linkId, scopes, consentVersion: PROFESSIONAL_SHARING_CONSENT_VERSION })

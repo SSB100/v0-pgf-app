@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { sql } from "@/lib/db"
 import { getSession } from "@/lib/session"
 import { hashProfessionalInvitationToken } from "@/lib/professional-access"
+import { hasCurrentProfessionalAffiliation } from "@/lib/organisation-lifecycle-policy.mjs"
 import {
   normaliseRequestableProfessionalScopes,
   PROFESSIONAL_SHARING_CONSENT_VERSION,
@@ -23,10 +24,15 @@ async function getInvitation(token: string) {
       p.verification_status AS professional_verification_status,
       p.organisation_id,
       o.name AS organisation_name,
-      o.verification_status AS organisation_verification_status
+      o.verification_status AS organisation_verification_status,
+      om.status AS membership_status
     FROM professional_invitations i
     JOIN professional_accounts p ON p.id = i.professional_account_id
     LEFT JOIN organisations o ON o.id = p.organisation_id
+    LEFT JOIN organisation_memberships om
+      ON om.professional_account_id = p.id
+      AND om.organisation_id = p.organisation_id
+      AND om.status IN ('active', 'suspended')
     WHERE i.token_hash = ${tokenHash}
     LIMIT 1
   `
@@ -37,9 +43,12 @@ function invitationAvailable(invitation: any) {
   return invitation
     && invitation.status === "active"
     && new Date(invitation.expires_at).getTime() > Date.now()
-    && invitation.professional_verification_status === "verified"
-    && invitation.organisation_id
-    && invitation.organisation_verification_status === "verified"
+    && hasCurrentProfessionalAffiliation({
+      professionalStatus: invitation.professional_verification_status,
+      organisationId: invitation.organisation_id,
+      organisationStatus: invitation.organisation_verification_status,
+      membershipStatus: invitation.membership_status,
+    })
 }
 
 export async function GET(request: NextRequest) {
@@ -145,10 +154,14 @@ export async function POST(request: NextRequest) {
         RETURNING professional_account_id, requested_scopes, created_at, expires_at
       ),
       verified_invite AS (
-        SELECT ci.*
+        SELECT ci.*, p.organisation_id
         FROM claimed_invite ci
         JOIN professional_accounts p ON p.id = ci.professional_account_id
         JOIN organisations o ON o.id = p.organisation_id
+        JOIN organisation_memberships om
+          ON om.professional_account_id = p.id
+          AND om.organisation_id = p.organisation_id
+          AND om.status = 'active'
         WHERE p.verification_status = 'verified'
           AND o.verification_status = 'verified'
       ),
@@ -169,15 +182,20 @@ export async function POST(request: NextRequest) {
         FROM verified_invite
         RETURNING id, professional_account_id
       ),
+      connection_context AS (
+        SELECT nl.id, nl.professional_account_id, vi.organisation_id
+        FROM new_link nl
+        JOIN verified_invite vi ON vi.professional_account_id = nl.professional_account_id
+      ),
       new_grants AS (
         INSERT INTO sharing_grants (link_id, data_scope, status, consent_version, granted_at)
         SELECT
-          new_link.id,
+          connection_context.id,
           selected.scope,
           'active',
           ${PROFESSIONAL_SHARING_CONSENT_VERSION},
           CURRENT_TIMESTAMP
-        FROM new_link
+        FROM connection_context
         CROSS JOIN jsonb_array_elements_text(${selectedJson}::jsonb) AS selected(scope)
         RETURNING id
       ),
@@ -186,25 +204,25 @@ export async function POST(request: NextRequest) {
           subject_user_id, actor_user_id, consent_type, action, target_type, target_id, scope, document_version, metadata
         )
         SELECT
-          ${user.id}, ${user.id}, 'professional_connection', 'accepted', 'client_professional_link', new_link.id,
-          jsonb_build_object('scopes', ${selectedJson}::jsonb),
+          ${user.id}, ${user.id}, 'professional_connection', 'accepted', 'client_professional_link', connection_context.id,
+          jsonb_build_object('scopes', ${selectedJson}::jsonb, 'organisationId', connection_context.organisation_id),
           ${PROFESSIONAL_SHARING_CONSENT_VERSION},
-          '{"source":"professional_invitation"}'::jsonb
-        FROM new_link
+          jsonb_build_object('source', 'professional_invitation', 'organisationId', connection_context.organisation_id)
+        FROM connection_context
         RETURNING id
       ),
       audit_event AS (
         INSERT INTO access_audit_events (
-          subject_user_id, actor_user_id, professional_account_id, event_type, resource_scope, purpose, metadata
+          subject_user_id, actor_user_id, professional_account_id, organisation_id, event_type, resource_scope, purpose, metadata
         )
         SELECT
-          ${user.id}, ${user.id}, new_link.professional_account_id,
+          ${user.id}, ${user.id}, connection_context.professional_account_id, connection_context.organisation_id,
           'professional_connection_accepted', 'connection', 'clinical_support',
-          jsonb_build_object('scopes', ${selectedJson}::jsonb)
-        FROM new_link
+          jsonb_build_object('scopes', ${selectedJson}::jsonb, 'organisationId', connection_context.organisation_id)
+        FROM connection_context
         RETURNING id
       )
-      SELECT id FROM new_link
+      SELECT id FROM connection_context
     `
 
     if (accepted.length === 0) return NextResponse.json({ error: "Invitation could not be accepted" }, { status: 409 })
