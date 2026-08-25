@@ -43,7 +43,7 @@ export default function SignUpForm() {
     setError("")
 
     if (!termsAccepted) {
-      setError("You must accept the Terms and Conditions to continue")
+      setError("You must accept the Terms and acknowledge the Privacy Policy to continue")
       return
     }
 
@@ -116,7 +116,7 @@ export default function SignUpForm() {
           <div className="space-y-2">
             <Label htmlFor="dateOfBirth" className="text-foreground font-medium">Date of birth</Label>
             <Input id="dateOfBirth" type="date" value={dateOfBirth} onChange={(e) => setDateOfBirth(e.target.value)} required disabled={loading} max={latestEligibleBirthDate()} className="border-input focus:border-primary focus:ring-primary" />
-            <p className="text-xs text-muted-foreground">Used to confirm that you meet the current 18+ age requirement.</p>
+            <p className="text-xs text-muted-foreground">Used to confirm that you meet the current 18+ age requirement. Waypoint is reviewing whether the final product needs to retain the exact date after verification.</p>
           </div>
 
           <div className="space-y-2">
@@ -150,9 +150,11 @@ export default function SignUpForm() {
           <div className="flex items-start space-x-2 pt-2">
             <Checkbox id="terms" checked={termsAccepted} onCheckedChange={(checked) => setTermsAccepted(checked === true)} disabled={loading} className="mt-1" />
             <div className="flex-1">
-              <label htmlFor="terms" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer">
+              <label htmlFor="terms" className="text-sm font-medium leading-5 peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer">
                 I agree to the{" "}
                 <Link href="/terms" target="_blank" className="text-primary hover:underline">Terms and Conditions</Link>{" "}
+                and acknowledge the{" "}
+                <Link href="/privacy-policy" target="_blank" className="text-primary hover:underline">Privacy Policy</Link>{" "}
                 <span className="text-destructive">*</span>
               </label>
             </div>
@@ -181,7 +183,7 @@ export default function SignUpForm() {
                         Any formal research project would need its own approved participant information, consent process, data rules and governance before your information could be used under that study.
                       </p>
                       <p>
-                        The way information is de-identified, accessed, retained and used would need to be defined in that study's approved documents and systems before any research use occurs.
+                        The way information is de-identified, accessed, retained and used would need to be defined in that study&apos;s approved documents and systems before any research use occurs.
                       </p>
                     </DialogDescription>
                   </DialogHeader>
