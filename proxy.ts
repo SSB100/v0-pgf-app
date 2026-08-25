@@ -21,9 +21,11 @@ const protectedRoutes = [
   "/privacy",
   "/professional",
   "/connect",
+  "/security",
+  "/admin",
 ]
 
-const authRoutes = ["/auth/signin", "/auth/signup", "/auth/professional-signup"]
+const authRoutes = ["/auth/signin", "/auth/signup", "/auth/professional-signup", "/auth/professional-mfa"]
 
 function matchesRoute(pathname: string, route: string) {
   return pathname === route || pathname.startsWith(`${route}/`)
@@ -48,6 +50,8 @@ export async function proxy(request: NextRequest) {
 
   let isAuthenticated = false
   let userId: string | null = null
+  let userRole: string | null = null
+  let sessionMfaVerified = false
   let invalidSession = Boolean(sessionCookie)
 
   if (sessionCookie && jwtKey) {
@@ -56,9 +60,18 @@ export async function proxy(request: NextRequest) {
       const payloadUserId = verified.payload.userId
 
       if (typeof payloadUserId === "string" && payloadUserId.length > 0) {
-        const userCheck = await sql`SELECT id FROM users WHERE id = ${payloadUserId} LIMIT 1`
-        if (userCheck.length > 0) {
+        const userCheck = await sql`
+          SELECT id, role, COALESCE(security_version, 1)::int AS security_version
+          FROM users
+          WHERE id = ${payloadUserId}
+          LIMIT 1
+        `
+        const userRow = userCheck[0]
+        const tokenSecurityVersion = typeof verified.payload.securityVersion === "number" ? verified.payload.securityVersion : 1
+        if (userRow && Number(userRow.security_version) === tokenSecurityVersion) {
           userId = payloadUserId
+          userRole = userRow.role ?? "client"
+          sessionMfaVerified = verified.payload.mfaVerified === true
           isAuthenticated = true
           invalidSession = false
         }
@@ -70,6 +83,10 @@ export async function proxy(request: NextRequest) {
     console.error("[waypoint] JWT_SECRET is not configured; session authentication is disabled")
   }
 
+  if (pathname === "/auth/signin" && request.nextUrl.searchParams.get("reauth") === "1" && isAuthenticated) {
+    return clearSession(NextResponse.next())
+  }
+
   if (isProtectedPath(pathname) && !isAuthenticated) {
     const signInUrl = new URL("/auth/signin", request.url)
     signInUrl.searchParams.set("from", `${pathname}${request.nextUrl.search}`)
@@ -77,12 +94,37 @@ export async function proxy(request: NextRequest) {
     return invalidSession ? clearSession(response) : response
   }
 
-  if (isAuthenticated && userId && isProtectedPath(pathname) && !matchesRoute(pathname, "/onboarding")) {
+  if (isAuthenticated && userId && isProtectedPath(pathname)) {
     try {
+      const isStrongAuthRole = userRole === "professional" || userRole === "admin"
+
+      if (matchesRoute(pathname, "/admin")) {
+        if (userRole !== "admin") return NextResponse.redirect(new URL(userRole === "professional" ? "/professional" : "/dashboard", request.url))
+      }
+
       if (matchesRoute(pathname, "/professional")) {
         const professional = await sql`SELECT id FROM professional_accounts WHERE user_id = ${userId} LIMIT 1`
         if (professional.length === 0) return NextResponse.redirect(new URL("/dashboard", request.url))
-      } else {
+      }
+
+      if (matchesRoute(pathname, "/security/mfa")) {
+        if (!isStrongAuthRole) return NextResponse.redirect(new URL("/settings", request.url))
+      } else if (isStrongAuthRole && (matchesRoute(pathname, "/professional") || matchesRoute(pathname, "/admin"))) {
+        const factor = await sql`
+          SELECT status
+          FROM mfa_factors
+          WHERE user_id = ${userId}
+            AND factor_type = 'totp'
+          LIMIT 1
+        `
+        if (factor[0]?.status !== "active") return NextResponse.redirect(new URL("/security/mfa", request.url))
+        if (!sessionMfaVerified) {
+          const signInUrl = new URL("/auth/signin", request.url)
+          signInUrl.searchParams.set("from", `${pathname}${request.nextUrl.search}`)
+          signInUrl.searchParams.set("reauth", "1")
+          return clearSession(NextResponse.redirect(signInUrl))
+        }
+      } else if (!isStrongAuthRole && !matchesRoute(pathname, "/onboarding")) {
         const result = await sql`SELECT onboarding_completed FROM user_profiles WHERE user_id = ${userId} LIMIT 1`
         if (result.length === 0) return clearSession(NextResponse.redirect(new URL("/auth/signin", request.url)))
         if (!result[0]?.onboarding_completed) return NextResponse.redirect(new URL("/onboarding", request.url))
@@ -95,7 +137,9 @@ export async function proxy(request: NextRequest) {
 
   if (isAuthPath(pathname) && isAuthenticated && userId) {
     try {
+      if (pathname === "/auth/professional-mfa") return NextResponse.redirect(new URL(userRole === "admin" ? "/admin/professionals" : userRole === "professional" ? "/professional" : "/dashboard", request.url))
       const professional = await sql`SELECT id FROM professional_accounts WHERE user_id = ${userId} LIMIT 1`
+      if (userRole === "admin") return NextResponse.redirect(new URL("/admin/professionals", request.url))
       return NextResponse.redirect(new URL(professional.length > 0 ? "/professional" : "/dashboard", request.url))
     } catch {
       return NextResponse.redirect(new URL("/dashboard", request.url))
