@@ -7,6 +7,8 @@ import { neon } from "@neondatabase/serverless"
 export type SqlRow = any
 type SqlTag = (strings: TemplateStringsArray, ...values: any[]) => Promise<SqlRow[]>
 
+type TransactionTag = (strings: TemplateStringsArray, ...values: any[]) => unknown
+
 let _sql: ReturnType<typeof neon> | null = null
 
 function getDb() {
@@ -22,6 +24,14 @@ function getDb() {
 
 export const sql: SqlTag = (strings, ...values) => {
   return getDb()(strings, ...values) as Promise<SqlRow[]>
+}
+
+// Neon's HTTP driver supports one-shot transactions. Security-sensitive
+// administrative workflows use this helper so related state and audit changes
+// either commit together or do not commit at all.
+export async function dbTransaction(buildQueries: (tx: TransactionTag) => unknown[]) {
+  const database = getDb()
+  return database.transaction((tx) => buildQueries(tx as TransactionTag) as any)
 }
 
 export async function dbColumnExists(tableName: string, columnName: string) {

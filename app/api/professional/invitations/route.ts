@@ -13,9 +13,12 @@ import { normaliseRequestableProfessionalScopes } from "@/lib/sharing-policy"
 
 export async function GET() {
   try {
-    const { user, professional } = await getProfessionalSession()
+    const { user, professional, mfaVerified } = await getProfessionalSession()
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     if (!professional) return NextResponse.json({ error: "Professional account not found" }, { status: 404 })
+    if (!mfaVerified || professional.mfa_status !== "active") {
+      return NextResponse.json({ error: "Authenticator verification is required" }, { status: 403 })
+    }
 
     await sql`
       UPDATE professional_invitations
@@ -42,11 +45,11 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const { user, professional } = await getProfessionalSession()
+    const { user, professional, mfaVerified } = await getProfessionalSession()
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     if (!professional) return NextResponse.json({ error: "Professional account not found" }, { status: 404 })
-    if (!professionalCanAccessClientData(professional)) {
-      return NextResponse.json({ error: "Professional and organisation verification are required before invitations can be created" }, { status: 403 })
+    if (!professionalCanAccessClientData(professional, mfaVerified)) {
+      return NextResponse.json({ error: "Professional, organisation and authenticator verification are required before invitations can be created" }, { status: 403 })
     }
 
     const body = await request.json()
@@ -95,9 +98,12 @@ export async function POST(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
-    const { user, professional } = await getProfessionalSession()
+    const { user, professional, mfaVerified } = await getProfessionalSession()
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     if (!professional) return NextResponse.json({ error: "Professional account not found" }, { status: 404 })
+    if (!mfaVerified || professional.mfa_status !== "active") {
+      return NextResponse.json({ error: "Authenticator verification is required" }, { status: 403 })
+    }
 
     const body = await request.json()
     if (!looksLikeUuid(body.invitationId) || body.action !== "revoke") {

@@ -7,6 +7,7 @@ export interface User {
   full_name: string | null
   role: string
   created_at: Date
+  security_version: number
 }
 
 export interface UserWithPassword extends User {
@@ -46,7 +47,7 @@ export async function createUser(email: string, password: string, fullName?: str
   const result = await sql`
     INSERT INTO users (email, password_hash, full_name, role)
     VALUES (${email}, ${passwordHash}, ${fullName || null}, 'client')
-    RETURNING id, email, full_name, role, created_at
+    RETURNING id, email, full_name, role, created_at, COALESCE(security_version, 1)::int AS security_version
   `
 
   const user = result[0] as User | undefined
@@ -62,7 +63,7 @@ export async function createUser(email: string, password: string, fullName?: str
 
 export async function getUserByEmail(email: string): Promise<UserWithPassword | null> {
   const result = await sql`
-    SELECT id, email, password_hash, full_name, role, created_at
+    SELECT id, email, password_hash, full_name, role, created_at, COALESCE(security_version, 1)::int AS security_version
     FROM users
     WHERE email = ${email}
   `
@@ -72,7 +73,7 @@ export async function getUserByEmail(email: string): Promise<UserWithPassword | 
 
 export async function getUserById(id: string): Promise<User | null> {
   const result = await sql`
-    SELECT id, email, full_name, role, created_at
+    SELECT id, email, full_name, role, created_at, COALESCE(security_version, 1)::int AS security_version
     FROM users
     WHERE id = ${id}
   `

@@ -1,8 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { hashPassword } from "@/lib/auth"
 import { sql } from "@/lib/db"
+import { isMfaEncryptionConfigured } from "@/lib/mfa"
 import { createSession } from "@/lib/session"
 import { PROFESSIONAL_USE_VERSION } from "@/lib/professional-access"
+
+export const runtime = "nodejs"
 
 const TERMS_VERSION = "0.3"
 const PRIVACY_VERSION = "0.1"
@@ -20,6 +23,13 @@ function parseBirthDate(value: unknown) {
 
 export async function POST(request: NextRequest) {
   try {
+    if (!isMfaEncryptionConfigured()) {
+      return NextResponse.json(
+        { error: "Professional account registration is temporarily unavailable while strong authentication is being configured." },
+        { status: 503 },
+      )
+    }
+
     const body = await request.json()
     const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : ""
     const password = typeof body.password === "string" ? body.password : ""
@@ -121,8 +131,8 @@ export async function POST(request: NextRequest) {
       throw error
     }
 
-    await createSession(userId)
-    return NextResponse.json({ success: true, redirectTo: "/professional" })
+    await createSession(userId, { mfaVerified: false })
+    return NextResponse.json({ success: true, redirectTo: "/security/mfa" })
   } catch (error) {
     console.error("[waypoint] Professional registration failed", error)
     return NextResponse.json({ error: "Unable to create professional account" }, { status: 500 })

@@ -1,13 +1,18 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { getUserByEmail, verifyPassword, hashPassword, isLegacyPasswordHash } from "@/lib/auth"
-import { encrypt } from "@/lib/session"
+import { createMfaChallengeToken, encrypt } from "@/lib/session"
 import { sql } from "@/lib/db"
+
+function safeReturnPath(value: unknown) {
+  return typeof value === "string" && value.startsWith("/") && !value.startsWith("//") ? value : null
+}
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : ""
     const password = typeof body.password === "string" ? body.password : ""
+    const returnTo = safeReturnPath(body.returnTo)
 
     if (!email || !password) {
       return NextResponse.json({ error: "Email and password are required" }, { status: 400 })
@@ -28,14 +33,68 @@ export async function POST(request: NextRequest) {
     const onboardingComplete = profile.length > 0 ? Boolean(profile[0].onboarding_completed) : false
     const professionalRows = await sql`SELECT id, verification_status FROM professional_accounts WHERE user_id = ${user.id} LIMIT 1`
     const professionalAccount = professionalRows[0] ?? null
-    const redirectTo = professionalAccount ? "/professional" : onboardingComplete ? "/dashboard" : "/onboarding"
+    const strongAuthAccount = user.role === "professional" || user.role === "admin" || Boolean(professionalAccount)
 
-    const token = await encrypt({ userId: user.id })
+    if (strongAuthAccount) {
+      const mfaRows = await sql`
+        SELECT status
+        FROM mfa_factors
+        WHERE user_id = ${user.id}
+          AND factor_type = 'totp'
+        LIMIT 1
+      `
+      const mfaStatus = mfaRows[0]?.status ?? null
+
+      if (mfaStatus === "active") {
+        const challengeToken = await createMfaChallengeToken({
+          userId: user.id,
+          securityVersion: user.security_version || 1,
+          returnTo: returnTo || (user.role === "admin" ? "/admin/professionals" : "/professional"),
+        })
+        const response = NextResponse.json({
+          success: true,
+          requiresMfa: true,
+          redirectTo: "/auth/professional-mfa",
+        })
+        response.cookies.delete("session")
+        response.cookies.set("professional_mfa_challenge", challengeToken, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          maxAge: 60 * 5,
+          path: "/",
+        })
+        return response
+      }
+
+      const token = await encrypt({
+        userId: user.id,
+        securityVersion: user.security_version || 1,
+        mfaVerified: false,
+      })
+      const response = NextResponse.json({
+        success: true,
+        requiresMfaSetup: true,
+        professionalAccount: professionalAccount ? { verificationStatus: professionalAccount.verification_status } : null,
+        redirectTo: "/security/mfa",
+      })
+      response.cookies.set("session", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 60 * 60 * 24 * 7,
+        path: "/",
+      })
+      return response
+    }
+
+    const redirectTo = onboardingComplete ? "/dashboard" : "/onboarding"
+    const token = await encrypt({ userId: user.id, securityVersion: user.security_version || 1, mfaVerified: false })
     const response = NextResponse.json({
       success: true,
       user: { id: user.id, email: user.email, full_name: user.full_name },
       onboardingComplete,
-      professionalAccount: professionalAccount ? { verificationStatus: professionalAccount.verification_status } : null,
+      professionalAccount: null,
       redirectTo,
     })
 

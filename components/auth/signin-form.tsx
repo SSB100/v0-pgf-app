@@ -26,10 +26,11 @@ export default function SignInForm() {
     setLoading(true)
 
     try {
+      const returnPath = safeReturnPath()
       const response = await fetch("/api/auth/signin", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, returnTo: returnPath }),
         credentials: "include",
       })
       const data = await response.json()
@@ -41,7 +42,10 @@ export default function SignInForm() {
       }
 
       await new Promise((resolve) => setTimeout(resolve, 100))
-      const returnPath = safeReturnPath()
+      if (data.requiresMfa || data.requiresMfaSetup) {
+        window.location.href = data.redirectTo
+        return
+      }
       window.location.href = returnPath || data.redirectTo || (data.onboardingComplete ? "/dashboard" : "/onboarding")
     } catch (err) {
       console.error("[waypoint] Sign in form error", err)

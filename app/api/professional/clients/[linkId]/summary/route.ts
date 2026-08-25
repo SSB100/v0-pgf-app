@@ -8,11 +8,11 @@ const ALLOWED_WINDOWS = new Set([7, 14, 30])
 
 export async function GET(request: NextRequest, context: { params: Promise<{ linkId: string }> }) {
   try {
-    const { user, professional } = await getProfessionalSession()
+    const { user, professional, mfaVerified } = await getProfessionalSession()
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     if (!professional) return NextResponse.json({ error: "Professional account not found" }, { status: 404 })
-    if (!professionalCanAccessClientData(professional)) {
-      return NextResponse.json({ error: "Verified professional and organisation access is required" }, { status: 403 })
+    if (!professionalCanAccessClientData(professional, mfaVerified)) {
+      return NextResponse.json({ error: "Verified professional, organisation and MFA access are required" }, { status: 403 })
     }
 
     const { linkId } = await context.params
@@ -98,16 +98,17 @@ export async function GET(request: NextRequest, context: { params: Promise<{ lin
       const totals = await sql`
         SELECT
           COUNT(*)::int AS completed_skills,
-          COUNT(*) FILTER (WHERE was_helpful = TRUE)::int AS found_helpful,
-          MAX(completed_at) AS latest_completion
-        FROM skills_completed
+          COUNT(*) FILTER (WHERE effectiveness_rating >= 4)::int AS found_helpful,
+          ROUND(AVG(effectiveness_rating)::numeric, 1) AS average_effectiveness,
+          MAX(practiced_at) AS latest_completion
+        FROM skills_practice
         WHERE user_id = ${connection.client_user_id}
       `
       const recent = await sql`
-        SELECT skill_slug, was_helpful, completed_at
-        FROM skills_completed
+        SELECT skill_name, skill_category, effectiveness_rating, practiced_at
+        FROM skills_practice
         WHERE user_id = ${connection.client_user_id}
-        ORDER BY completed_at DESC
+        ORDER BY practiced_at DESC
         LIMIT 8
       `
       response.skillsPractice = { ...(totals[0] ?? {}), recentSkills: recent }
@@ -131,7 +132,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ lin
       eventType: "professional_summary_view",
       resourceScope: authorisedScopes.join(","),
       purpose: "clinical_support",
-      metadata: { linkId, days },
+      metadata: { linkId, days, mfaVerified: true },
     })
 
     return NextResponse.json(response, { headers: { "Cache-Control": "private, no-store, max-age=0" } })
