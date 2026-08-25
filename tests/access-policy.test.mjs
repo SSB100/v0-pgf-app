@@ -3,8 +3,11 @@ import assert from "node:assert/strict"
 import {
   canAdminActOnProfessionalTarget,
   canAdminManageProfessionals,
+  canExposeScopeDerivedMetadata,
   canProfessionalAccessClientData,
   canProfessionalViewClientSummary,
+  canUseClientSurface,
+  canUseProfessionalSurface,
 } from "../lib/access-policy.mjs"
 
 const baseProfessional = {
@@ -43,4 +46,25 @@ test("administrator cannot act on their own professional account", () => {
   assert.equal(canAdminActOnProfessionalTarget({ actorUserId: "user-1", targetUserId: "user-1" }), false)
   assert.equal(canAdminActOnProfessionalTarget({ actorUserId: "user-1", targetUserId: "user-2" }), true)
   assert.equal(canAdminActOnProfessionalTarget({ actorUserId: null, targetUserId: "user-2" }), false)
+})
+
+test("client-only surfaces reject professional and admin identities", () => {
+  assert.equal(canUseClientSurface({ role: "client" }), true)
+  assert.equal(canUseClientSurface({ role: "professional" }), false)
+  assert.equal(canUseClientSurface({ role: "admin" }), false)
+  assert.equal(canUseClientSurface({ role: null }), false)
+})
+
+test("professional surfaces require the exact professional role", () => {
+  assert.equal(canUseProfessionalSurface({ role: "professional" }), true)
+  assert.equal(canUseProfessionalSurface({ role: "client" }), false)
+  assert.equal(canUseProfessionalSurface({ role: "admin" }), false)
+  assert.equal(canUseProfessionalSurface({ role: null }), false)
+})
+
+test("scope-derived activity metadata is exposed only for the matching active scope", () => {
+  assert.equal(canExposeScopeDerivedMetadata({ activeScopes: ["daily_checkins_summary"], requiredScope: "daily_checkins_summary" }), true)
+  assert.equal(canExposeScopeDerivedMetadata({ activeScopes: ["journey_progress"], requiredScope: "daily_checkins_summary" }), false)
+  assert.equal(canExposeScopeDerivedMetadata({ activeScopes: [], requiredScope: "daily_checkins_summary" }), false)
+  assert.equal(canExposeScopeDerivedMetadata({ activeScopes: null, requiredScope: "daily_checkins_summary" }), false)
 })

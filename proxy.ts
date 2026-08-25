@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 import { jwtVerify } from "jose"
 import { sql } from "@/lib/db"
+import { canUseClientSurface, canUseProfessionalSurface } from "@/lib/access-policy.mjs"
 
 const jwtSecret = process.env.JWT_SECRET
 const jwtKey = jwtSecret ? new TextEncoder().encode(jwtSecret) : null
@@ -25,23 +26,71 @@ const protectedRoutes = [
   "/admin",
 ]
 
+const clientOnlyRoutes = [
+  "/dashboard",
+  "/onboarding",
+  "/check-in",
+  "/community",
+  "/skills",
+  "/profile",
+  "/training",
+  "/safeguards",
+  "/journey",
+  "/share-journey",
+  "/connect",
+]
+
+const clientOnlyApiRoutes = [
+  "/api/check-in",
+  "/api/community",
+  "/api/connect/professional",
+  "/api/growth",
+  "/api/journey",
+  "/api/onboarding",
+  "/api/privacy/professional-connection",
+  "/api/privacy/sharing-grants",
+  "/api/skills",
+  "/api/sos",
+  "/api/user/update-values-order",
+]
+
+const professionalOnlyApiRoutes = [
+  "/api/professional/clients",
+  "/api/professional/invitations",
+]
+
 const authRoutes = ["/auth/signin", "/auth/signup", "/auth/professional-signup", "/auth/professional-mfa"]
 
 function matchesRoute(pathname: string, route: string) {
   return pathname === route || pathname.startsWith(`${route}/`)
 }
 
+function matchesAnyRoute(pathname: string, routes: string[]) {
+  return routes.some((route) => matchesRoute(pathname, route))
+}
+
 function isProtectedPath(pathname: string) {
-  return protectedRoutes.some((route) => matchesRoute(pathname, route))
+  return matchesAnyRoute(pathname, protectedRoutes)
 }
 
 function isAuthPath(pathname: string) {
-  return authRoutes.some((route) => matchesRoute(pathname, route))
+  return matchesAnyRoute(pathname, authRoutes)
+}
+
+function roleHome(role: string | null) {
+  if (role === "admin") return "/admin/professionals"
+  if (role === "professional") return "/professional"
+  return "/dashboard"
 }
 
 function clearSession(response: NextResponse) {
   response.cookies.delete("session")
   return response
+}
+
+function apiDenied(status: 401 | 403, error: string, clear = false) {
+  const response = NextResponse.json({ error }, { status })
+  return clear ? clearSession(response) : response
 }
 
 export async function proxy(request: NextRequest) {
@@ -68,9 +117,13 @@ export async function proxy(request: NextRequest) {
         `
         const userRow = userCheck[0]
         const tokenSecurityVersion = typeof verified.payload.securityVersion === "number" ? verified.payload.securityVersion : 1
-        if (userRow && Number(userRow.security_version) === tokenSecurityVersion) {
+        const recognisedRole = userRow?.role === "client" || userRow?.role === "professional" || userRow?.role === "admin"
+          ? userRow.role
+          : null
+
+        if (userRow && recognisedRole && Number(userRow.security_version) === tokenSecurityVersion) {
           userId = payloadUserId
-          userRole = userRow.role ?? "client"
+          userRole = recognisedRole
           sessionMfaVerified = verified.payload.mfaVerified === true
           isAuthenticated = true
           invalidSession = false
@@ -81,6 +134,20 @@ export async function proxy(request: NextRequest) {
     }
   } else if (sessionCookie && !jwtKey) {
     console.error("[waypoint] JWT_SECRET is not configured; session authentication is disabled")
+  }
+
+  if (matchesAnyRoute(pathname, clientOnlyApiRoutes)) {
+    if (!isAuthenticated) return apiDenied(401, "Unauthorized", invalidSession)
+    if (!canUseClientSurface({ role: userRole })) {
+      return apiDenied(403, "This endpoint is available only to client accounts")
+    }
+  }
+
+  if (matchesAnyRoute(pathname, professionalOnlyApiRoutes)) {
+    if (!isAuthenticated) return apiDenied(401, "Unauthorized", invalidSession)
+    if (!canUseProfessionalSurface({ role: userRole })) {
+      return apiDenied(403, "This endpoint is available only to professional accounts")
+    }
   }
 
   if (pathname === "/auth/signin" && request.nextUrl.searchParams.get("reauth") === "1" && isAuthenticated) {
@@ -94,17 +161,28 @@ export async function proxy(request: NextRequest) {
     return invalidSession ? clearSession(response) : response
   }
 
+  if (isAuthenticated && matchesAnyRoute(pathname, clientOnlyRoutes) && !canUseClientSurface({ role: userRole })) {
+    return NextResponse.redirect(new URL(roleHome(userRole), request.url))
+  }
+
   if (isAuthenticated && userId && isProtectedPath(pathname)) {
     try {
       const isStrongAuthRole = userRole === "professional" || userRole === "admin"
 
       if (matchesRoute(pathname, "/admin")) {
-        if (userRole !== "admin") return NextResponse.redirect(new URL(userRole === "professional" ? "/professional" : "/dashboard", request.url))
+        if (userRole !== "admin") return NextResponse.redirect(new URL(roleHome(userRole), request.url))
       }
 
       if (matchesRoute(pathname, "/professional")) {
+        if (!canUseProfessionalSurface({ role: userRole })) {
+          return NextResponse.redirect(new URL(roleHome(userRole), request.url))
+        }
         const professional = await sql`SELECT id FROM professional_accounts WHERE user_id = ${userId} LIMIT 1`
-        if (professional.length === 0) return NextResponse.redirect(new URL("/dashboard", request.url))
+        if (professional.length === 0) {
+          const signInUrl = new URL("/auth/signin", request.url)
+          signInUrl.searchParams.set("from", "/professional")
+          return clearSession(NextResponse.redirect(signInUrl))
+        }
       }
 
       if (matchesRoute(pathname, "/security/mfa")) {
@@ -136,14 +214,8 @@ export async function proxy(request: NextRequest) {
   }
 
   if (isAuthPath(pathname) && isAuthenticated && userId) {
-    try {
-      if (pathname === "/auth/professional-mfa") return NextResponse.redirect(new URL(userRole === "admin" ? "/admin/professionals" : userRole === "professional" ? "/professional" : "/dashboard", request.url))
-      const professional = await sql`SELECT id FROM professional_accounts WHERE user_id = ${userId} LIMIT 1`
-      if (userRole === "admin") return NextResponse.redirect(new URL("/admin/professionals", request.url))
-      return NextResponse.redirect(new URL(professional.length > 0 ? "/professional" : "/dashboard", request.url))
-    } catch {
-      return NextResponse.redirect(new URL("/dashboard", request.url))
-    }
+    if (pathname === "/auth/professional-mfa") return NextResponse.redirect(new URL(roleHome(userRole), request.url))
+    return NextResponse.redirect(new URL(roleHome(userRole), request.url))
   }
 
   const response = NextResponse.next()
@@ -151,5 +223,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$|api).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"],
 }
