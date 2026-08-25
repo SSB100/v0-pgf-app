@@ -14,37 +14,29 @@ export async function POST(request: NextRequest) {
     }
 
     const user = await getUserByEmail(email)
-    if (!user) {
-      return NextResponse.json({ error: "Invalid email or password" }, { status: 401 })
-    }
+    if (!user) return NextResponse.json({ error: "Invalid email or password" }, { status: 401 })
 
     const isValid = await verifyPassword(password, user.password_hash)
-    if (!isValid) {
-      return NextResponse.json({ error: "Invalid email or password" }, { status: 401 })
-    }
+    if (!isValid) return NextResponse.json({ error: "Invalid email or password" }, { status: 401 })
 
-    // Existing MVP accounts may still have the original unsalted SHA-256 password
-    // hash. Upgrade it transparently after the user proves they know the password.
     if (isLegacyPasswordHash(user.password_hash)) {
       const upgradedHash = await hashPassword(password)
-      await sql`
-        UPDATE users
-        SET password_hash = ${upgradedHash}, updated_at = NOW()
-        WHERE id = ${user.id}
-      `
+      await sql`UPDATE users SET password_hash = ${upgradedHash}, updated_at = NOW() WHERE id = ${user.id}`
     }
 
-    const profile = await sql`
-      SELECT onboarding_completed FROM user_profiles WHERE user_id = ${user.id}
-    `
+    const profile = await sql`SELECT onboarding_completed FROM user_profiles WHERE user_id = ${user.id}`
     const onboardingComplete = profile.length > 0 ? Boolean(profile[0].onboarding_completed) : false
+    const professionalRows = await sql`SELECT id, verification_status FROM professional_accounts WHERE user_id = ${user.id} LIMIT 1`
+    const professionalAccount = professionalRows[0] ?? null
+    const redirectTo = professionalAccount ? "/professional" : onboardingComplete ? "/dashboard" : "/onboarding"
 
     const token = await encrypt({ userId: user.id })
-
     const response = NextResponse.json({
       success: true,
       user: { id: user.id, email: user.email, full_name: user.full_name },
       onboardingComplete,
+      professionalAccount: professionalAccount ? { verificationStatus: professionalAccount.verification_status } : null,
+      redirectTo,
     })
 
     response.cookies.set("session", token, {
@@ -57,7 +49,7 @@ export async function POST(request: NextRequest) {
 
     return response
   } catch (error) {
-    console.error("[v0] Sign in error:", error)
+    console.error("[waypoint] Sign in error:", error)
     return NextResponse.json({ error: "An error occurred during sign in" }, { status: 500 })
   }
 }

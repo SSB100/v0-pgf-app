@@ -1,41 +1,31 @@
 export const PROFESSIONAL_SHARING_CONSENT_VERSION = "professional-sharing-v1"
 
+type ProfessionalSensitivity = "standard" | "sensitive" | "high"
+
 export const PROFESSIONAL_SHARE_SCOPES = [
   {
     id: "journey_progress",
     label: "Journey progress",
-    description: "Modules completed, current module and overall learning progress.",
-    sensitivity: "standard",
+    description: "Modules completed and overall learning progress.",
+    sensitivity: "standard" as ProfessionalSensitivity,
   },
   {
     id: "daily_checkins_summary",
     label: "Daily check-in summaries",
     description: "Selected trend and summary information from daily check-ins. Free-text reflections are excluded.",
-    sensitivity: "sensitive",
+    sensitivity: "sensitive" as ProfessionalSensitivity,
   },
   {
     id: "skills_practice",
     label: "Skills practice",
-    description: "Skills and tools practised in Waypoint, including completion and effectiveness ratings where available.",
-    sensitivity: "standard",
+    description: "Skills and tools completed in Waypoint, including whether the user found them helpful where available.",
+    sensitivity: "standard" as ProfessionalSensitivity,
   },
   {
     id: "core_values",
     label: "Core values",
-    description: "Values the user has chosen to record and explicitly share.",
-    sensitivity: "sensitive",
-  },
-  {
-    id: "safeguards",
-    label: "Safeguards",
-    description: "Selected support and safeguard information the user chooses to make available.",
-    sensitivity: "high",
-  },
-  {
-    id: "selected_reflections",
-    label: "Selected reflections",
-    description: "Only reflections the user deliberately selects for professional sharing. Private free text is never included by default.",
-    sensitivity: "high",
+    description: "Core values the user has chosen to record and explicitly share.",
+    sensitivity: "sensitive" as ProfessionalSensitivity,
   },
 ] as const
 
@@ -52,7 +42,18 @@ export function normaliseProfessionalShareScopes(values: unknown): ProfessionalS
   return [...new Set(values.filter(isProfessionalShareScope))]
 }
 
-// Nothing beyond high-level Journey progress is assumed to be shareable by default.
-// Every other category requires an explicit user action after a verified professional
-// relationship exists.
+// Only categories with an explicit, permission-scoped professional summary are
+// selectable. Safeguards and private reflections remain reserved for later work.
+export const PROFESSIONAL_REQUESTABLE_SCOPES: ProfessionalShareScope[] = [
+  "journey_progress",
+  "daily_checkins_summary",
+  "skills_practice",
+  "core_values",
+]
+
+export function normaliseRequestableProfessionalScopes(values: unknown): ProfessionalShareScope[] {
+  const requestable = new Set<string>(PROFESSIONAL_REQUESTABLE_SCOPES)
+  return normaliseProfessionalShareScopes(values).filter((scope) => requestable.has(scope))
+}
+
 export const DEFAULT_PROFESSIONAL_SHARE_SCOPES: ProfessionalShareScope[] = ["journey_progress"]

@@ -19,9 +19,11 @@ const protectedRoutes = [
   "/journey",
   "/share-journey",
   "/privacy",
+  "/professional",
+  "/connect",
 ]
 
-const authRoutes = ["/auth/signin", "/auth/signup"]
+const authRoutes = ["/auth/signin", "/auth/signup", "/auth/professional-signup"]
 
 function matchesRoute(pathname: string, route: string) {
   return pathname === route || pathname.startsWith(`${route}/`)
@@ -54,17 +56,14 @@ export async function proxy(request: NextRequest) {
       const payloadUserId = verified.payload.userId
 
       if (typeof payloadUserId === "string" && payloadUserId.length > 0) {
-        const userCheck = await sql`
-          SELECT id FROM users WHERE id = ${payloadUserId} LIMIT 1
-        `
-
+        const userCheck = await sql`SELECT id FROM users WHERE id = ${payloadUserId} LIMIT 1`
         if (userCheck.length > 0) {
           userId = payloadUserId
           isAuthenticated = true
           invalidSession = false
         }
       }
-    } catch (error) {
+    } catch {
       console.warn("[waypoint] Session verification failed")
     }
   } else if (sessionCookie && !jwtKey) {
@@ -73,35 +72,34 @@ export async function proxy(request: NextRequest) {
 
   if (isProtectedPath(pathname) && !isAuthenticated) {
     const signInUrl = new URL("/auth/signin", request.url)
-    signInUrl.searchParams.set("from", pathname)
+    signInUrl.searchParams.set("from", `${pathname}${request.nextUrl.search}`)
     const response = NextResponse.redirect(signInUrl)
     return invalidSession ? clearSession(response) : response
   }
 
   if (isAuthenticated && userId && isProtectedPath(pathname) && !matchesRoute(pathname, "/onboarding")) {
     try {
-      const result = await sql`
-        SELECT onboarding_completed
-        FROM user_profiles
-        WHERE user_id = ${userId}
-        LIMIT 1
-      `
-
-      if (result.length === 0) {
-        return clearSession(NextResponse.redirect(new URL("/auth/signin", request.url)))
-      }
-
-      if (!result[0]?.onboarding_completed) {
-        return NextResponse.redirect(new URL("/onboarding", request.url))
+      if (matchesRoute(pathname, "/professional")) {
+        const professional = await sql`SELECT id FROM professional_accounts WHERE user_id = ${userId} LIMIT 1`
+        if (professional.length === 0) return NextResponse.redirect(new URL("/dashboard", request.url))
+      } else {
+        const result = await sql`SELECT onboarding_completed FROM user_profiles WHERE user_id = ${userId} LIMIT 1`
+        if (result.length === 0) return clearSession(NextResponse.redirect(new URL("/auth/signin", request.url)))
+        if (!result[0]?.onboarding_completed) return NextResponse.redirect(new URL("/onboarding", request.url))
       }
     } catch (error) {
-      console.error("[waypoint] Unable to verify onboarding status")
+      console.error("[waypoint] Unable to verify route access", error)
       return clearSession(NextResponse.redirect(new URL("/auth/signin", request.url)))
     }
   }
 
-  if (isAuthPath(pathname) && isAuthenticated) {
-    return NextResponse.redirect(new URL("/dashboard", request.url))
+  if (isAuthPath(pathname) && isAuthenticated && userId) {
+    try {
+      const professional = await sql`SELECT id FROM professional_accounts WHERE user_id = ${userId} LIMIT 1`
+      return NextResponse.redirect(new URL(professional.length > 0 ? "/professional" : "/dashboard", request.url))
+    } catch {
+      return NextResponse.redirect(new URL("/dashboard", request.url))
+    }
   }
 
   const response = NextResponse.next()
@@ -109,7 +107,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$|api).*)",
-  ],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$|api).*)"],
 }
