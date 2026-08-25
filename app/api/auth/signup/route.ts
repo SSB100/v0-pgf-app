@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 import { createUser, getUserByEmail } from "@/lib/auth"
 import { encrypt } from "@/lib/session"
-import { sql } from "@/lib/db"
+import { dbColumnExists, sql } from "@/lib/db"
 import { getAotearoaDateKey } from "@/lib/aotearoa-date"
 import { governanceTableExists, recordConsentEvent } from "@/lib/governance"
 
@@ -30,6 +30,15 @@ function calculateAge(dateOfBirth: string) {
   }
 
   return age
+}
+
+function ageBandForAge(age: number) {
+  if (age <= 24) return "18-24"
+  if (age <= 34) return "25-34"
+  if (age <= 44) return "35-44"
+  if (age <= 54) return "45-54"
+  if (age <= 64) return "55-64"
+  return "65+"
 }
 
 export async function POST(request: NextRequest) {
@@ -72,19 +81,40 @@ export async function POST(request: NextRequest) {
 
     const user = await createUser(email, password, fullName || undefined)
     const now = new Date().toISOString()
+    const ageMinimisationReady = await dbColumnExists("users", "age_verified_18_plus")
 
-    await sql`
-      UPDATE users
-      SET
-        data_consent = ${dataConsent},
-        data_consent_date = ${now},
-        terms_accepted = true,
-        terms_accepted_date = ${now},
-        date_of_birth = ${dateOfBirth},
-        country = ${country || null},
-        gender = ${gender || null}
-      WHERE id = ${user.id}
-    `
+    if (ageMinimisationReady) {
+      await sql`
+        UPDATE users
+        SET
+          data_consent = ${dataConsent},
+          data_consent_date = ${now},
+          terms_accepted = true,
+          terms_accepted_date = ${now},
+          date_of_birth = NULL,
+          age_verified_18_plus = true,
+          age_verified_at = ${now},
+          age_band = ${ageBandForAge(age)},
+          country = ${country || null},
+          gender = ${gender || null}
+        WHERE id = ${user.id}
+      `
+    } else {
+      // Compatibility path until migration 020 is applied. The controlled
+      // migration enables new signups to stop retaining exact DOB.
+      await sql`
+        UPDATE users
+        SET
+          data_consent = ${dataConsent},
+          data_consent_date = ${now},
+          terms_accepted = true,
+          terms_accepted_date = ${now},
+          date_of_birth = ${dateOfBirth},
+          country = ${country || null},
+          gender = ${gender || null}
+        WHERE id = ${user.id}
+      `
+    }
 
     // Governance logging is additive during the migration period so environments
     // without migration 020 continue to work. Before a formal pilot, account
