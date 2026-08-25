@@ -1,8 +1,13 @@
-import { type NextRequest, NextResponse } from "next/server"
+import { NextResponse } from "next/server"
+import type { NextRequest } from "next/server"
 import { createUser, getUserByEmail } from "@/lib/auth"
 import { encrypt } from "@/lib/session"
 import { sql } from "@/lib/db"
 import { getAotearoaDateKey } from "@/lib/aotearoa-date"
+import { governanceTableExists, recordConsentEvent } from "@/lib/governance"
+
+const TERMS_VERSION = "0.3"
+const PRIVACY_POLICY_VERSION = "0.1"
 
 function calculateAge(dateOfBirth: string) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dateOfBirth)) return null
@@ -48,7 +53,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (!termsAccepted) {
-      return NextResponse.json({ error: "You must accept the terms and conditions" }, { status: 400 })
+      return NextResponse.json({ error: "You must accept the terms and acknowledge the privacy notice" }, { status: 400 })
     }
 
     const age = calculateAge(dateOfBirth)
@@ -72,7 +77,7 @@ export async function POST(request: NextRequest) {
       UPDATE users
       SET
         data_consent = ${dataConsent},
-        data_consent_date = ${dataConsent ? now : null},
+        data_consent_date = ${now},
         terms_accepted = true,
         terms_accepted_date = ${now},
         date_of_birth = ${dateOfBirth},
@@ -80,6 +85,35 @@ export async function POST(request: NextRequest) {
         gender = ${gender || null}
       WHERE id = ${user.id}
     `
+
+    // Governance logging is additive during the migration period so environments
+    // without migration 020 continue to work. Before a formal pilot, account
+    // creation and required governance records should be made transactional.
+    try {
+      if (await governanceTableExists("policy_acceptances")) {
+        await sql`
+          INSERT INTO policy_acceptances (user_id, policy_type, policy_version, action, occurred_at, metadata)
+          VALUES
+            (${user.id}, 'terms', ${TERMS_VERSION}, 'accepted', ${now}, '{"source":"signup"}'::jsonb),
+            (${user.id}, 'privacy_policy', ${PRIVACY_POLICY_VERSION}, 'accepted', ${now}, '{"source":"signup","acknowledgement":true}'::jsonb)
+        `
+      }
+
+      await recordConsentEvent({
+        subjectUserId: user.id,
+        actorUserId: user.id,
+        consentType: "future_research_interest",
+        action: dataConsent ? "granted" : "declined",
+        documentVersion: "future-research-interest-v1",
+        scope: {},
+        metadata: {
+          formalResearchConsent: false,
+          source: "signup",
+        },
+      })
+    } catch (governanceError) {
+      console.warn("[waypoint] Account created but governance history could not be recorded", governanceError)
+    }
 
     const token = await encrypt({ userId: user.id })
     const response = NextResponse.json({
