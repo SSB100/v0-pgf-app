@@ -98,16 +98,17 @@ export async function GET(request: NextRequest, context: { params: Promise<{ lin
       const totals = await sql`
         SELECT
           COUNT(*)::int AS completed_skills,
-          COUNT(*) FILTER (WHERE was_helpful = TRUE)::int AS found_helpful,
-          MAX(completed_at) AS latest_completion
-        FROM skills_completed
+          COUNT(*) FILTER (WHERE effectiveness_rating >= 4)::int AS found_helpful,
+          ROUND(AVG(effectiveness_rating)::numeric, 1) AS average_effectiveness,
+          MAX(practiced_at) AS latest_completion
+        FROM skills_practice
         WHERE user_id = ${connection.client_user_id}
       `
       const recent = await sql`
-        SELECT skill_slug, was_helpful, completed_at
-        FROM skills_completed
+        SELECT skill_name, skill_category, effectiveness_rating, practiced_at
+        FROM skills_practice
         WHERE user_id = ${connection.client_user_id}
-        ORDER BY completed_at DESC
+        ORDER BY practiced_at DESC
         LIMIT 8
       `
       response.skillsPractice = { ...(totals[0] ?? {}), recentSkills: recent }
