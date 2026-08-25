@@ -21,17 +21,10 @@ export async function PATCH(request: NextRequest) {
       (await governanceTableExists("professional_accounts")) &&
       (await governanceTableExists("sharing_grants"))
 
-    if (!ready) {
-      return NextResponse.json(
-        { error: "Professional sharing has not been activated on this environment." },
-        { status: 503 },
-      )
-    }
+    if (!ready) return NextResponse.json({ error: "Professional sharing has not been activated on this environment." }, { status: 503 })
 
     const body = await request.json()
-    if (!looksLikeUuid(body.linkId)) {
-      return NextResponse.json({ error: "Invalid professional connection" }, { status: 400 })
-    }
+    if (!looksLikeUuid(body.linkId)) return NextResponse.json({ error: "Invalid professional connection" }, { status: 400 })
 
     const scopes = normaliseProfessionalShareScopes(body.scopes)
     if (!Array.isArray(body.scopes) || scopes.length !== body.scopes.length) {
@@ -42,6 +35,7 @@ export async function PATCH(request: NextRequest) {
       SELECT
         l.id,
         l.status,
+        p.organisation_id,
         p.verification_status AS professional_verification_status,
         o.verification_status AS organisation_verification_status
       FROM client_professional_links l
@@ -54,13 +48,13 @@ export async function PATCH(request: NextRequest) {
 
     const link = linkRows[0]
     if (!link) return NextResponse.json({ error: "Professional connection not found" }, { status: 404 })
-    if (link.status !== "active") {
-      return NextResponse.json({ error: "Sharing can only be changed for an active professional connection" }, { status: 409 })
+    if (!['active', 'paused'].includes(link.status)) {
+      return NextResponse.json({ error: "Sharing cannot be changed for an ended professional connection" }, { status: 409 })
     }
     if (link.professional_verification_status !== "verified") {
       return NextResponse.json({ error: "This professional is not currently verified for data access" }, { status: 409 })
     }
-    if (link.organisation_verification_status && link.organisation_verification_status !== "verified") {
+    if (!link.organisation_id || link.organisation_verification_status !== "verified") {
       return NextResponse.json({ error: "This professional's organisation is not currently verified for data access" }, { status: 409 })
     }
 
@@ -78,23 +72,11 @@ export async function PATCH(request: NextRequest) {
     `
 
     await sql`
-      INSERT INTO sharing_grants (
-        link_id,
-        data_scope,
-        status,
-        consent_version,
-        granted_at
-      )
-      SELECT
-        ${body.linkId},
-        selected.scope,
-        'active',
-        ${PROFESSIONAL_SHARING_CONSENT_VERSION},
-        CURRENT_TIMESTAMP
+      INSERT INTO sharing_grants (link_id, data_scope, status, consent_version, granted_at)
+      SELECT ${body.linkId}, selected.scope, 'active', ${PROFESSIONAL_SHARING_CONSENT_VERSION}, CURRENT_TIMESTAMP
       FROM jsonb_array_elements_text(${selectedScopesJson}::jsonb) AS selected(scope)
       WHERE NOT EXISTS (
-        SELECT 1
-        FROM sharing_grants existing
+        SELECT 1 FROM sharing_grants existing
         WHERE existing.link_id = ${body.linkId}
           AND existing.data_scope = selected.scope
           AND existing.status = 'active'
@@ -108,16 +90,12 @@ export async function PATCH(request: NextRequest) {
       action: "updated",
       targetType: "client_professional_link",
       targetId: body.linkId,
-      scope: { scopes },
+      scope: { scopes, connectionStatus: link.status },
       documentVersion: PROFESSIONAL_SHARING_CONSENT_VERSION,
       metadata: { source: "privacy_centre" },
     })
 
-    return NextResponse.json({
-      linkId: body.linkId,
-      scopes,
-      consentVersion: PROFESSIONAL_SHARING_CONSENT_VERSION,
-    })
+    return NextResponse.json({ linkId: body.linkId, scopes, consentVersion: PROFESSIONAL_SHARING_CONSENT_VERSION })
   } catch (error) {
     console.error("[waypoint] Unable to update professional sharing", error)
     return NextResponse.json({ error: "Unable to update sharing permissions" }, { status: 500 })
