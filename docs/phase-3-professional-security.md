@@ -62,6 +62,8 @@ If a professional loses both their authenticator and recovery codes, Waypoint do
 
 Before professional MFA is used in a live environment, configure a high-entropy `MFA_ENCRYPTION_KEY` in the hosting environment. Use a unique secret for Waypoint production and separate values for non-production environments.
 
+Environment-variable changes must be followed by a fresh deployment so the new deployment receives the current secret configuration. Professional registration fails safely before creating an account when the MFA encryption secret is unavailable.
+
 ## Automated security policy tests
 
 `pnpm test` runs Node's built-in test runner against the pure access-policy module. The initial tests assert that:
