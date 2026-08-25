@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { getSession } from "@/lib/session"
-import { sql } from "@/lib/db"
+import { dbColumnExists, sql } from "@/lib/db"
 import { governanceTableExists } from "@/lib/governance"
 
 export async function GET() {
@@ -8,26 +8,62 @@ export async function GET() {
     const user = await getSession()
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-    const accountRows = await sql`
-      SELECT
-        created_at,
-        data_consent,
-        data_consent_date,
-        terms_accepted,
-        terms_accepted_date,
-        date_of_birth,
-        country,
-        gender
-      FROM users
-      WHERE id = ${user.id}
-      LIMIT 1
-    `
+    const [
+      ageMinimisationReady,
+      linksReady,
+      professionalsReady,
+      grantsReady,
+      auditReady,
+      policyReady,
+      privacyRequestsReady,
+    ] = await Promise.all([
+      dbColumnExists("users", "age_verified_18_plus"),
+      governanceTableExists("client_professional_links"),
+      governanceTableExists("professional_accounts"),
+      governanceTableExists("sharing_grants"),
+      governanceTableExists("access_audit_events"),
+      governanceTableExists("policy_acceptances"),
+      governanceTableExists("privacy_requests"),
+    ])
+
+    const accountRows = ageMinimisationReady
+      ? await sql`
+          SELECT
+            created_at,
+            data_consent,
+            data_consent_date,
+            terms_accepted,
+            terms_accepted_date,
+            date_of_birth,
+            age_verified_18_plus,
+            age_verified_at,
+            age_band,
+            country,
+            gender
+          FROM users
+          WHERE id = ${user.id}
+          LIMIT 1
+        `
+      : await sql`
+          SELECT
+            created_at,
+            data_consent,
+            data_consent_date,
+            terms_accepted,
+            terms_accepted_date,
+            date_of_birth,
+            NULL::boolean AS age_verified_18_plus,
+            NULL::timestamp AS age_verified_at,
+            NULL::varchar AS age_band,
+            country,
+            gender
+          FROM users
+          WHERE id = ${user.id}
+          LIMIT 1
+        `
 
     const account = accountRows[0] ?? {}
-    const sharingInfrastructureReady =
-      (await governanceTableExists("client_professional_links")) &&
-      (await governanceTableExists("professional_accounts")) &&
-      (await governanceTableExists("sharing_grants"))
+    const sharingInfrastructureReady = linksReady && professionalsReady && grantsReady
 
     let connections: any[] = []
     let accessHistory: any[] = []
@@ -72,7 +108,7 @@ export async function GET() {
       `
     }
 
-    if (await governanceTableExists("access_audit_events")) {
+    if (auditReady) {
       accessHistory = await sql`
         SELECT
           a.id,
@@ -91,7 +127,7 @@ export async function GET() {
       `
     }
 
-    if (await governanceTableExists("policy_acceptances")) {
+    if (policyReady) {
       policyHistory = await sql`
         SELECT policy_type, policy_version, action, occurred_at
         FROM policy_acceptances
@@ -105,6 +141,10 @@ export async function GET() {
       account: {
         createdAt: account.created_at ?? null,
         exactDateOfBirthStored: Boolean(account.date_of_birth),
+        ageMinimisationReady,
+        ageVerified18Plus: account.age_verified_18_plus === true,
+        ageVerifiedAt: account.age_verified_at ?? null,
+        ageBand: account.age_band ?? null,
         countryStored: Boolean(account.country),
         genderStored: Boolean(account.gender),
         termsAccepted: account.terms_accepted === true,
@@ -116,6 +156,7 @@ export async function GET() {
         formalResearchConsent: false,
       },
       sharingInfrastructureReady,
+      privacyRequestsReady,
       connections,
       accessHistory,
       policyHistory,
