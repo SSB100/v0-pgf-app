@@ -17,7 +17,7 @@ export async function GET() {
         l.accepted_at,
         u.full_name AS client_name,
         COALESCE(
-          json_agg(g.data_scope ORDER BY g.data_scope) FILTER (WHERE g.id IS NOT NULL AND g.status = 'active'),
+          json_agg(DISTINCT g.data_scope) FILTER (WHERE g.id IS NOT NULL AND g.status = 'active'),
           '[]'::json
         ) AS shared_scopes,
         MAX(d.date) AS latest_checkin_date,
