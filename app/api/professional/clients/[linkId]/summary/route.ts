@@ -3,6 +3,11 @@ import { sql } from "@/lib/db"
 import { recordAccessAuditEvent } from "@/lib/governance"
 import { getProfessionalSession, looksLikeUuid, professionalCanAccessClientData } from "@/lib/professional-access"
 import { normaliseProfessionalShareScopes, type ProfessionalShareScope } from "@/lib/sharing-policy"
+import {
+  PROFESSIONAL_SUMMARY_BOUNDARY,
+  PROFESSIONAL_SUMMARY_SCHEMA_VERSION,
+  sanitizeProfessionalSummarySection,
+} from "@/lib/clinician-summary-policy.mjs"
 
 const ALLOWED_WINDOWS = new Set([7, 14, 30])
 
@@ -47,11 +52,12 @@ export async function GET(request: NextRequest, context: { params: Promise<{ lin
     const authorisedScopes = normaliseProfessionalShareScopes(connection.shared_scopes)
     const scopes = new Set<ProfessionalShareScope>(authorisedScopes)
     const response: Record<string, unknown> = {
+      summarySchemaVersion: PROFESSIONAL_SUMMARY_SCHEMA_VERSION,
       client: { name: connection.client_name, connectedAt: connection.accepted_at },
-      windowDays: days,
       generatedAt: new Date().toISOString(),
       sharedScopes: authorisedScopes,
-      monitoringNotice: "This is a user-authorised summary for later review. Waypoint is not continuously monitored and does not generate a clinical risk score.",
+      dataBoundary: PROFESSIONAL_SUMMARY_BOUNDARY,
+      monitoringNotice: "This is a user-authorised summary for later review. Waypoint is not continuously monitored, does not replace clinical assessment, and does not generate a clinical risk score.",
     }
 
     if (scopes.has("daily_checkins_summary")) {
@@ -75,7 +81,11 @@ export async function GET(request: NextRequest, context: { params: Promise<{ lin
           AND date >= CURRENT_DATE - (${days - 1} * INTERVAL '1 day')
         ORDER BY date ASC
       `
-      response.dailyCheckins = { summary: checkins[0] ?? {}, trend: recent }
+      response.dailyCheckins = sanitizeProfessionalSummarySection("daily_checkins_summary", {
+        period: { basis: "rolling_days", days },
+        summary: checkins[0] ?? {},
+        trend: recent,
+      })
     }
 
     if (scopes.has("journey_progress")) {
@@ -85,43 +95,55 @@ export async function GET(request: NextRequest, context: { params: Promise<{ lin
         WHERE user_id = ${connection.client_user_id}
       `
       const recent = await sql`
-        SELECT module_slug, module_name, completed_at
+        SELECT module_slug, module_name, completed_at, content_version
         FROM journey_completions
         WHERE user_id = ${connection.client_user_id}
         ORDER BY completed_at DESC
         LIMIT 8
       `
-      response.journeyProgress = { ...(totals[0] ?? {}), recentModules: recent }
+      response.journeyProgress = sanitizeProfessionalSummarySection("journey_progress", {
+        period: { basis: "all_time" },
+        ...(totals[0] ?? {}),
+        recentModules: recent,
+      })
     }
 
     if (scopes.has("skills_practice")) {
       const totals = await sql`
         SELECT
-          COUNT(*)::int AS completed_skills,
-          COUNT(*) FILTER (WHERE effectiveness_rating >= 4)::int AS found_helpful,
+          COUNT(*)::int AS practice_count,
+          COUNT(*) FILTER (WHERE COALESCE(was_helpful, effectiveness_rating >= 4, FALSE))::int AS helpful_count,
           ROUND(AVG(effectiveness_rating)::numeric, 1) AS average_effectiveness,
-          MAX(practiced_at) AS latest_completion
+          MAX(practiced_at) AS latest_practice
         FROM skills_practice
         WHERE user_id = ${connection.client_user_id}
       `
       const recent = await sql`
-        SELECT skill_name, skill_category, effectiveness_rating, practiced_at
+        SELECT skill_name, skill_category, effectiveness_rating, was_helpful, practiced_at, content_version
         FROM skills_practice
         WHERE user_id = ${connection.client_user_id}
         ORDER BY practiced_at DESC
         LIMIT 8
       `
-      response.skillsPractice = { ...(totals[0] ?? {}), recentSkills: recent }
+      response.skillsPractice = sanitizeProfessionalSummarySection("skills_practice", {
+        period: { basis: "all_time" },
+        ...(totals[0] ?? {}),
+        recentSkills: recent,
+      })
     }
 
     if (scopes.has("core_values")) {
-      response.coreValues = await sql`
+      const values = await sql`
         SELECT value_name, category, rank
         FROM user_values
         WHERE user_id = ${connection.client_user_id}
           AND is_core_value = TRUE
         ORDER BY rank NULLS LAST, created_at ASC
       `
+      response.coreValues = sanitizeProfessionalSummarySection("core_values", {
+        period: { basis: "current" },
+        values,
+      })
     }
 
     await recordAccessAuditEvent({
@@ -132,7 +154,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ lin
       eventType: "professional_summary_view",
       resourceScope: authorisedScopes.join(","),
       purpose: "clinical_support",
-      metadata: { linkId, days, mfaVerified: true },
+      metadata: { linkId, days, mfaVerified: true, summarySchemaVersion: PROFESSIONAL_SUMMARY_SCHEMA_VERSION },
     })
 
     return NextResponse.json(response, { headers: { "Cache-Control": "private, no-store, max-age=0" } })
