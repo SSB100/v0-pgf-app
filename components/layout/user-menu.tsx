@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { LogOut, LayoutDashboard, Settings } from "lucide-react"
+import { LogOut, LayoutDashboard, Settings, ShieldCheck } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -68,6 +68,10 @@ export default function UserMenu({ userName, userEmail }: UserMenuProps) {
         <DropdownMenuItem onClick={() => router.push("/settings")} className="cursor-pointer">
           <Settings className="mr-2 h-4 w-4" />
           <span>Settings</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => router.push("/privacy")} className="cursor-pointer">
+          <ShieldCheck className="mr-2 h-4 w-4" />
+          <span>Privacy &amp; Sharing</span>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleSignOut} disabled={isLoading} className="cursor-pointer text-destructive">

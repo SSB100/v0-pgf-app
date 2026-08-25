@@ -23,3 +23,16 @@ function getDb() {
 export const sql: SqlTag = (strings, ...values) => {
   return getDb()(strings, ...values) as Promise<SqlRow[]>
 }
+
+export async function dbColumnExists(tableName: string, columnName: string) {
+  const result = await sql`
+    SELECT EXISTS (
+      SELECT 1
+      FROM information_schema.columns
+      WHERE table_schema = 'public'
+        AND table_name = ${tableName}
+        AND column_name = ${columnName}
+    ) AS column_exists
+  `
+  return result[0]?.column_exists === true
+}

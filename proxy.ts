@@ -18,6 +18,7 @@ const protectedRoutes = [
   "/safeguards",
   "/journey",
   "/share-journey",
+  "/privacy",
 ]
 
 const authRoutes = ["/auth/signin", "/auth/signup"]
