@@ -91,6 +91,10 @@ Migration 022 is validated on an isolated Neon branch with disposable records. T
 
 The migration remains isolated from production until explicit approval is given and production verification is completed.
 
+## Deployment validation
+
+After the hosting MFA secret is configured, a fresh preview deployment is required before merge so the Phase 3 runtime is deployed with the current environment configuration. The final deployment must also pass the existing Next.js build checks.
+
 ## Deliberate remaining boundaries
 
 Phase 3 does not claim the professional portal is ready for a clinical pilot by itself. The following remain required before live pilot use:
