@@ -32,6 +32,8 @@ There is no public professional-verification endpoint. A Waypoint administrator 
 
 Every privileged action is recorded in the administrative audit trail and professional verification history. Verification, suspension, offboarding and MFA reset state changes are committed atomically with their audit records.
 
+Professional verification also invalidates the pre-verification session so newly granted privileges require a fresh MFA-backed sign-in. A suspended organisation cannot be silently reactivated by verifying an individual professional against it.
+
 ## Suspension
 
 Suspension immediately:
