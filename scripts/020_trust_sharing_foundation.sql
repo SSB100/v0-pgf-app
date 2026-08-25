@@ -5,6 +5,40 @@
 -- public migration endpoint. Apply it through a controlled deployment/admin
 -- process and verify it in staging before any pilot or production rollout.
 
+-- Data-minimisation fields for the adult-only MVP. New signups can retain an
+-- age-verification result and broad age band rather than an exact birthday.
+-- Existing exact DOB values are not automatically deleted by this migration;
+-- their controlled cleanup should follow a reviewed retention decision.
+ALTER TABLE users
+  ADD COLUMN IF NOT EXISTS age_verified_18_plus BOOLEAN DEFAULT FALSE,
+  ADD COLUMN IF NOT EXISTS age_verified_at TIMESTAMP,
+  ADD COLUMN IF NOT EXISTS age_band VARCHAR(20);
+
+UPDATE users
+SET
+  age_verified_18_plus = CASE
+    WHEN date_of_birth IS NOT NULL THEN date_of_birth <= (CURRENT_DATE - INTERVAL '18 years')
+    ELSE age_verified_18_plus
+  END,
+  age_verified_at = CASE
+    WHEN date_of_birth IS NOT NULL THEN COALESCE(age_verified_at, created_at, CURRENT_TIMESTAMP)
+    ELSE age_verified_at
+  END,
+  age_band = COALESCE(
+    age_band,
+    CASE
+      WHEN date_of_birth IS NULL THEN NULL
+      WHEN EXTRACT(YEAR FROM age(CURRENT_DATE, date_of_birth)) BETWEEN 18 AND 24 THEN '18-24'
+      WHEN EXTRACT(YEAR FROM age(CURRENT_DATE, date_of_birth)) BETWEEN 25 AND 34 THEN '25-34'
+      WHEN EXTRACT(YEAR FROM age(CURRENT_DATE, date_of_birth)) BETWEEN 35 AND 44 THEN '35-44'
+      WHEN EXTRACT(YEAR FROM age(CURRENT_DATE, date_of_birth)) BETWEEN 45 AND 54 THEN '45-54'
+      WHEN EXTRACT(YEAR FROM age(CURRENT_DATE, date_of_birth)) BETWEEN 55 AND 64 THEN '55-64'
+      WHEN EXTRACT(YEAR FROM age(CURRENT_DATE, date_of_birth)) >= 65 THEN '65+'
+      ELSE NULL
+    END
+  )
+WHERE date_of_birth IS NOT NULL;
+
 CREATE TABLE IF NOT EXISTS organisations (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name VARCHAR(255) NOT NULL,
