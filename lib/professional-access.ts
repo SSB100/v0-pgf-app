@@ -57,9 +57,9 @@ export async function getProfessionalAccountForUser(userId: string): Promise<Pro
 }
 
 export function professionalCanAccessClientData(professional: ProfessionalAccount) {
-  if (professional.verification_status !== "verified") return false
-  if (professional.organisation_id && professional.organisation_verification_status !== "verified") return false
-  return true
+  return professional.verification_status === "verified"
+    && Boolean(professional.organisation_id)
+    && professional.organisation_verification_status === "verified"
 }
 
 export async function getProfessionalSession() {
