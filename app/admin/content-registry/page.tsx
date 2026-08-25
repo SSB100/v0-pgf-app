@@ -47,23 +47,28 @@ export default async function AdminContentRegistryPage() {
             <p className="mt-1 text-sm text-muted-foreground">Guidelines, method sources and internal provenance used to explain where the content comes from.</p>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
-            {evidenceSources.map((source) => (
-              <article key={source.id} className="rounded-xl border bg-card p-5 shadow-sm">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-primary">{source.sourceType.replaceAll("_", " ")}</p>
-                    <h3 className="mt-1 font-semibold">{source.title}</h3>
+            {evidenceSources.map((source) => {
+              const sourceUrl = "url" in source ? source.url : null
+              const sourcePath = "sourcePath" in source ? source.sourcePath : null
+              return (
+                <article key={source.id} className="rounded-xl border bg-card p-5 shadow-sm">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-primary">{source.sourceType.replaceAll("_", " ")}</p>
+                      <h3 className="mt-1 font-semibold">{source.title}</h3>
+                    </div>
+                    {sourceUrl ? (
+                      <a href={sourceUrl} target="_blank" rel="noreferrer" aria-label={`Open source for ${source.title}`} className="text-muted-foreground hover:text-foreground">
+                        <ExternalLink className="size-4" />
+                      </a>
+                    ) : null}
                   </div>
-                  {source.url ? (
-                    <a href={source.url} target="_blank" rel="noreferrer" aria-label={`Open source for ${source.title}`} className="text-muted-foreground hover:text-foreground">
-                      <ExternalLink className="size-4" />
-                    </a>
-                  ) : null}
-                </div>
-                <p className="mt-3 text-sm leading-6 text-muted-foreground">{source.citation}</p>
-                <p className="mt-3 text-sm leading-6">{source.note}</p>
-              </article>
-            ))}
+                  <p className="mt-3 text-sm leading-6 text-muted-foreground">{source.citation}</p>
+                  {sourcePath ? <p className="mt-2 font-mono text-xs text-muted-foreground">{sourcePath}</p> : null}
+                  <p className="mt-3 text-sm leading-6">{source.note}</p>
+                </article>
+              )
+            })}
           </div>
         </section>
 
