@@ -3,6 +3,7 @@ import { getSession } from "@/lib/session"
 import { sql } from "@/lib/db"
 import { recordAccessAuditEvent, recordConsentEvent } from "@/lib/governance"
 import { looksLikeUuid } from "@/lib/professional-access"
+import { hasCurrentProfessionalAffiliation } from "@/lib/organisation-lifecycle-policy.mjs"
 import { PROFESSIONAL_SHARING_CONSENT_VERSION } from "@/lib/sharing-policy"
 
 export async function PATCH(request: NextRequest) {
@@ -23,10 +24,15 @@ export async function PATCH(request: NextRequest) {
         l.professional_account_id,
         p.organisation_id,
         p.verification_status AS professional_verification_status,
-        o.verification_status AS organisation_verification_status
+        o.verification_status AS organisation_verification_status,
+        om.status AS membership_status
       FROM client_professional_links l
       JOIN professional_accounts p ON p.id = l.professional_account_id
       LEFT JOIN organisations o ON o.id = p.organisation_id
+      LEFT JOIN organisation_memberships om
+        ON om.professional_account_id = p.id
+        AND om.organisation_id = p.organisation_id
+        AND om.status IN ('active', 'suspended')
       WHERE l.id = ${body.linkId}
         AND l.client_user_id = ${user.id}
       LIMIT 1
@@ -41,14 +47,19 @@ export async function PATCH(request: NextRequest) {
 
     if (action === "resume") {
       if (link.status !== "paused") return NextResponse.json({ error: "Only a paused connection can be resumed" }, { status: 409 })
-      if (link.professional_verification_status !== "verified" || !link.organisation_id || link.organisation_verification_status !== "verified") {
-        return NextResponse.json({ error: "This professional connection cannot be resumed until verification is current" }, { status: 409 })
+      if (!hasCurrentProfessionalAffiliation({
+        professionalStatus: link.professional_verification_status,
+        organisationId: link.organisation_id,
+        organisationStatus: link.organisation_verification_status,
+        membershipStatus: link.membership_status,
+      })) {
+        return NextResponse.json({ error: "This professional connection cannot be resumed until the professional's current organisation affiliation is verified" }, { status: 409 })
       }
       await sql`UPDATE client_professional_links SET status = 'active', updated_at = CURRENT_TIMESTAMP WHERE id = ${body.linkId}`
     }
 
     if (action === "end") {
-      if (!['active', 'paused'].includes(link.status)) return NextResponse.json({ error: "This connection has already ended" }, { status: 409 })
+      if (!["active", "paused"].includes(link.status)) return NextResponse.json({ error: "This connection has already ended" }, { status: 409 })
       await sql`
         UPDATE client_professional_links
         SET status = 'ended', ended_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
@@ -68,9 +79,12 @@ export async function PATCH(request: NextRequest) {
       action: action === "end" ? "revoked" : "updated",
       targetType: "client_professional_link",
       targetId: body.linkId,
-      scope: { connectionStatus: action === "pause" ? "paused" : action === "resume" ? "active" : "ended" },
+      scope: {
+        connectionStatus: action === "pause" ? "paused" : action === "resume" ? "active" : "ended",
+        organisationId: link.organisation_id,
+      },
       documentVersion: PROFESSIONAL_SHARING_CONSENT_VERSION,
-      metadata: { source: "privacy_centre", action },
+      metadata: { source: "privacy_centre", action, organisationId: link.organisation_id },
     })
 
     await recordAccessAuditEvent({
@@ -81,7 +95,7 @@ export async function PATCH(request: NextRequest) {
       eventType: `professional_connection_${action}`,
       resourceScope: "connection",
       purpose: "user_privacy_control",
-      metadata: { linkId: body.linkId },
+      metadata: { linkId: body.linkId, organisationId: link.organisation_id },
     })
 
     return NextResponse.json({ success: true, status: action === "pause" ? "paused" : action === "resume" ? "active" : "ended" })

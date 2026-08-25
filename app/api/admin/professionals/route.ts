@@ -3,6 +3,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { dbTableExists, dbTransaction, sql } from "@/lib/db"
 import { getAdminSession } from "@/lib/admin-access"
 import { looksLikeUuid } from "@/lib/professional-access"
+import { isOrganisationAffiliationTransfer } from "@/lib/organisation-lifecycle-policy.mjs"
 import { validateVerificationEvidence } from "@/lib/professional-verification-policy.mjs"
 
 export const runtime = "nodejs"
@@ -165,6 +166,10 @@ export async function PATCH(request: NextRequest) {
 
       const organisationId = (existingOrganisation?.id as string | undefined) ?? randomUUID()
       const organisationWasExisting = Boolean(existingOrganisation)
+      const organisationTransfer = isOrganisationAffiliationTransfer({
+        currentOrganisationId: openMembership?.organisation_id ?? null,
+        nextOrganisationId: organisationId,
+      })
       const sameOpenMembership = openMembership?.organisation_id === organisationId ? openMembership : null
       const membershipId = (sameOpenMembership?.id as string | undefined) ?? randomUUID()
       const membershipAction = sameOpenMembership?.status === "suspended" ? "reactivated" : sameOpenMembership ? "verified" : "created"
@@ -172,6 +177,8 @@ export async function PATCH(request: NextRequest) {
         source: "admin_portal",
         organisationId,
         membershipId,
+        previousOrganisationId: organisationTransfer ? openMembership?.organisation_id : null,
+        consentContextReset: organisationTransfer,
         verification: verificationEvidence,
       }
       const verificationMetadataJson = JSON.stringify(verificationMetadata)
@@ -195,7 +202,13 @@ export async function PATCH(request: NextRequest) {
               `,
         ]
 
-        if (openMembership && openMembership.organisation_id !== organisationId) {
+        if (organisationTransfer && openMembership) {
+          const transferMetadata = JSON.stringify({
+            source: "admin_portal",
+            previousOrganisationId: openMembership.organisation_id,
+            newOrganisationId: organisationId,
+            automaticAction: "connection_paused",
+          })
           queries.push(
             tx`
               UPDATE organisation_memberships
@@ -210,6 +223,41 @@ export async function PATCH(request: NextRequest) {
               ) VALUES (
                 ${openMembership.id}, ${professionalId}, ${openMembership.organisation_id}, ${admin.user.id},
                 'transferred', ${openMembership.status}, 'ended', ${verificationNote}, ${verificationMetadataJson}::jsonb
+              )
+            `,
+            tx`
+              UPDATE professional_invitations
+              SET status = 'revoked'
+              WHERE professional_account_id = ${professionalId} AND status = 'active'
+            `,
+            tx`
+              INSERT INTO access_audit_events (
+                subject_user_id, actor_user_id, professional_account_id, organisation_id,
+                event_type, resource_scope, purpose, metadata
+              )
+              SELECT
+                l.client_user_id, ${admin.user.id}, ${professionalId}, ${openMembership.organisation_id},
+                'professional_affiliation_changed', 'connection', 'user_privacy_control',
+                jsonb_build_object(
+                  'linkId', l.id,
+                  'previousOrganisationId', ${openMembership.organisation_id},
+                  'newOrganisationId', ${organisationId},
+                  'automaticAction', 'paused'
+                )
+              FROM client_professional_links l
+              WHERE l.professional_account_id = ${professionalId} AND l.status = 'active'
+            `,
+            tx`
+              UPDATE client_professional_links
+              SET status = 'paused', updated_at = CURRENT_TIMESTAMP
+              WHERE professional_account_id = ${professionalId} AND status = 'active'
+            `,
+            tx`
+              INSERT INTO administrative_audit_events (
+                actor_user_id, action, target_type, target_id, reason, metadata
+              ) VALUES (
+                ${admin.user.id}, 'professional_organisation_transferred', 'professional_account', ${professionalId},
+                ${verificationNote}, ${transferMetadata}::jsonb
               )
             `,
           )
