@@ -109,7 +109,10 @@ export async function PATCH(request: NextRequest) {
       currentStatus: organisation.verification_status,
       reason: body.reason,
     })
-    if (!validation.ok) return NextResponse.json({ error: validation.errors[0], lifecycleErrors: validation.errors }, { status: 400 })
+    const validationErrors = validation.errors ?? []
+    if (!validation.ok || !validation.value) {
+      return NextResponse.json({ error: validationErrors[0] || "Invalid organisation lifecycle action", lifecycleErrors: validationErrors }, { status: 400 })
+    }
 
     const { action, reason, policyVersion } = validation.value
     const metadataJson = JSON.stringify({
