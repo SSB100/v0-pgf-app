@@ -127,7 +127,7 @@ CREATE TABLE IF NOT EXISTS policy_acceptances (
   policy_type VARCHAR(80) NOT NULL,
   policy_version VARCHAR(80) NOT NULL,
   action VARCHAR(30) NOT NULL DEFAULT 'accepted'
-    CHECK (action IN ('accepted', 'withdrawn', 'superseded')),
+    CHECK (action IN ('accepted', 'acknowledged', 'withdrawn', 'superseded')),
   occurred_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
   CHECK (jsonb_typeof(metadata) = 'object')
@@ -166,9 +166,9 @@ CREATE INDEX IF NOT EXISTS idx_policy_acceptances_user
 CREATE INDEX IF NOT EXISTS idx_privacy_requests_user
   ON privacy_requests(user_id, requested_at DESC);
 
--- Preserve the meaning of existing signup data: this is a preference/interest
--- record, not formal study consent. Historical rows are copied into the new
--- append-only ledger only when a matching event is not already present.
+-- Preserve only affirmative historical research-interest signals. A legacy
+-- FALSE value may simply be the column default for an account created before
+-- the preference was shown, so it must not be rewritten as an explicit decline.
 INSERT INTO consent_events (
   subject_user_id,
   actor_user_id,
@@ -183,20 +183,24 @@ SELECT
   u.id,
   u.id,
   'future_research_interest',
-  CASE WHEN u.data_consent THEN 'granted' ELSE 'declined' END,
+  'granted',
   '{}'::jsonb,
   'legacy-signup-preference-v1',
   COALESCE(u.data_consent_date, u.created_at, CURRENT_TIMESTAMP),
   '{"source":"legacy_user_field","formal_research_consent":false}'::jsonb
 FROM users u
-WHERE NOT EXISTS (
-  SELECT 1
-  FROM consent_events ce
-  WHERE ce.subject_user_id = u.id
-    AND ce.consent_type = 'future_research_interest'
-    AND ce.document_version = 'legacy-signup-preference-v1'
-);
+WHERE u.data_consent = TRUE
+  AND NOT EXISTS (
+    SELECT 1
+    FROM consent_events ce
+    WHERE ce.subject_user_id = u.id
+      AND ce.consent_type = 'future_research_interest'
+      AND ce.document_version = 'legacy-signup-preference-v1'
+  );
 
+-- Historical users only have a boolean/timestamp, not the exact Terms version
+-- they saw. Record that honestly instead of claiming they accepted today's
+-- version. New signups are logged with explicit policy versions by the app.
 INSERT INTO policy_acceptances (
   user_id,
   policy_type,
@@ -208,10 +212,10 @@ INSERT INTO policy_acceptances (
 SELECT
   u.id,
   'terms',
-  '0.3',
+  'legacy-unversioned',
   'accepted',
   COALESCE(u.terms_accepted_date, u.created_at, CURRENT_TIMESTAMP),
-  '{"source":"legacy_user_field"}'::jsonb
+  '{"source":"legacy_user_field","exact_version_unknown":true}'::jsonb
 FROM users u
 WHERE u.terms_accepted = TRUE
   AND NOT EXISTS (
@@ -219,5 +223,5 @@ WHERE u.terms_accepted = TRUE
     FROM policy_acceptances pa
     WHERE pa.user_id = u.id
       AND pa.policy_type = 'terms'
-      AND pa.policy_version = '0.3'
+      AND pa.policy_version = 'legacy-unversioned'
   );
