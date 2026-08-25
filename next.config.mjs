@@ -32,6 +32,7 @@ const nextConfig = {
       { source: "/profile/:path*", headers: noStore },
       { source: "/settings/:path*", headers: noStore },
       { source: "/share-journey/:path*", headers: noStore },
+      { source: "/privacy/:path*", headers: noStore },
     ]
   },
 }
