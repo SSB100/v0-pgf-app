@@ -1,29 +1,31 @@
 export const PROFESSIONAL_SHARING_CONSENT_VERSION = "professional-sharing-v1"
 
+type ProfessionalSensitivity = "standard" | "sensitive" | "high"
+
 export const PROFESSIONAL_SHARE_SCOPES = [
   {
     id: "journey_progress",
     label: "Journey progress",
     description: "Modules completed and overall learning progress.",
-    sensitivity: "standard",
+    sensitivity: "standard" as ProfessionalSensitivity,
   },
   {
     id: "daily_checkins_summary",
     label: "Daily check-in summaries",
     description: "Selected trend and summary information from daily check-ins. Free-text reflections are excluded.",
-    sensitivity: "sensitive",
+    sensitivity: "sensitive" as ProfessionalSensitivity,
   },
   {
     id: "skills_practice",
     label: "Skills practice",
     description: "Skills and tools completed in Waypoint, including whether the user found them helpful where available.",
-    sensitivity: "standard",
+    sensitivity: "standard" as ProfessionalSensitivity,
   },
   {
     id: "core_values",
     label: "Core values",
     description: "Core values the user has chosen to record and explicitly share.",
-    sensitivity: "sensitive",
+    sensitivity: "sensitive" as ProfessionalSensitivity,
   },
 ] as const
 
