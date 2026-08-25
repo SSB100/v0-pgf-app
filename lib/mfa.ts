@@ -11,6 +11,11 @@ const BASE32_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567"
 const TOTP_PERIOD_SECONDS = 30
 const TOTP_DIGITS = 6
 
+export function isMfaEncryptionConfigured() {
+  const value = process.env.MFA_ENCRYPTION_KEY
+  return typeof value === "string" && value.length >= 24
+}
+
 function getMfaMasterSecret() {
   const value = process.env.MFA_ENCRYPTION_KEY
   if (!value || value.length < 24) {
@@ -127,7 +132,7 @@ export function buildTotpUri(input: { secret: string; email: string }) {
 
 export function generateRecoveryCodes(count = 10) {
   return Array.from({ length: count }, () => {
-    const value = randomBytes(9).toString("base64url").replace(/[^A-Za-z0-9]/g, "").slice(0, 12).toUpperCase()
+    const value = randomBytes(6).toString("hex").toUpperCase()
     return `${value.slice(0, 4)}-${value.slice(4, 8)}-${value.slice(8, 12)}`
   })
 }
