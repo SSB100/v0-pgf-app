@@ -1,25 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { sql } from "@/lib/db"
 import { getSession } from "@/lib/session"
-
-const AVAILABLE_SKILLS = [
-  { slug: "tip", name: "TIP Skills" },
-  { slug: "stop", name: "STOP Skill" },
-  { slug: "please", name: "PLEASE Skills" },
-  { slug: "improve", name: "IMPROVE Skills" },
-  { slug: "rain", name: "RAIN Mindfulness" },
-  { slug: "opposite-action", name: "Opposite Action" },
-  { slug: "interpersonal/dear-man", name: "DEAR MAN" },
-  { slug: "interpersonal/give", name: "GIVE" },
-  { slug: "interpersonal/fast", name: "FAST" },
-  { slug: "interpersonal/problem-solving", name: "Problem Solving" },
-  { slug: "interpersonal/turning-the-mind", name: "Turning the Mind" },
-  { slug: "reality-acceptance", name: "Reality Acceptance" },
-  { slug: "willingness", name: "Willingness" },
-  { slug: "distress-tolerance", name: "Distress Tolerance Overview" },
-] as const
-
-const AVAILABLE_SKILL_SLUGS = new Set<string>(AVAILABLE_SKILLS.map((skill) => skill.slug))
+import { SKILL_CONTENT, getSkillContentBySlug } from "@/lib/clinical-content-registry"
 
 export async function POST(req: NextRequest) {
   try {
@@ -29,18 +11,40 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const skillSlug = typeof body.skillSlug === "string" ? body.skillSlug : ""
     const wasHelpful = body.wasHelpful
+    const content = getSkillContentBySlug(skillSlug)
 
-    if (!AVAILABLE_SKILL_SLUGS.has(skillSlug) || typeof wasHelpful !== "boolean") {
+    if (!content || typeof wasHelpful !== "boolean") {
       return NextResponse.json({ error: "Invalid skill feedback" }, { status: 400 })
     }
 
     const inserted = await sql`
-      INSERT INTO skills_completed (user_id, skill_slug, was_helpful)
-      SELECT ${user.id}, ${skillSlug}, ${wasHelpful}
-      WHERE NOT EXISTS (
-        SELECT 1 FROM skills_completed
-        WHERE user_id = ${user.id} AND skill_slug = ${skillSlug}
+      INSERT INTO skills_practice (
+        user_id,
+        skill_name,
+        skill_category,
+        practiced_at,
+        skill_slug,
+        content_id,
+        content_version,
+        content_registry_revision,
+        practice_source,
+        was_helpful
       )
+      VALUES (
+        ${user.id},
+        ${content.title},
+        ${content.category},
+        CURRENT_TIMESTAMP,
+        ${content.slug},
+        ${content.contentId},
+        ${content.version},
+        ${content.registryRevision},
+        'skill_page_feedback',
+        ${wasHelpful}
+      )
+      ON CONFLICT (user_id, skill_slug)
+        WHERE practice_source = 'skill_page_feedback' AND skill_slug IS NOT NULL
+      DO NOTHING
       RETURNING id
     `
 
@@ -61,20 +65,26 @@ export async function POST(req: NextRequest) {
         creditAwarded: true,
         message: "Feedback recorded and 1 Growth Credit added for this Waypoint activity.",
         totalCredits: updated[0]?.level_credits || 0,
+        content: { contentId: content.contentId, version: content.version },
       })
     }
 
     const currentSkillsCompleted = await sql`
-      SELECT skill_slug FROM skills_completed WHERE user_id = ${user.id}
+      SELECT skill_slug
+      FROM skills_practice
+      WHERE user_id = ${user.id}
+        AND practice_source = 'skill_page_feedback'
+        AND skill_slug IS NOT NULL
     `
     const completedSlugs = new Set(currentSkillsCompleted.map((skill: any) => skill.skill_slug))
-    const suggestion = AVAILABLE_SKILLS.find((skill) => !completedSlugs.has(skill.slug) && skill.slug !== skillSlug)
+    const suggestion = SKILL_CONTENT.find((skill) => !completedSlugs.has(skill.slug) && skill.slug !== skillSlug)
 
     return NextResponse.json({
       success: true,
       creditAwarded: false,
       message: suggestion ? "Thanks for your feedback. You could try another skill if you want to:" : "Thanks for your feedback.",
-      suggestedSkill: suggestion || null,
+      suggestedSkill: suggestion ? { slug: suggestion.slug, name: suggestion.title } : null,
+      content: { contentId: content.contentId, version: content.version },
     })
   } catch (error) {
     console.error("[v0] Error recording skill feedback:", error)
