@@ -30,7 +30,7 @@ There is no public professional-verification endpoint. A Waypoint administrator 
 5. record a verification note where appropriate;
 6. explicitly verify the professional and organisation.
 
-Every privileged action is recorded in the administrative audit trail and professional verification history.
+Every privileged action is recorded in the administrative audit trail and professional verification history. Verification, suspension, offboarding and MFA reset state changes are committed atomically with their audit records.
 
 ## Suspension
 
@@ -93,7 +93,7 @@ The migration remains isolated from production until explicit approval is given 
 
 ## Deployment validation
 
-After the hosting MFA secret is configured, a fresh preview deployment is required before merge so the Phase 3 runtime is deployed with the current environment configuration. The final deployment must also pass the existing Next.js build checks.
+After the hosting MFA secret was configured, the Phase 3 branch was freshly deployed and the Vercel preview reached READY with the current Next.js build checks passing.
 
 ## Deliberate remaining boundaries
 
