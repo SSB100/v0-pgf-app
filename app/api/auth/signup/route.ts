@@ -6,6 +6,8 @@ import { dbColumnExists, dbTableExists, sql } from "@/lib/db"
 import { getAotearoaDateKey } from "@/lib/aotearoa-date"
 import { governanceTableExists, recordConsentEvent } from "@/lib/governance"
 import { sanitizeDemographicsInput } from "@/lib/demographics-policy.mjs"
+import { AUTH_RATE_LIMITS } from "@/lib/auth-abuse-policy.mjs"
+import { consumeAuthRateLimit, getAuthRequestNetworkSubject } from "@/lib/auth-rate-limit"
 
 const TERMS_VERSION = "0.3"
 const PRIVACY_POLICY_VERSION = "0.1"
@@ -30,8 +32,32 @@ function ageBandForAge(age: number) {
   return "65+"
 }
 
+function limiterUnavailable() {
+  return NextResponse.json(
+    { error: "Account creation is temporarily unavailable. Please try again shortly." },
+    { status: 503, headers: { "Cache-Control": "no-store", "Retry-After": "60" } },
+  )
+}
+
+function limiterBlocked(retryAfterSeconds: number) {
+  return NextResponse.json(
+    { error: "Too many account-creation attempts. Please try again later." },
+    {
+      status: 429,
+      headers: { "Cache-Control": "no-store", "Retry-After": String(Math.max(1, retryAfterSeconds)) },
+    },
+  )
+}
+
 export async function POST(request: NextRequest) {
   try {
+    const networkGate = await consumeAuthRateLimit(
+      AUTH_RATE_LIMITS.clientSignupNetwork,
+      getAuthRequestNetworkSubject(request),
+    )
+    if (networkGate.unavailable) return limiterUnavailable()
+    if (!networkGate.allowed) return limiterBlocked(networkGate.retryAfterSeconds)
+
     const body = await request.json()
     const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : ""
     const password = typeof body.password === "string" ? body.password : ""
@@ -44,6 +70,11 @@ export async function POST(request: NextRequest) {
     const demographics = sanitizeDemographicsInput(body)
 
     if (!email || !password || !dateOfBirth) return NextResponse.json({ error: "Email, password and date of birth are required" }, { status: 400 })
+
+    const identityGate = await consumeAuthRateLimit(AUTH_RATE_LIMITS.clientSignupIdentity, email)
+    if (identityGate.unavailable) return limiterUnavailable()
+    if (!identityGate.allowed) return limiterBlocked(identityGate.retryAfterSeconds)
+
     if (password.length < 8 || password.length > 128) return NextResponse.json({ error: "Password must be between 8 and 128 characters" }, { status: 400 })
     if (!termsAccepted) return NextResponse.json({ error: "You must accept the terms and acknowledge the privacy notice" }, { status: 400 })
 

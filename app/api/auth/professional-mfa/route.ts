@@ -6,6 +6,8 @@ import { createSession, deleteMfaChallenge, readMfaChallengeToken } from "@/lib/
 import { decryptMfaSecret, hashRecoveryCode, looksLikeTotp, verifyTotpCode } from "@/lib/mfa"
 import { recordAccessAuditEvent } from "@/lib/governance"
 import { canonicalReturnPath } from "@/lib/route-paths"
+import { AUTH_RATE_LIMITS } from "@/lib/auth-abuse-policy.mjs"
+import { consumeAuthRateLimit, getAuthRequestNetworkSubject } from "@/lib/auth-rate-limit"
 
 export const runtime = "nodejs"
 
@@ -13,8 +15,32 @@ function safeReturnPath(value: unknown, role: string) {
   return canonicalReturnPath(value, role === "admin" ? "/admin/professionals" : "/professional")
 }
 
+function limiterUnavailable() {
+  return NextResponse.json(
+    { error: "Authenticator verification is temporarily unavailable. Please try again shortly." },
+    { status: 503, headers: { "Cache-Control": "no-store", "Retry-After": "60" } },
+  )
+}
+
+function limiterBlocked(retryAfterSeconds: number) {
+  return NextResponse.json(
+    { error: "Too many authenticator attempts from this network. Please try again later." },
+    {
+      status: 429,
+      headers: { "Cache-Control": "no-store", "Retry-After": String(Math.max(1, retryAfterSeconds)) },
+    },
+  )
+}
+
 export async function POST(request: NextRequest) {
   try {
+    const networkGate = await consumeAuthRateLimit(
+      AUTH_RATE_LIMITS.mfaNetwork,
+      getAuthRequestNetworkSubject(request),
+    )
+    if (networkGate.unavailable) return limiterUnavailable()
+    if (!networkGate.allowed) return limiterBlocked(networkGate.retryAfterSeconds)
+
     const cookieStore = await cookies()
     const challengeToken = cookieStore.get("professional_mfa_challenge")?.value
     if (!challengeToken) return NextResponse.json({ error: "Your verification session has expired. Sign in again." }, { status: 401 })
