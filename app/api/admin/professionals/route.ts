@@ -3,6 +3,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { dbTransaction, sql } from "@/lib/db"
 import { getAdminSession } from "@/lib/admin-access"
 import { looksLikeUuid } from "@/lib/professional-access"
+import { validateVerificationEvidence } from "@/lib/professional-verification-policy.mjs"
 
 export const runtime = "nodejs"
 
@@ -64,11 +65,21 @@ export async function GET() {
         o.name AS organisation_name,
         o.verification_status AS organisation_verification_status,
         m.status AS mfa_status,
-        m.verified_at AS mfa_verified_at
+        m.verified_at AS mfa_verified_at,
+        latest_verification.action AS latest_verification_action,
+        latest_verification.created_at AS latest_verification_at,
+        latest_verification.metadata AS latest_verification_metadata
       FROM professional_accounts p
       JOIN users u ON u.id = p.user_id
       LEFT JOIN organisations o ON o.id = p.organisation_id
       LEFT JOIN mfa_factors m ON m.user_id = p.user_id AND m.factor_type = 'totp'
+      LEFT JOIN LATERAL (
+        SELECT action, created_at, metadata
+        FROM professional_verification_events
+        WHERE professional_account_id = p.id
+        ORDER BY created_at DESC
+        LIMIT 1
+      ) latest_verification ON TRUE
       ORDER BY
         CASE p.verification_status WHEN 'pending' THEN 0 WHEN 'suspended' THEN 1 ELSE 2 END,
         p.verification_requested_at DESC NULLS LAST,
@@ -94,7 +105,6 @@ export async function PATCH(request: NextRequest) {
     const action = body.action
     const reason = typeof body.reason === "string" ? body.reason.trim().slice(0, 2000) : ""
     const organisationName = typeof body.organisationName === "string" ? body.organisationName.trim().slice(0, 255) : ""
-    const verificationNote = typeof body.verificationNote === "string" ? body.verificationNote.trim().slice(0, 2000) : ""
 
     if (!looksLikeUuid(professionalId)) return NextResponse.json({ error: "Invalid professional account" }, { status: 400 })
     if (!["verify", "suspend", "offboard", "reset_mfa"].includes(action)) {
@@ -113,6 +123,13 @@ export async function PATCH(request: NextRequest) {
         return NextResponse.json({ error: "The professional must activate MFA before verification can be granted" }, { status: 409 })
       }
 
+      const evidenceResult = validateVerificationEvidence(body.verificationEvidence)
+      if (!evidenceResult.ok) {
+        return NextResponse.json({ error: evidenceResult.errors[0], verificationErrors: evidenceResult.errors }, { status: 400 })
+      }
+      const verificationEvidence = evidenceResult.value
+      const verificationNote = verificationEvidence.note
+
       const finalOrganisationName = organisationName || professional.organisation_name || professional.claimed_organisation_name
       if (!finalOrganisationName) return NextResponse.json({ error: "A verified organisation is required" }, { status: 400 })
 
@@ -130,7 +147,12 @@ export async function PATCH(request: NextRequest) {
 
       const organisationId = (existingOrganisation?.id as string | undefined) ?? randomUUID()
       const organisationWasExisting = Boolean(existingOrganisation)
-      const adminMetadata = JSON.stringify({ organisationId, source: "admin_portal" })
+      const verificationMetadata = {
+        source: "admin_portal",
+        organisationId,
+        verification: verificationEvidence,
+      }
+      const verificationMetadataJson = JSON.stringify(verificationMetadata)
 
       await dbTransaction((tx) => [
         organisationWasExisting
@@ -140,7 +162,7 @@ export async function PATCH(request: NextRequest) {
                 verification_status = 'verified',
                 verified_at = CURRENT_TIMESTAMP,
                 verified_by_user_id = ${admin.user.id},
-                verification_note = ${verificationNote || null},
+                verification_note = ${verificationNote},
                 updated_at = CURRENT_TIMESTAMP
               WHERE id = ${organisationId}
             `
@@ -149,7 +171,7 @@ export async function PATCH(request: NextRequest) {
                 id, name, verification_status, verified_at, verified_by_user_id, verification_note
               )
               VALUES (
-                ${organisationId}, ${finalOrganisationName}, 'verified', CURRENT_TIMESTAMP, ${admin.user.id}, ${verificationNote || null}
+                ${organisationId}, ${finalOrganisationName}, 'verified', CURRENT_TIMESTAMP, ${admin.user.id}, ${verificationNote}
               )
             `,
         tx`
@@ -176,8 +198,8 @@ export async function PATCH(request: NextRequest) {
             professional_account_id, actor_user_id, action, previous_status, new_status, organisation_id, reason, metadata
           )
           VALUES (
-            ${professionalId}, ${admin.user.id}, 'verified', ${previousStatus}, 'verified', ${organisationId}, ${verificationNote || null},
-            ${JSON.stringify({ source: "admin_portal" })}::jsonb
+            ${professionalId}, ${admin.user.id}, 'verified', ${previousStatus}, 'verified', ${organisationId}, ${verificationNote},
+            ${verificationMetadataJson}::jsonb
           )
         `,
         tx`
@@ -185,8 +207,8 @@ export async function PATCH(request: NextRequest) {
             actor_user_id, action, target_type, target_id, reason, metadata
           )
           VALUES (
-            ${admin.user.id}, 'professional_verified', 'professional_account', ${professionalId}, ${verificationNote || null},
-            ${adminMetadata}::jsonb
+            ${admin.user.id}, 'professional_verified', 'professional_account', ${professionalId}, ${verificationNote},
+            ${verificationMetadataJson}::jsonb
           )
         `,
       ])
