@@ -100,7 +100,7 @@ function assertRegistryIntegrity() {
     }
     if (record.evidenceIds.length === 0) throw new Error(`Clinical content ${record.contentId} has no provenance/evidence references`)
     for (const evidenceId of record.evidenceIds) {
-      if (!EVIDENCE_SOURCES[evidenceId]) throw new Error(`Clinical content ${record.contentId} references unknown evidence source: ${evidenceId}`)
+      if (!(evidenceId in EVIDENCE_SOURCES)) throw new Error(`Clinical content ${record.contentId} references unknown evidence source: ${evidenceId}`)
     }
     if (record.validationStatus !== CONTENT_VALIDATION_STATUS) {
       throw new Error(`Clinical content ${record.contentId} has an unexpected validation status`)
