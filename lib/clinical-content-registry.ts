@@ -11,11 +11,11 @@ import {
   getSkillContentBySlug,
   isSemanticContentVersion,
   resolveJourneyEvidenceIds,
-  type EvidenceSource,
-  type SkillContentRecord,
 } from "@/lib/content-evidence-registry.mjs"
 
 export type ClinicalContentKind = "journey_module" | "skill"
+export type EvidenceSource = (typeof EVIDENCE_SOURCES)[keyof typeof EVIDENCE_SOURCES]
+export type SkillContentRecord = (typeof SKILL_CONTENT)[number]
 
 export type ClinicalContentRecord = {
   kind: ClinicalContentKind
@@ -32,7 +32,6 @@ export type ClinicalContentRecord = {
   validationStatus: string
 }
 
-export type { EvidenceSource, SkillContentRecord }
 export {
   CONTENT_REGISTRY_REVISION,
   CONTENT_REVIEW_STATUS,
