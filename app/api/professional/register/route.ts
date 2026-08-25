@@ -4,6 +4,8 @@ import { sql } from "@/lib/db"
 import { isMfaEncryptionConfigured } from "@/lib/mfa"
 import { createSession } from "@/lib/session"
 import { PROFESSIONAL_USE_VERSION } from "@/lib/professional-access"
+import { AUTH_RATE_LIMITS } from "@/lib/auth-abuse-policy.mjs"
+import { consumeAuthRateLimit, getAuthRequestNetworkSubject } from "@/lib/auth-rate-limit"
 
 export const runtime = "nodejs"
 
@@ -21,8 +23,32 @@ function parseBirthDate(value: unknown) {
   return Number.isNaN(parsed.getTime()) ? null : parsed
 }
 
+function limiterUnavailable() {
+  return NextResponse.json(
+    { error: "Professional registration is temporarily unavailable. Please try again shortly." },
+    { status: 503, headers: { "Cache-Control": "no-store", "Retry-After": "60" } },
+  )
+}
+
+function limiterBlocked(retryAfterSeconds: number) {
+  return NextResponse.json(
+    { error: "Too many professional-registration attempts. Please try again later." },
+    {
+      status: 429,
+      headers: { "Cache-Control": "no-store", "Retry-After": String(Math.max(1, retryAfterSeconds)) },
+    },
+  )
+}
+
 export async function POST(request: NextRequest) {
   try {
+    const networkGate = await consumeAuthRateLimit(
+      AUTH_RATE_LIMITS.professionalSignupNetwork,
+      getAuthRequestNetworkSubject(request),
+    )
+    if (networkGate.unavailable) return limiterUnavailable()
+    if (!networkGate.allowed) return limiterBlocked(networkGate.retryAfterSeconds)
+
     if (!isMfaEncryptionConfigured()) {
       return NextResponse.json(
         { error: "Professional account registration is temporarily unavailable while strong authentication is being configured." },
@@ -33,21 +59,26 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : ""
     const password = typeof body.password === "string" ? body.password : ""
-    const displayName = typeof body.displayName === "string" ? body.displayName.trim() : ""
-    const professionalRole = typeof body.professionalRole === "string" ? body.professionalRole.trim() : ""
-    const organisationName = typeof body.organisationName === "string" ? body.organisationName.trim() : ""
-    const registrationBody = typeof body.registrationBody === "string" ? body.registrationBody.trim() : ""
-    const registrationNumber = typeof body.registrationNumber === "string" ? body.registrationNumber.trim() : ""
+    const displayName = typeof body.displayName === "string" ? body.displayName.trim().slice(0, 150) : ""
+    const professionalRole = typeof body.professionalRole === "string" ? body.professionalRole.trim().slice(0, 160) : ""
+    const organisationName = typeof body.organisationName === "string" ? body.organisationName.trim().slice(0, 200) : ""
+    const registrationBody = typeof body.registrationBody === "string" ? body.registrationBody.trim().slice(0, 160) : ""
+    const registrationNumber = typeof body.registrationNumber === "string" ? body.registrationNumber.trim().slice(0, 120) : ""
     const dateOfBirth = parseBirthDate(body.dateOfBirth)
 
     if (!email || !displayName || !professionalRole || !organisationName || !dateOfBirth) {
       return NextResponse.json({ error: "Please complete all required fields" }, { status: 400 })
     }
+
+    const identityGate = await consumeAuthRateLimit(AUTH_RATE_LIMITS.professionalSignupIdentity, email)
+    if (identityGate.unavailable) return limiterUnavailable()
+    if (!identityGate.allowed) return limiterBlocked(identityGate.retryAfterSeconds)
+
     if (dateOfBirth > latestEligibleBirthDate()) {
       return NextResponse.json({ error: "Professional accounts are currently limited to people aged 18 and over" }, { status: 400 })
     }
-    if (password.length < 8) {
-      return NextResponse.json({ error: "Password must be at least 8 characters" }, { status: 400 })
+    if (password.length < 8 || password.length > 128) {
+      return NextResponse.json({ error: "Password must be between 8 and 128 characters" }, { status: 400 })
     }
     if (body.termsAccepted !== true || body.privacyAcknowledged !== true || body.professionalUseAccepted !== true) {
       return NextResponse.json({ error: "You must accept the required terms and professional-use notice" }, { status: 400 })

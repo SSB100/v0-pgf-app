@@ -3,9 +3,41 @@ import { getUserByEmail, verifyPassword, hashPassword, isLegacyPasswordHash } fr
 import { createMfaChallengeToken, encrypt } from "@/lib/session"
 import { sql } from "@/lib/db"
 import { canonicalReturnPath } from "@/lib/route-paths"
+import { AUTH_RATE_LIMITS } from "@/lib/auth-abuse-policy.mjs"
+import {
+  clearAuthRateLimit,
+  combineAuthRateLimitSubject,
+  consumeAuthRateLimit,
+  getAuthRequestNetworkSubject,
+} from "@/lib/auth-rate-limit"
+
+function unavailableResponse() {
+  return NextResponse.json(
+    { error: "Sign in is temporarily unavailable. Please try again shortly." },
+    { status: 503, headers: { "Cache-Control": "no-store", "Retry-After": "60" } },
+  )
+}
+
+function throttledResponse(retryAfterSeconds: number) {
+  return NextResponse.json(
+    { error: "Too many sign-in attempts. Please try again later." },
+    {
+      status: 429,
+      headers: {
+        "Cache-Control": "no-store",
+        "Retry-After": String(Math.max(1, retryAfterSeconds)),
+      },
+    },
+  )
+}
 
 export async function POST(request: NextRequest) {
   try {
+    const networkSubject = getAuthRequestNetworkSubject(request)
+    const networkGate = await consumeAuthRateLimit(AUTH_RATE_LIMITS.signInNetwork, networkSubject)
+    if (networkGate.unavailable) return unavailableResponse()
+    if (!networkGate.allowed) return throttledResponse(networkGate.retryAfterSeconds)
+
     const body = await request.json()
     const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : ""
     const password = typeof body.password === "string" ? body.password : ""
@@ -15,11 +47,28 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Email and password are required" }, { status: 400 })
     }
 
+    const identityNetworkSubject = combineAuthRateLimitSubject(email, networkSubject)
     const user = await getUserByEmail(email)
-    if (!user) return NextResponse.json({ error: "Invalid email or password" }, { status: 401 })
+    const isValid = user ? await verifyPassword(password, user.password_hash) : false
 
-    const isValid = await verifyPassword(password, user.password_hash)
-    if (!isValid) return NextResponse.json({ error: "Invalid email or password" }, { status: 401 })
+    if (!user || !isValid) {
+      const [identityNetworkGate, identityGate] = await Promise.all([
+        consumeAuthRateLimit(AUTH_RATE_LIMITS.signInFailedIdentityNetwork, identityNetworkSubject),
+        consumeAuthRateLimit(AUTH_RATE_LIMITS.signInFailedIdentity, email),
+      ])
+
+      if (identityNetworkGate.unavailable || identityGate.unavailable) return unavailableResponse()
+      if (!identityNetworkGate.allowed || !identityGate.allowed) {
+        return throttledResponse(Math.max(identityNetworkGate.retryAfterSeconds, identityGate.retryAfterSeconds))
+      }
+
+      return NextResponse.json({ error: "Invalid email or password" }, { status: 401 })
+    }
+
+    await Promise.all([
+      clearAuthRateLimit(AUTH_RATE_LIMITS.signInFailedIdentityNetwork, identityNetworkSubject),
+      clearAuthRateLimit(AUTH_RATE_LIMITS.signInFailedIdentity, email),
+    ])
 
     if (isLegacyPasswordHash(user.password_hash)) {
       const upgradedHash = await hashPassword(password)
