@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
-import { BookOpenCheck, Building2, ShieldCheck } from "lucide-react"
+import { BookOpenCheck, Building2, ShieldAlert, ShieldCheck } from "lucide-react"
 import { getAdminSession } from "@/lib/admin-access"
 import ProfessionalVerificationClient from "@/components/admin/professional-verification-client"
 
@@ -21,6 +21,7 @@ export default async function AdminProfessionalsPage() {
             </div>
             <div className="flex flex-wrap gap-2">
               <Link href="/admin/organisations" className="inline-flex items-center gap-2 rounded-lg border bg-card px-4 py-2 text-sm font-medium shadow-sm hover:bg-muted/50"><Building2 className="size-4" /> Organisations</Link>
+              <Link href="/admin/security" className="inline-flex items-center gap-2 rounded-lg border bg-card px-4 py-2 text-sm font-medium shadow-sm hover:bg-muted/50"><ShieldAlert className="size-4" /> Security & incidents</Link>
               <Link href="/admin/content-registry" className="inline-flex items-center gap-2 rounded-lg border bg-card px-4 py-2 text-sm font-medium shadow-sm hover:bg-muted/50"><BookOpenCheck className="size-4" /> Content & evidence register</Link>
             </div>
           </div>
