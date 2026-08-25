@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { sql } from "@/lib/db"
 import { recordAccessAuditEvent } from "@/lib/governance"
 import { getProfessionalSession, looksLikeUuid, professionalCanAccessClientData } from "@/lib/professional-access"
-import type { ProfessionalShareScope } from "@/lib/sharing-policy"
+import { normaliseProfessionalShareScopes, type ProfessionalShareScope } from "@/lib/sharing-policy"
 
 const ALLOWED_WINDOWS = new Set([7, 14, 30])
 
@@ -28,7 +28,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ lin
         l.accepted_at,
         u.full_name AS client_name,
         COALESCE(
-          json_agg(g.data_scope ORDER BY g.data_scope) FILTER (WHERE g.id IS NOT NULL AND g.status = 'active'),
+          json_agg(DISTINCT g.data_scope) FILTER (WHERE g.id IS NOT NULL AND g.status = 'active'),
           '[]'::json
         ) AS shared_scopes
       FROM client_professional_links l
@@ -44,12 +44,13 @@ export async function GET(request: NextRequest, context: { params: Promise<{ lin
     const connection = rows[0]
     if (!connection) return NextResponse.json({ error: "Active client connection not found" }, { status: 404 })
 
-    const scopes = new Set<ProfessionalShareScope>((connection.shared_scopes || []) as ProfessionalShareScope[])
+    const authorisedScopes = normaliseProfessionalShareScopes(connection.shared_scopes)
+    const scopes = new Set<ProfessionalShareScope>(authorisedScopes)
     const response: Record<string, unknown> = {
       client: { name: connection.client_name, connectedAt: connection.accepted_at },
       windowDays: days,
       generatedAt: new Date().toISOString(),
-      sharedScopes: [...scopes],
+      sharedScopes: authorisedScopes,
       monitoringNotice: "This is a user-authorised summary for later review. Waypoint is not continuously monitored and does not generate a clinical risk score.",
     }
 
@@ -122,27 +123,18 @@ export async function GET(request: NextRequest, context: { params: Promise<{ lin
       `
     }
 
-    if (scopes.has("safeguards")) {
-      response.safeguards = { available: false, message: "Personal safeguard-plan sharing is not yet implemented." }
-    }
-    if (scopes.has("selected_reflections")) {
-      response.selectedReflections = { available: false, message: "No private reflection is shared until an explicit user-selection workflow exists." }
-    }
-
     await recordAccessAuditEvent({
       subjectUserId: connection.client_user_id,
       actorUserId: user.id,
       professionalAccountId: professional.id,
       organisationId: professional.organisation_id,
       eventType: "professional_summary_view",
-      resourceScope: [...scopes].join(","),
+      resourceScope: authorisedScopes.join(","),
       purpose: "clinical_support",
       metadata: { linkId, days },
     })
 
-    return NextResponse.json(response, {
-      headers: { "Cache-Control": "private, no-store, max-age=0" },
-    })
+    return NextResponse.json(response, { headers: { "Cache-Control": "private, no-store, max-age=0" } })
   } catch (error) {
     console.error("[waypoint] Unable to load professional client summary", error)
     return NextResponse.json({ error: "Unable to load client summary" }, { status: 500 })
