@@ -17,6 +17,14 @@ export async function GET() {
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     if (!professional) return NextResponse.json({ error: "Professional account not found" }, { status: 404 })
 
+    await sql`
+      UPDATE professional_invitations
+      SET status = 'expired'
+      WHERE professional_account_id = ${professional.id}
+        AND status = 'active'
+        AND expires_at <= CURRENT_TIMESTAMP
+    `
+
     const invitations = await sql`
       SELECT id, requested_scopes, status, expires_at, created_at, used_at
       FROM professional_invitations
@@ -25,7 +33,7 @@ export async function GET() {
       LIMIT 30
     `
 
-    return NextResponse.json({ invitations })
+    return NextResponse.json({ invitations }, { headers: { "Cache-Control": "private, no-store, max-age=0" } })
   } catch (error) {
     console.error("[waypoint] Unable to load professional invitations", error)
     return NextResponse.json({ error: "Unable to load invitations" }, { status: 500 })
