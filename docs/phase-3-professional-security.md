@@ -89,6 +89,8 @@ Migration 022 is validated on an isolated Neon branch with disposable records. T
 - administrative and professional-verification events being retained through the lifecycle;
 - complete cleanup of all disposable validation records.
 
+The migration remains isolated from production until explicit approval is given and production verification is completed.
+
 ## Deliberate remaining boundaries
 
 Phase 3 does not claim the professional portal is ready for a clinical pilot by itself. The following remain required before live pilot use:
