@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { sql } from "@/lib/db"
 import { getUserFromSession } from "@/lib/session"
 import { differenceInCalendarDays, getAotearoaDateKey } from "@/lib/aotearoa-date"
+import { getSkillContentByName } from "@/lib/clinical-content-registry"
 
 const MAX_REFLECTION_LENGTH = 4000
 const MAX_LIST_ITEMS = 30
@@ -200,9 +201,30 @@ export async function POST(request: Request) {
     `
 
     for (const skill of skillsUsed) {
+      const content = getSkillContentByName(skill)
       await sql`
-        INSERT INTO skills_practice (user_id, skill_name, skill_category, practiced_at)
-        VALUES (${user.id}::uuid, ${skill}, 'self-reported', CURRENT_TIMESTAMP)
+        INSERT INTO skills_practice (
+          user_id,
+          skill_name,
+          skill_category,
+          practiced_at,
+          skill_slug,
+          content_id,
+          content_version,
+          content_registry_revision,
+          practice_source
+        )
+        VALUES (
+          ${user.id}::uuid,
+          ${skill},
+          'self-reported',
+          CURRENT_TIMESTAMP,
+          ${content?.slug ?? null},
+          ${content?.contentId ?? null},
+          ${content?.version ?? null},
+          ${content?.registryRevision ?? null},
+          'daily_checkin_self_report'
+        )
       `
     }
 
