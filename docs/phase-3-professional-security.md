@@ -95,7 +95,7 @@ The migration remains isolated from production until explicit approval is given 
 
 ## Deployment validation
 
-After the hosting MFA secret was configured, the Phase 3 branch was freshly deployed and the Vercel preview reached READY with the current Next.js build checks passing.
+After the hosting MFA secret was configured, the Phase 3 branch was freshly deployed and the Vercel preview reached READY with the current Next.js build checks passing. Subsequent documentation-only changes do not alter the validated runtime behaviour.
 
 ## Deliberate remaining boundaries
 
