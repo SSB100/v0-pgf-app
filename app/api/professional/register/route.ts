@@ -121,8 +121,8 @@ export async function POST(request: NextRequest) {
       throw error
     }
 
-    await createSession(userId)
-    return NextResponse.json({ success: true, redirectTo: "/professional" })
+    await createSession(userId, { mfaVerified: false })
+    return NextResponse.json({ success: true, redirectTo: "/security/mfa" })
   } catch (error) {
     console.error("[waypoint] Professional registration failed", error)
     return NextResponse.json({ error: "Unable to create professional account" }, { status: 500 })
