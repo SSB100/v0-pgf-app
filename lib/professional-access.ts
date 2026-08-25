@@ -1,7 +1,10 @@
 import { createHash, randomBytes } from "node:crypto"
 import { dbTableExists, sql } from "@/lib/db"
 import { getSessionContext } from "@/lib/session"
-import { canProfessionalAccessClientData as policyCanProfessionalAccessClientData } from "@/lib/access-policy.mjs"
+import {
+  canProfessionalAccessClientData as policyCanProfessionalAccessClientData,
+  canUseProfessionalSurface,
+} from "@/lib/access-policy.mjs"
 
 export const PROFESSIONAL_USE_VERSION = "professional-use-v1"
 export const PROFESSIONAL_INVITE_DEFAULT_DAYS = 7
@@ -115,6 +118,9 @@ export function professionalCanAccessClientData(professional: ProfessionalAccoun
 export async function getProfessionalSession() {
   const session = await getSessionContext()
   if (!session.user) return { user: null, professional: null, mfaVerified: false }
+  if (!canUseProfessionalSurface({ role: session.user.role })) {
+    return { user: session.user, professional: null, mfaVerified: false }
+  }
   const professional = await getProfessionalAccountForUser(session.user.id)
   return { user: session.user, professional, mfaVerified: session.mfaVerified }
 }
