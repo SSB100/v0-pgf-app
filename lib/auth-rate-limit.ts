@@ -2,7 +2,12 @@ import { createHmac } from "node:crypto"
 import type { NextRequest } from "next/server"
 import { dbTableExists, sql } from "@/lib/db"
 import { isRateLimitExceeded, rateLimitRetryAfterSeconds } from "@/lib/auth-abuse-policy.mjs"
-import type { AuthRateLimitDefinition } from "@/lib/auth-abuse-policy.mjs"
+
+type AuthRateLimitDefinition = {
+  action: string
+  limit: number
+  windowSeconds: number
+}
 
 export type AuthRateLimitResult = {
   allowed: boolean
@@ -85,8 +90,6 @@ export async function consumeAuthRateLimit(
     windowSeconds: Number(row?.window_seconds ?? definition.windowSeconds),
   })
 
-  // Opportunistic retention cleanup. Keys are already pseudonymised, but they
-  // should not persist indefinitely when they no longer serve abuse prevention.
   if (Math.random() < 0.02) {
     try {
       await sql`
