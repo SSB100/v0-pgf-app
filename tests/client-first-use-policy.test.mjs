@@ -46,6 +46,13 @@ test("minimal dashboard check-in state is truthful and does not link to a missin
   assert.doesNotMatch(source, /href="\/progress"/)
 })
 
+test("desktop dashboard does not assume every client uses a Growth Companion", async () => {
+  const source = await readSource("app/dashboard/page.tsx")
+
+  assert.match(source, /See your growth progress first/)
+  assert.doesNotMatch(source, /See your Growth Companion first/)
+})
+
 test("weekly overview does not assume an empty seven-day window means a first-ever check-in", async () => {
   const source = await readSource("components/dashboard/weekly-overview-card.tsx")
 
@@ -68,17 +75,21 @@ test("minimal dashboard values and skill suggestions remain optional and truthfu
   assert.doesNotMatch(skills, /Three Waypoint suggestions based on information you recorded/)
 })
 
-test("public getting-started copy matches the current minimum setup flow", async () => {
+test("public getting-started copy matches the optional-companion minimum setup flow", async () => {
   const home = await readSource("app/page.tsx")
   const faq = await readSource("app/faq/page.tsx")
   const footer = await readSource("components/layout/public-footer.tsx")
 
   assert.match(home, /choose the areas you want Waypoint to support/)
-  assert.match(home, /pick a Growth Companion/)
+  assert.match(home, /choose whether to use a Growth Companion or Progress only/)
+  assert.match(home, /optional Growth Companion or progress-only view/)
   assert.match(home, /personalise the experience further later/)
   assert.doesNotMatch(home, /Guided onboarding asks about your goals, values, strengths/)
+  assert.doesNotMatch(home, /pick a Growth Companion/)
 
   assert.match(faq, /brief setup gets you to your dashboard/)
+  assert.match(faq, /choose whether you want a Growth Companion or Progress only/)
+  assert.match(faq, /A Growth Companion is an optional visual way/)
   assert.match(faq, /Daily check-ins, values work and other personalisation can be used later/)
   assert.doesNotMatch(faq, /Create an account and complete guided onboarding/)
 

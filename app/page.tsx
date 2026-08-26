@@ -88,7 +88,7 @@ export default async function Home() {
               {[
                 "11 interactive learning and skills modules",
                 "Daily check-ins for mood, urges and patterns you choose to track",
-                "A Growth Companion that reflects your engagement with Waypoint",
+                "An optional Growth Companion or progress-only view for your Waypoint engagement",
               ].map((item) => (
                 <li key={item} className="flex items-start gap-3">
                   <CheckCircle className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
@@ -227,7 +227,7 @@ export default async function Home() {
               {
                 n: "01",
                 title: "Set up your Waypoint",
-                desc: "Create your account, choose the areas you want Waypoint to support, and pick a Growth Companion. You can personalise the experience further later.",
+                desc: "Create your account, choose the areas you want Waypoint to support, and choose whether to use a Growth Companion or Progress only. You can personalise the experience further later.",
               },
               {
                 n: "02",

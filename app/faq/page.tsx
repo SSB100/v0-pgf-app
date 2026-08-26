@@ -53,7 +53,7 @@ export default function FAQPage() {
               <AccordionItem value="item-5" className="border rounded-lg px-6 bg-card">
                 <AccordionTrigger className="text-lg font-semibold text-primary hover:no-underline">How do Journey Modules work?</AccordionTrigger>
                 <AccordionContent className="text-primary/70">
-                  Journey modules are self-guided learning experiences with practical exercises and reflection prompts. Completing a module adds to your Waypoint engagement progress and Growth Companion. That progress reflects activity in the app; it is not a clinical measure of recovery or wellbeing.
+                  Journey modules are self-guided learning experiences with practical exercises and reflection prompts. Completing a module adds to your Waypoint engagement progress and can be reflected by a Growth Companion if you choose to use one. That progress reflects activity in the app; it is not a clinical measure of recovery or wellbeing.
                 </AccordionContent>
               </AccordionItem>
 
@@ -67,7 +67,7 @@ export default function FAQPage() {
               <AccordionItem value="item-7" className="border rounded-lg px-6 bg-card">
                 <AccordionTrigger className="text-lg font-semibold text-primary hover:no-underline">What is the Growth Companion?</AccordionTrigger>
                 <AccordionContent className="text-primary/70">
-                  The Growth Companion is a visual way to recognise your engagement with Waypoint. It can grow as you complete activities and practise skills. A higher level does not mean that you are "more recovered" or clinically healthier than someone at a different level.
+                  A Growth Companion is an optional visual way to recognise your engagement with Waypoint. It can change as you complete selected activities and apply Growth Credits. You can instead choose Progress only and keep the same credits and engagement levels without a character. A higher level does not mean that you are "more recovered" or clinically healthier than someone at a different level.
                 </AccordionContent>
               </AccordionItem>
 
@@ -95,7 +95,7 @@ export default function FAQPage() {
               <AccordionItem value="item-11" className="border rounded-lg px-6 bg-card">
                 <AccordionTrigger className="text-lg font-semibold text-primary hover:no-underline">How do I get started?</AccordionTrigger>
                 <AccordionContent className="text-primary/70">
-                  Create an adult account, choose what you want Waypoint to support, and pick a Growth Companion. That brief setup gets you to your dashboard. Daily check-ins, values work and other personalisation can be used later when they are useful to you. The current MVP is intended for people aged 18 and over.
+                  Create an adult account, choose what you want Waypoint to support, and choose whether you want a Growth Companion or Progress only. That brief setup gets you to your dashboard. Daily check-ins, values work and other personalisation can be used later when they are useful to you. The current MVP is intended for people aged 18 and over.
                 </AccordionContent>
               </AccordionItem>
 
