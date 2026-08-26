@@ -9,6 +9,9 @@ interface MobileDashboardSectionShellProps {
 }
 
 export default function MobileDashboardSectionShell({ title, description, children }: MobileDashboardSectionShellProps) {
+  const displayTitle = title === "Growth Companion" ? "Growth & Progress" : title
+  const displayDescription = title === "Growth Companion" ? "Your credits, levels and optional companion" : description
+
   return (
     <div className="min-h-[100dvh] bg-background pb-24">
       <header className="sticky top-0 z-40 border-b border-border/70 bg-card/95 backdrop-blur-xl">
@@ -21,8 +24,8 @@ export default function MobileDashboardSectionShell({ title, description, childr
             <ChevronLeft className="size-5" />
           </Link>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-base font-bold text-foreground">{title}</p>
-            <p className="truncate text-xs text-muted-foreground">{description}</p>
+            <p className="truncate text-base font-bold text-foreground">{displayTitle}</p>
+            <p className="truncate text-xs text-muted-foreground">{displayDescription}</p>
           </div>
           <Link
             href="/support"

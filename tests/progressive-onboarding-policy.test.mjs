@@ -4,27 +4,37 @@ import { readFile } from "node:fs/promises"
 import {
   MINIMUM_ONBOARDING_AVATARS,
   MINIMUM_ONBOARDING_FOCUS_AREAS,
+  MINIMUM_ONBOARDING_PRESENTATIONS,
+  NO_COMPANION_ID,
   sanitizeMinimumOnboardingInput,
 } from "../lib/minimum-onboarding-policy.mjs"
 
 const readSource = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8")
 
-test("minimum onboarding accepts only known focus areas and companions", () => {
+test("minimum onboarding accepts only known focus areas and progress presentations", () => {
   const result = sanitizeMinimumOnboardingInput({
     journeyTypes: ["gambling", "personal_growth", "gambling", "not-real"],
     growthAvatar: "spirit_fox",
+  })
+  const progressOnly = sanitizeMinimumOnboardingInput({
+    journeyTypes: ["mental_health"],
+    growthAvatar: NO_COMPANION_ID,
   })
 
   assert.equal(result.ok, true)
   assert.deepEqual(result.journeyTypes, ["gambling", "personal_growth"])
   assert.equal(result.growthAvatar, "spirit_fox")
+  assert.equal(progressOnly.ok, true)
+  assert.equal(progressOnly.growthAvatar, "none")
   assert.ok(MINIMUM_ONBOARDING_FOCUS_AREAS.length >= 6)
-  assert.ok(MINIMUM_ONBOARDING_AVATARS.length >= 5)
+  assert.equal(MINIMUM_ONBOARDING_AVATARS.length, 5)
+  assert.ok(MINIMUM_ONBOARDING_PRESENTATIONS.includes("none"))
 })
 
-test("minimum onboarding requires a real focus and valid companion", () => {
+test("minimum onboarding requires a real focus and an explicit valid presentation choice", () => {
   assert.equal(sanitizeMinimumOnboardingInput({ journeyTypes: [], growthAvatar: "growth_tree" }).ok, false)
   assert.equal(sanitizeMinimumOnboardingInput({ journeyTypes: ["gambling"], growthAvatar: "unknown" }).ok, false)
+  assert.equal(sanitizeMinimumOnboardingInput({ journeyTypes: ["gambling"], growthAvatar: "" }).ok, false)
 })
 
 test("minimum completion changes access state without fabricating personalisation data", async () => {
@@ -41,15 +51,52 @@ test("minimum completion changes access state without fabricating personalisatio
   }
 })
 
-test("minimum onboarding is a three-step focus companion start flow", async () => {
+test("minimum onboarding is a three-step focus presentation start flow", async () => {
   const source = await readSource("components/onboarding/minimum-onboarding-flow.tsx")
 
   assert.match(source, /Step \{step\} of 3/)
   assert.match(source, /What would you like Waypoint to help with\?/)
-  assert.match(source, /Choose your Growth Companion/)
+  assert.match(source, /Choose how you want to see progress/)
+  assert.match(source, /Progress only/)
+  assert.match(source, /Fantasy Companions/)
   assert.match(source, /Start using Waypoint/)
   assert.match(source, /does not create a Daily Check-in or award a Growth Credit/)
   assert.match(source, /\/api\/onboarding\/minimum-complete/)
+  assert.doesNotMatch(source, /growthAvatar: "growth_tree"/)
+})
+
+test("completed clients can update only their Waypoint focus and presentation preferences", async () => {
+  const source = await readSource("app/api/user/waypoint-preferences/route.ts")
+
+  assert.match(source, /user\.role !== "client"/)
+  assert.match(source, /WHERE user_id = \$\{user\.id\}::uuid/)
+  assert.match(source, /COALESCE\(onboarding_completed, false\) = true/)
+  assert.match(source, /sanitizeMinimumOnboardingInput/)
+  assert.match(source, /journey_types =/)
+  assert.match(source, /growth_avatar =/)
+  assert.match(source, /updated_at = CURRENT_TIMESTAMP/)
+  assert.match(source, /Cache-Control": "no-store"/)
+
+  for (const forbidden of ["level_credits", "tree_growth_level", "check_in_streak", "daily_checkins", "journey_completions", "user_values", "problem_areas", "sharing_permissions", "user_demographics"]) {
+    assert.equal(source.includes(forbidden), false, `preference update must not mutate or query ${forbidden}`)
+  }
+})
+
+test("settings exposes editable focus and an equal progress-only companion alternative", async () => {
+  const settings = await readSource("app/settings/page.tsx")
+  const preferences = await readSource("components/settings/waypoint-preferences-card.tsx")
+  const desktopGrowth = await readSource("components/dashboard/growth-avatar-card.tsx")
+  const mobileGrowth = await readSource("components/dashboard/mobile-growth-companion.tsx")
+
+  assert.match(settings, /WaypointPreferencesCard/)
+  assert.match(preferences, /\/api\/user\/waypoint-preferences/)
+  assert.match(preferences, /Progress only/)
+  assert.match(preferences, /Fantasy Companions/)
+  assert.match(preferences, /do not erase your history, credits, Journey progress or sharing settings/)
+  assert.match(desktopGrowth, /avatarType === "none"/)
+  assert.match(desktopGrowth, /Progress only/)
+  assert.match(mobileGrowth, /avatarType === "none"/)
+  assert.match(mobileGrowth, /track engagement without a character/)
 })
 
 test("signup is limited to account essentials and does not infer optional preferences", async () => {

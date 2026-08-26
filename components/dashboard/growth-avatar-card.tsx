@@ -73,6 +73,7 @@ export default function GrowthAvatarCard({ avatarType, level, levelCredits, stre
   const [credits, setCredits] = useState(levelCredits)
   const [isLevelingUp, setIsLevelingUp] = useState(false)
 
+  const progressOnly = avatarType === "none"
   const config = avatarConfig[avatarType as keyof typeof avatarConfig] || avatarConfig.growth_tree
   const avatar = config.getStage(currentLevel)
 
@@ -111,18 +112,18 @@ export default function GrowthAvatarCard({ avatarType, level, levelCredits, stre
         <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/40 to-card" />
         <div className="absolute bottom-0 left-0 right-0 flex items-end justify-between px-4 pb-3">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-primary/90">Growth Companion</p>
-            <h3 className="text-base font-bold leading-tight text-white">Your {config.name}</h3>
+            <p className="text-xs font-semibold uppercase tracking-wider text-primary/90">Growth &amp; Progress</p>
+            <h3 className="text-base font-bold leading-tight text-white">{progressOnly ? "Progress only" : `Your ${config.name}`}</h3>
           </div>
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <button className="flex h-7 w-7 items-center justify-center rounded-full bg-black/40" aria-label="About Growth Companion">
+                <button className="flex h-7 w-7 items-center justify-center rounded-full bg-black/40" aria-label="About Growth and Progress">
                   <Info className="h-3.5 w-3.5 text-white/70" />
                 </button>
               </TooltipTrigger>
               <TooltipContent className="max-w-xs">
-                <p className="text-sm">Your companion changes as you complete selected Waypoint activities. Levels represent engagement with the app, not clinical recovery, health or personal worth.</p>
+                <p className="text-sm">Growth Credits and levels represent selected Waypoint engagement, not clinical recovery, health or personal worth. A visual companion is optional.</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -131,13 +132,21 @@ export default function GrowthAvatarCard({ avatarType, level, levelCredits, stre
 
       <CardContent className="space-y-4 pt-4">
         <div className="flex items-center gap-4">
-          <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-xl border-2 border-primary/30 bg-secondary/30">
-            <Image id="growth-avatar-image" src={avatar.image || "/placeholder.svg"} alt={avatar.stage} fill className="object-contain p-1 transition-all duration-700 ease-in-out" priority />
-          </div>
+          {progressOnly ? (
+            <div className="flex h-24 w-24 flex-shrink-0 items-center justify-center rounded-xl border-2 border-primary/30 bg-primary/10">
+              <Sparkles className="size-9 text-primary" />
+            </div>
+          ) : (
+            <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-xl border-2 border-primary/30 bg-secondary/30">
+              <Image id="growth-avatar-image" src={avatar.image || "/placeholder.svg"} alt={avatar.stage} fill className="object-contain p-1 transition-all duration-700 ease-in-out" priority />
+            </div>
+          )}
           <div className="min-w-0 flex-1">
-            <div className={`text-xl font-bold ${avatar.color}`}>{avatar.stage}</div>
+            <div className={`text-xl font-bold ${progressOnly ? "text-primary" : avatar.color}`}>{progressOnly ? `Level ${currentLevel}` : avatar.stage}</div>
             <div className="text-sm font-medium text-muted-foreground">Engagement level {currentLevel}</div>
-            <div className="mt-0.5 text-pretty text-xs leading-snug text-muted-foreground">{avatar.description}</div>
+            <div className="mt-0.5 text-pretty text-xs leading-snug text-muted-foreground">
+              {progressOnly ? "Your engagement progress without a character or creature." : avatar.description}
+            </div>
           </div>
         </div>
 
@@ -172,7 +181,9 @@ export default function GrowthAvatarCard({ avatarType, level, levelCredits, stre
         )}
 
         <div className="text-pretty text-center text-xs text-muted-foreground">
-          Growth Companion stages are a visual record of Waypoint engagement only. They do not measure recovery, wellbeing or treatment outcomes.
+          {progressOnly
+            ? "Progress-only levels are a record of Waypoint engagement. They do not measure recovery, wellbeing or treatment outcomes."
+            : "Growth Companion stages are a visual record of Waypoint engagement only. They do not measure recovery, wellbeing or treatment outcomes."}
         </div>
       </CardContent>
     </Card>

@@ -1,5 +1,7 @@
 export const MINIMUM_ONBOARDING_FOCUS_AREAS: string[]
 export const MINIMUM_ONBOARDING_AVATARS: string[]
+export const NO_COMPANION_ID: string
+export const MINIMUM_ONBOARDING_PRESENTATIONS: string[]
 
 export type MinimumOnboardingSanitized =
   | { ok: false; error: string }
