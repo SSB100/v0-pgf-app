@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { sql } from "@/lib/db"
 import { deleteSession, getSession } from "@/lib/session"
 
-const MAX_ONBOARDING_DRAFT_BYTES = 8_000
+const MAX_ONBOARDING_DRAFT_BYTES = 100 * 1024
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
 
     const { currentStep, data } = await request.json()
 
-    if (!Number.isInteger(currentStep) || currentStep < 1 || currentStep > 3 || !data || typeof data !== "object") {
+    if (!Number.isInteger(currentStep) || currentStep < 1 || currentStep > 50 || !data || typeof data !== "object") {
       return NextResponse.json({ error: "Invalid onboarding progress" }, { status: 400 })
     }
 
@@ -36,8 +36,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Setup is already complete or unavailable" }, { status: 409 })
     }
 
-    // "Save & Finish Later" is an explicit exit from setup. End the current
-    // session only after the minimum setup draft has been saved successfully.
+    // "Save & Finish Later" is an explicit exit from the comprehensive setup.
+    // End the current session only after the baseline draft has saved successfully.
     await deleteSession()
 
     return NextResponse.json({ success: true, message: "Progress saved" })

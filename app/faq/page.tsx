@@ -95,7 +95,7 @@ export default function FAQPage() {
               <AccordionItem value="item-11" className="border rounded-lg px-6 bg-card">
                 <AccordionTrigger className="text-lg font-semibold text-primary hover:no-underline">How do I get started?</AccordionTrigger>
                 <AccordionContent className="text-primary/70">
-                  Create an adult account, choose what you want Waypoint to support, and choose whether you want a Growth Companion or Progress only. That brief setup gets you to your dashboard. Daily check-ins, values work and other personalisation can be used later when they are useful to you. The current MVP is intended for people aged 18 and over.
+                  Create an adult account and complete guided onboarding to establish your starting self-reported baseline. The onboarding asks about the areas you want support with, relevant history and patterns, your values and strengths, and includes your first Daily Check-in and Growth Companion choice. This gives Waypoint a meaningful starting point for later reflection and personalisation. Some preferences can still be changed later in Settings. The current MVP is intended for people aged 18 and over.
                 </AccordionContent>
               </AccordionItem>
 

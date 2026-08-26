@@ -75,23 +75,23 @@ test("minimal dashboard values and skill suggestions remain optional and truthfu
   assert.doesNotMatch(skills, /Three Waypoint suggestions based on information you recorded/)
 })
 
-test("public getting-started copy matches the optional-companion minimum setup flow", async () => {
+test("public getting-started copy describes the comprehensive baseline onboarding", async () => {
   const home = await readSource("app/page.tsx")
   const faq = await readSource("app/faq/page.tsx")
   const footer = await readSource("components/layout/public-footer.tsx")
 
-  assert.match(home, /choose the areas you want Waypoint to support/)
-  assert.match(home, /choose whether to use a Growth Companion or Progress only/)
-  assert.match(home, /optional Growth Companion or progress-only view/)
-  assert.match(home, /personalise the experience further later/)
-  assert.doesNotMatch(home, /Guided onboarding asks about your goals, values, strengths/)
-  assert.doesNotMatch(home, /pick a Growth Companion/)
+  assert.match(home, /Establish your Waypoint baseline/)
+  assert.match(home, /relevant history and patterns/)
+  assert.match(home, /your values and strengths/)
+  assert.match(home, /your first Daily Check-in/)
+  assert.doesNotMatch(home, /personalise the experience further later/)
 
-  assert.match(faq, /brief setup gets you to your dashboard/)
-  assert.match(faq, /choose whether you want a Growth Companion or Progress only/)
-  assert.match(faq, /A Growth Companion is an optional visual way/)
-  assert.match(faq, /Daily check-ins, values work and other personalisation can be used later/)
-  assert.doesNotMatch(faq, /Create an account and complete guided onboarding/)
+  assert.match(faq, /complete guided onboarding to establish your starting self-reported baseline/)
+  assert.match(faq, /relevant history and patterns/)
+  assert.match(faq, /your values and strengths/)
+  assert.match(faq, /first Daily Check-in/)
+  assert.doesNotMatch(faq, /brief setup gets you to your dashboard/)
+  assert.doesNotMatch(faq, /Daily check-ins, values work and other personalisation can be used later/)
 
   assert.match(footer, /© 2026 Waypoint/)
 })

@@ -218,7 +218,7 @@ export default async function Home() {
       <section className="bg-card border-y border-border">
         <div className="container mx-auto px-6 py-20 md:py-28">
           <div className="text-center mb-14 space-y-3">
-            <p className="text-xs font-semibold uppercase tracking-widest text-primary">Simple to start</p>
+            <p className="text-xs font-semibold uppercase tracking-widest text-primary">Build your starting point</p>
             <h2 className="text-3xl md:text-4xl font-bold text-foreground">How Waypoint works</h2>
           </div>
 
@@ -226,8 +226,8 @@ export default async function Home() {
             {[
               {
                 n: "01",
-                title: "Set up your Waypoint",
-                desc: "Create your account, choose the areas you want Waypoint to support, and choose whether to use a Growth Companion or Progress only. You can personalise the experience further later.",
+                title: "Establish your Waypoint baseline",
+                desc: "Create your account, then complete guided onboarding covering the areas you want support with, relevant history and patterns, your values and strengths, and your first Daily Check-in. You will also choose a Growth Companion for your initial progress view.",
               },
               {
                 n: "02",
@@ -236,8 +236,8 @@ export default async function Home() {
               },
               {
                 n: "03",
-                title: "Check in when it helps",
-                desc: "Record your mood, urges, emotions and reflections. Your entries are self-reported and appear in your personal dashboard.",
+                title: "Keep checking in",
+                desc: "Record your mood, urges, emotions and reflections over time so you can compare later entries with your own starting point and notice patterns.",
               },
               {
                 n: "04",

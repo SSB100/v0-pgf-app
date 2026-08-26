@@ -11,7 +11,7 @@ import {
 
 const readSource = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8")
 
-test("minimum onboarding accepts only known focus areas and progress presentations", () => {
+test("preference sanitizer still accepts only known focus areas and progress presentations", () => {
   const result = sanitizeMinimumOnboardingInput({
     journeyTypes: ["gambling", "personal_growth", "gambling", "not-real"],
     growthAvatar: "spirit_fox",
@@ -31,38 +31,63 @@ test("minimum onboarding accepts only known focus areas and progress presentatio
   assert.ok(MINIMUM_ONBOARDING_PRESENTATIONS.includes("none"))
 })
 
-test("minimum onboarding requires a real focus and an explicit valid presentation choice", () => {
+test("preference sanitizer requires a real focus and an explicit valid presentation choice", () => {
   assert.equal(sanitizeMinimumOnboardingInput({ journeyTypes: [], growthAvatar: "growth_tree" }).ok, false)
   assert.equal(sanitizeMinimumOnboardingInput({ journeyTypes: ["gambling"], growthAvatar: "unknown" }).ok, false)
   assert.equal(sanitizeMinimumOnboardingInput({ journeyTypes: ["gambling"], growthAvatar: "" }).ok, false)
 })
 
-test("minimum completion changes access state without fabricating personalisation data", async () => {
+test("retired minimum completion cannot bypass the required baseline", async () => {
   const source = await readSource("app/api/onboarding/minimum-complete/route.ts")
+  const page = await readSource("app/onboarding/page.tsx")
 
-  assert.match(source, /user\.role !== "client"/)
-  assert.match(source, /onboarding_completed = true/)
-  assert.match(source, /journey_types =/)
-  assert.match(source, /growth_avatar =/)
-  assert.match(source, /growthCreditsAwarded: 0/)
-
-  for (const forbidden of ["daily_checkins", "user_values", "problem_areas", "strengths_completed", "level_credits", "check_in_streak", "total_points_earned"]) {
-    assert.equal(source.includes(forbidden), false, `minimum completion must not write ${forbidden}`)
-  }
+  assert.match(source, /status: 410/)
+  assert.match(source, /FULL_BASELINE_ONBOARDING_REQUIRED/)
+  assert.match(source, /full Waypoint baseline onboarding/)
+  assert.doesNotMatch(source, /UPDATE user_profiles/)
+  assert.doesNotMatch(source, /onboarding_completed = true/)
+  assert.doesNotMatch(page, /MinimumOnboardingFlow/)
 })
 
-test("minimum onboarding is a three-step focus presentation start flow", async () => {
-  const source = await readSource("components/onboarding/minimum-onboarding-flow.tsx")
+test("active onboarding restores the comprehensive baseline flow", async () => {
+  const page = await readSource("app/onboarding/page.tsx")
+  const flow = await readSource("components/onboarding/onboarding-flow.tsx")
+  const completion = await readSource("app/api/onboarding/complete/route.ts")
 
-  assert.match(source, /Step \{step\} of 3/)
-  assert.match(source, /What would you like Waypoint to help with\?/)
-  assert.match(source, /Choose how you want to see progress/)
-  assert.match(source, /Progress only/)
-  assert.match(source, /Fantasy Companions/)
-  assert.match(source, /Start using Waypoint/)
-  assert.match(source, /does not create a Daily Check-in or award a Growth Credit/)
-  assert.match(source, /\/api\/onboarding\/minimum-complete/)
-  assert.doesNotMatch(source, /growthAvatar: "growth_tree"/)
+  assert.match(page, /OnboardingFlow/)
+  assert.match(page, /userId=\{user\.id\}/)
+  assert.match(page, /requestedStep <= 50/)
+  assert.match(page, /focus areas, values, strengths and first check-in/)
+  assert.doesNotMatch(page, /Three short steps/)
+  assert.doesNotMatch(page, /MinimumOnboardingFlow/)
+
+  for (const requiredStep of [
+    "journey_type",
+    "gambling",
+    "alcohol",
+    "substances",
+    "mental_health",
+    "personal_growth",
+    "gaming",
+    "physical_harm",
+    "values_selection",
+    "values_ranking",
+    "values_summary",
+    "strengths",
+    "daily_checkin",
+    "avatar_selection",
+    "completion",
+  ]) {
+    assert.ok(flow.includes(`\"${requiredStep}\"`), `full onboarding is missing ${requiredStep}`)
+  }
+
+  assert.match(flow, /\/api\/onboarding\/complete/)
+  assert.match(flow, /\/api\/onboarding\/save-progress/)
+  assert.match(completion, /selectedValues/)
+  assert.match(completion, /initialDailyCheckIn/)
+  assert.match(completion, /user_values/)
+  assert.match(completion, /problem_areas/)
+  assert.match(completion, /daily_checkins/)
 })
 
 test("completed clients can update only their Waypoint focus and presentation preferences", async () => {
@@ -82,7 +107,7 @@ test("completed clients can update only their Waypoint focus and presentation pr
   }
 })
 
-test("settings exposes editable focus and an equal progress-only companion alternative", async () => {
+test("settings retains editable focus and the progress-only companion alternative after baseline onboarding", async () => {
   const settings = await readSource("app/settings/page.tsx")
   const preferences = await readSource("components/settings/waypoint-preferences-card.tsx")
   const desktopGrowth = await readSource("components/dashboard/growth-avatar-card.tsx")
@@ -99,7 +124,7 @@ test("settings exposes editable focus and an equal progress-only companion alter
   assert.match(mobileGrowth, /track engagement without a character/)
 })
 
-test("signup is limited to account essentials and does not infer optional preferences", async () => {
+test("signup remains limited to account essentials and does not infer optional preferences", async () => {
   const form = await readSource("components/auth/signup-form.tsx")
   const route = await readSource("app/api/auth/signup/route.ts")
 
@@ -124,13 +149,15 @@ test("first explicit demographics save records the collection notice instead of 
   assert.match(source, /source: "settings"/)
 })
 
-test("minimum draft saving is client-only, bounded to three steps and exits only after save", async () => {
+test("full baseline draft saving is client-only, supports the long flow and exits only after save", async () => {
   const source = await readSource("app/api/onboarding/save-progress/route.ts")
   const updateIndex = source.indexOf("UPDATE user_profiles")
   const signOutIndex = source.indexOf("await deleteSession()")
 
   assert.match(source, /user\.role !== "client"/)
-  assert.match(source, /currentStep > 3/)
+  assert.match(source, /currentStep > 50/)
+  assert.match(source, /100 \* 1024/)
+  assert.match(source, /COALESCE\(onboarding_completed, false\) = false/)
   assert.ok(updateIndex >= 0)
   assert.ok(signOutIndex > updateIndex)
 })
