@@ -11,6 +11,12 @@ test("migration creates private current-response storage and explicit Journey hi
   assert.match(migration, /include_pre_grant_data BOOLEAN/)
   assert.match(migration, /'journey_responses'/)
   assert.match(migration, /data_scope <> 'journey_responses' OR include_pre_grant_data IS NOT NULL/)
+  assert.match(migration, /sharing_grants_data_scope_check_v2/)
+  assert.match(migration, /ADD CONSTRAINT sharing_grants_data_scope_check_v2[\s\S]*NOT VALID/)
+  assert.match(migration, /VALIDATE CONSTRAINT sharing_grants_data_scope_check_v2/)
+  assert.match(migration, /DROP CONSTRAINT sharing_grants_data_scope_check;[\s\S]*RENAME CONSTRAINT sharing_grants_data_scope_check_v2/)
+  assert.match(migration, /ADD CONSTRAINT sharing_grants_journey_history_check[\s\S]*NOT VALID/)
+  assert.match(migration, /VALIDATE CONSTRAINT sharing_grants_journey_history_check/)
 })
 
 test("Journey response sharing is distinct, high sensitivity and never a default grant", () => {

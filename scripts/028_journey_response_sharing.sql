@@ -26,24 +26,73 @@ CREATE INDEX IF NOT EXISTS idx_journey_module_responses_content_version
 ALTER TABLE sharing_grants
   ADD COLUMN IF NOT EXISTS include_pre_grant_data BOOLEAN;
 
+-- Validate the broader scope rule before removing the existing production rule.
+-- This avoids a window where sharing_grants has no data-scope constraint.
 ALTER TABLE sharing_grants
-  DROP CONSTRAINT IF EXISTS sharing_grants_data_scope_check;
+  DROP CONSTRAINT IF EXISTS sharing_grants_data_scope_check_v2;
 
-ALTER TABLE sharing_grants
-  ADD CONSTRAINT sharing_grants_data_scope_check CHECK (data_scope IN (
-    'journey_progress',
-    'journey_responses',
-    'daily_checkins_summary',
-    'skills_practice',
-    'core_values',
-    'safeguards',
-    'selected_reflections'
-  ));
+DO $$
+DECLARE
+  current_scope_constraint TEXT;
+BEGIN
+  SELECT pg_get_constraintdef(oid)
+  INTO current_scope_constraint
+  FROM pg_constraint
+  WHERE conrelid = 'sharing_grants'::regclass
+    AND conname = 'sharing_grants_data_scope_check';
 
-ALTER TABLE sharing_grants
-  DROP CONSTRAINT IF EXISTS sharing_grants_journey_history_check;
+  IF current_scope_constraint IS NULL THEN
+    ALTER TABLE sharing_grants
+      ADD CONSTRAINT sharing_grants_data_scope_check CHECK (data_scope IN (
+        'journey_progress',
+        'journey_responses',
+        'daily_checkins_summary',
+        'skills_practice',
+        'core_values',
+        'safeguards',
+        'selected_reflections'
+      )) NOT VALID;
 
-ALTER TABLE sharing_grants
-  ADD CONSTRAINT sharing_grants_journey_history_check CHECK (
-    data_scope <> 'journey_responses' OR include_pre_grant_data IS NOT NULL
-  );
+    ALTER TABLE sharing_grants
+      VALIDATE CONSTRAINT sharing_grants_data_scope_check;
+  ELSIF POSITION('journey_responses' IN current_scope_constraint) = 0 THEN
+    ALTER TABLE sharing_grants
+      ADD CONSTRAINT sharing_grants_data_scope_check_v2 CHECK (data_scope IN (
+        'journey_progress',
+        'journey_responses',
+        'daily_checkins_summary',
+        'skills_practice',
+        'core_values',
+        'safeguards',
+        'selected_reflections'
+      )) NOT VALID;
+
+    ALTER TABLE sharing_grants
+      VALIDATE CONSTRAINT sharing_grants_data_scope_check_v2;
+
+    ALTER TABLE sharing_grants
+      DROP CONSTRAINT sharing_grants_data_scope_check;
+
+    ALTER TABLE sharing_grants
+      RENAME CONSTRAINT sharing_grants_data_scope_check_v2
+      TO sharing_grants_data_scope_check;
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conrelid = 'sharing_grants'::regclass
+      AND conname = 'sharing_grants_journey_history_check'
+  ) THEN
+    ALTER TABLE sharing_grants
+      ADD CONSTRAINT sharing_grants_journey_history_check CHECK (
+        data_scope <> 'journey_responses' OR include_pre_grant_data IS NOT NULL
+      ) NOT VALID;
+  END IF;
+
+  ALTER TABLE sharing_grants
+    VALIDATE CONSTRAINT sharing_grants_journey_history_check;
+END $$;
