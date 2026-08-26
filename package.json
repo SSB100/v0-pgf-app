@@ -5,7 +5,7 @@
   "scripts": {
     "build": "next build",
     "dev": "next dev",
-    "lint": "eslint .",
+    "lint": "pnpm dlx oxlint@1.80.0 .",
     "start": "next start",
     "test": "node --test tests/*.test.mjs"
   },
