@@ -1,4 +1,4 @@
-export const PROFESSIONAL_SHARING_CONSENT_VERSION = "professional-sharing-v1"
+export const PROFESSIONAL_SHARING_CONSENT_VERSION = "professional-sharing-v2"
 
 type ProfessionalSensitivity = "standard" | "sensitive" | "high"
 
@@ -8,6 +8,12 @@ export const PROFESSIONAL_SHARE_SCOPES = [
     label: "Journey progress",
     description: "Modules completed and overall learning progress. Journey exercise answers and quick-check responses are not included.",
     sensitivity: "standard" as ProfessionalSensitivity,
+  },
+  {
+    id: "journey_responses",
+    label: "Journey responses",
+    description: "Saved answers and reflections from completed Journey modules, including exercise responses and educational quick-check selections. These are not clinical assessments or scores.",
+    sensitivity: "high" as ProfessionalSensitivity,
   },
   {
     id: "daily_checkins_summary",
@@ -42,11 +48,11 @@ export function normaliseProfessionalShareScopes(values: unknown): ProfessionalS
   return [...new Set(values.filter(isProfessionalShareScope))]
 }
 
-// Only categories with an explicit, permission-scoped professional summary are
-// selectable. Safeguards, Journey response content and private reflections remain
-// outside the professional summary unless a future separately consented policy is added.
+// A professional can request Journey responses, but the client must still make
+// the explicit history-mode choice when granting that scope.
 export const PROFESSIONAL_REQUESTABLE_SCOPES: ProfessionalShareScope[] = [
   "journey_progress",
+  "journey_responses",
   "daily_checkins_summary",
   "skills_practice",
   "core_values",
