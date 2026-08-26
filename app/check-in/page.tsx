@@ -3,6 +3,7 @@ import { getSession } from "@/lib/session"
 import CheckInForm from "@/components/check-in/check-in-form"
 import Link from "next/link"
 import { sql } from "@/lib/db"
+import { getAotearoaDateKey } from "@/lib/aotearoa-date"
 
 export default async function CheckInPage() {
   const session = await getSession()
@@ -12,12 +13,17 @@ export default async function CheckInPage() {
   }
 
   const userId = session.id
+  const today = getAotearoaDateKey()
 
   const [profileResult, problemsResult, todayCheckIn] = await Promise.all([
-    sql`SELECT journey_types FROM user_profiles WHERE user_id = ${userId}`,
+    sql`SELECT journey_types, onboarding_completed FROM user_profiles WHERE user_id = ${userId}`,
     sql`SELECT problem_type, specific_types FROM problem_areas WHERE user_id = ${userId}`,
-    sql`SELECT id, created_at FROM daily_checkins WHERE user_id = ${userId}::uuid AND date = CURRENT_DATE LIMIT 1`,
+    sql`SELECT id, created_at FROM daily_checkins WHERE user_id = ${userId}::uuid AND date = ${today}::date LIMIT 1`,
   ])
+
+  if (!profileResult[0]?.onboarding_completed) {
+    redirect("/onboarding")
+  }
 
   let journeyTypes: string[] = []
   if (profileResult[0]?.journey_types) {
