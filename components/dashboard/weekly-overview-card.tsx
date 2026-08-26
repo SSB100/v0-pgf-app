@@ -87,32 +87,18 @@ export default function WeeklyOverviewCard({ checkins, journeyTypes = [], accoun
     const previousRating = previous?.overall_rating ?? previous?.mood_rating ?? null
     const currentRating = overall ?? mood
     const delta = currentRating !== null && previousRating !== null ? currentRating - previousRating : null
-    const behaviourRecorded = Boolean(checkin && tracksSpecificBehaviour && didRecordPrimaryBehaviour(checkin))
-
     const beforeAccount = accountCreatedDate ? date < accountCreatedDate : false
-    const missed = !checkin && !beforeAccount
 
     return {
       day: days[date.getDay()],
       dateLabel: `${date.getMonth() + 1}/${date.getDate()}`,
       hasData: Boolean(checkin),
       beforeAccount,
-      missed,
+      missed: !checkin && !beforeAccount,
       mood,
       overall,
       urges,
-      behaviourRecorded,
       delta,
-      feedback:
-        beforeAccount
-          ? "Before you joined"
-          : !checkin
-            ? "No check-in recorded"
-            : delta !== null && delta >= 2
-              ? "Your self-reported rating increased from the previous recorded day"
-              : delta !== null && delta <= -2
-                ? "Your self-reported rating decreased from the previous recorded day"
-                : "Your rating was similar to the previous recorded day",
     }
   })
 
@@ -120,99 +106,79 @@ export default function WeeklyOverviewCard({ checkins, journeyTypes = [], accoun
   const completedDays = chartData.filter((day) => day.hasData).length
   const missingDays = chartData.filter((day) => day.missed).length
   const behaviourDays = tracksSpecificBehaviour ? validCheckins.filter(didRecordPrimaryBehaviour).length : 0
-  const noBehaviourDays = tracksSpecificBehaviour ? validCheckins.length - behaviourDays : 0
-  const avgMood = validCheckins.length ? validCheckins.reduce((sum, checkin) => sum + checkin.mood_rating, 0) / validCheckins.length : 0
-  const avgUrges = validCheckins.length ? validCheckins.reduce((sum, checkin) => sum + checkin.urge_strength, 0) / validCheckins.length : 0
-  const increasedDays = chartData.filter((day) => day.delta !== null && day.delta >= 2)
-  const decreasedDays = chartData.filter((day) => day.delta !== null && day.delta <= -2)
+  const avgMood = validCheckins.length ? validCheckins.reduce((sum, checkin) => sum + checkin.mood_rating, 0) / validCheckins.length : null
+  const avgUrges = validCheckins.length ? validCheckins.reduce((sum, checkin) => sum + checkin.urge_strength, 0) / validCheckins.length : null
+  const increasedDays = chartData.filter((day) => day.delta !== null && day.delta >= 2).length
+  const decreasedDays = chartData.filter((day) => day.delta !== null && day.delta <= -2).length
   const hasAnyHistory = validCheckins.length > 0
 
   return (
-    <Card className="soft-shadow border-border/50">
-      <CardHeader className="pb-2">
-        <CardTitle className="flex items-center gap-2 text-base text-foreground sm:text-lg">
-          <BarChart3 className="size-5 text-primary" />
-          Weekly Overview
-          <span className="ml-auto text-xs font-normal text-muted-foreground">{completedDays}/{accountDaysInWindow} days</span>
-        </CardTitle>
+    <Card className="gap-3 border-border/50 py-4 soft-shadow">
+      <CardHeader className="px-4 pb-0">
+        <div className="flex items-center justify-between gap-4">
+          <CardTitle className="flex items-center gap-2 text-base text-foreground">
+            <BarChart3 className="size-4 text-primary" />
+            Weekly Overview
+          </CardTitle>
+          <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+            {increasedDays > 0 && <span className="inline-flex items-center gap-1"><TrendingUp className="size-3 text-emerald-500" />{increasedDays}</span>}
+            {decreasedDays > 0 && <span className="inline-flex items-center gap-1"><TrendingDown className="size-3 text-amber-500" />{decreasedDays}</span>}
+            <span className="rounded-full bg-secondary/50 px-2 py-1 font-semibold">{completedDays}/{accountDaysInWindow} recorded</span>
+          </div>
+        </div>
       </CardHeader>
-      <CardContent className="space-y-3 pb-3">
+
+      <CardContent className="space-y-3 px-4 pb-0">
         {!hasAnyHistory && (
-          <div className="rounded-lg border-2 border-primary/20 bg-primary/10 p-3">
-            <p className="mb-1 text-sm font-medium text-primary">No check-ins in this 7-day view yet</p>
-            <p className="text-xs text-muted-foreground">When you record a check-in, your self-reported mood, overall rating and urges will appear here. Missing a day is not a failure.</p>
+          <div className="rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-muted-foreground">
+            No check-ins in this 7-day view yet. Missing a day is left empty rather than treated as a result.
           </div>
         )}
 
-        {missingDays > 0 && (
-          <div className="flex items-start gap-2 rounded-lg border border-border bg-muted/40 p-2.5 text-xs">
-            <AlertCircle className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
-            <p className="text-muted-foreground">
-              <span className="font-medium text-foreground">{missingDays} day{missingDays === 1 ? "" : "s"} without a check-in.</span>{" "}
-              Those days are left empty rather than treated as good or bad days. Missing a check-in is not a failure.
-            </p>
+        <div className="grid grid-cols-3 gap-2">
+          <div className="rounded-lg border border-border/60 bg-secondary/20 px-3 py-2">
+            <p className="text-[9px] font-medium uppercase tracking-wide text-muted-foreground">Average mood</p>
+            <p className="mt-0.5 text-lg font-bold text-foreground">{avgMood === null ? "—" : `${avgMood.toFixed(1)}/10`}</p>
           </div>
-        )}
-
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
-          <span className="font-semibold text-foreground">Self-reported check-ins</span>
-          <span className="flex items-center gap-1"><i className="size-2 rounded-sm bg-[var(--chart-1)]" />Mood</span>
-          <span className="flex items-center gap-1"><i className="size-2 rounded-sm bg-[var(--chart-2)]" />Overall</span>
-          <span className="flex items-center gap-1"><i className="size-2 rounded-sm bg-[var(--chart-3)]" />Urges</span>
+          <div className="rounded-lg border border-border/60 bg-secondary/20 px-3 py-2">
+            <p className="text-[9px] font-medium uppercase tracking-wide text-muted-foreground">Average urges</p>
+            <p className="mt-0.5 text-lg font-bold text-foreground">{avgUrges === null ? "—" : `${avgUrges.toFixed(1)}/10`}</p>
+          </div>
+          <div className="rounded-lg border border-border/60 bg-secondary/20 px-3 py-2">
+            <p className="truncate text-[9px] font-medium uppercase tracking-wide text-muted-foreground">{tracksSpecificBehaviour ? `${behaviourLabel} reported` : "Days recorded"}</p>
+            <p className="mt-0.5 text-lg font-bold text-foreground">{tracksSpecificBehaviour ? behaviourDays : completedDays}</p>
+          </div>
         </div>
 
-        <ChartContainer config={chartConfig} className="h-[220px] w-full">
-          <BarChart data={chartData} margin={{ top: 8, right: 4, left: -20, bottom: 0 }} barGap={1} barCategoryGap="18%">
-            <CartesianGrid vertical={false} stroke="hsl(var(--border))" strokeDasharray="3 3" opacity={0.35} />
-            <XAxis dataKey="day" tickLine={false} axisLine={false} fontSize={11} tickFormatter={(value, index) => `${value}\n${chartData[index]?.dateLabel ?? ""}`} />
-            <YAxis domain={[0, 10]} ticks={[0, 5, 10]} tickLine={false} axisLine={false} fontSize={10} width={24} />
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-muted-foreground">
+            <span className="font-semibold text-foreground">Self-reported</span>
+            <span className="flex items-center gap-1"><i className="size-2 rounded-sm bg-[var(--chart-1)]" />Mood</span>
+            <span className="flex items-center gap-1"><i className="size-2 rounded-sm bg-[var(--chart-2)]" />Overall</span>
+            <span className="flex items-center gap-1"><i className="size-2 rounded-sm bg-[var(--chart-3)]" />Urges</span>
+          </div>
+          {missingDays > 0 && (
+            <span className="inline-flex shrink-0 items-center gap-1 text-[10px] text-muted-foreground" title="Missing days are left empty and are not treated as good or bad results.">
+              <AlertCircle className="size-3" /> {missingDays} empty
+            </span>
+          )}
+        </div>
+
+        <ChartContainer config={chartConfig} className="h-[160px] w-full">
+          <BarChart data={chartData} margin={{ top: 4, right: 2, left: -22, bottom: 0 }} barGap={1} barCategoryGap="20%">
+            <CartesianGrid vertical={false} stroke="hsl(var(--border))" strokeDasharray="3 3" opacity={0.3} />
+            <XAxis dataKey="day" tickLine={false} axisLine={false} fontSize={10} />
+            <YAxis domain={[0, 10]} ticks={[0, 5, 10]} tickLine={false} axisLine={false} fontSize={9} width={22} />
             <ChartTooltip content={<ChartTooltipContent />} />
-            <Bar dataKey="mood" name="Mood" fill="var(--color-mood)" radius={[2, 2, 0, 0]}>{chartData.map((day) => <Cell key={`mood-${day.dateLabel}`} fill={day.hasData ? "var(--color-mood)" : "hsl(var(--muted))"} opacity={day.mood === null ? (day.beforeAccount ? 0.08 : 0.25) : 1} />)}</Bar>
-            <Bar dataKey="overall" name="Overall" fill="var(--color-overall)" radius={[2, 2, 0, 0]}>{chartData.map((day) => <Cell key={`overall-${day.dateLabel}`} fill={day.hasData ? "var(--color-overall)" : "hsl(var(--muted))"} opacity={day.overall === null ? (day.beforeAccount ? 0.08 : 0.25) : 1} />)}</Bar>
-            <Bar dataKey="urges" name="Urges" fill="var(--color-urges)" radius={[2, 2, 0, 0]}>{chartData.map((day) => <Cell key={`urges-${day.dateLabel}`} fill={day.hasData ? "var(--color-urges)" : "hsl(var(--muted))"} opacity={day.urges === null ? (day.beforeAccount ? 0.08 : 0.25) : 1} />)}</Bar>
+            <Bar dataKey="mood" name="Mood" fill="var(--color-mood)" radius={[2, 2, 0, 0]}>{chartData.map((day) => <Cell key={`mood-${day.dateLabel}`} fill={day.hasData ? "var(--color-mood)" : "hsl(var(--muted))"} opacity={day.mood === null ? (day.beforeAccount ? 0.08 : 0.22) : 1} />)}</Bar>
+            <Bar dataKey="overall" name="Overall" fill="var(--color-overall)" radius={[2, 2, 0, 0]}>{chartData.map((day) => <Cell key={`overall-${day.dateLabel}`} fill={day.hasData ? "var(--color-overall)" : "hsl(var(--muted))"} opacity={day.overall === null ? (day.beforeAccount ? 0.08 : 0.22) : 1} />)}</Bar>
+            <Bar dataKey="urges" name="Urges" fill="var(--color-urges)" radius={[2, 2, 0, 0]}>{chartData.map((day) => <Cell key={`urges-${day.dateLabel}`} fill={day.hasData ? "var(--color-urges)" : "hsl(var(--muted))"} opacity={day.urges === null ? (day.beforeAccount ? 0.08 : 0.22) : 1} />)}</Bar>
           </BarChart>
         </ChartContainer>
 
-        <div className="grid grid-cols-7 gap-1" aria-label="Daily check-in status">
-          {chartData.map((day) => (
-            <div key={day.dateLabel} className="flex min-w-0 flex-col items-center gap-1 text-center" title={day.feedback}>
-              <div className={`flex size-5 items-center justify-center rounded-full text-[10px] font-bold ${day.beforeAccount ? "bg-muted/40 text-muted-foreground/50" : !day.hasData ? "bg-muted text-muted-foreground" : "bg-primary/15 text-primary"}`}>
-                {day.beforeAccount ? "" : day.hasData ? "•" : "–"}
-              </div>
-              {day.delta !== null && day.delta >= 2 && <TrendingUp className="size-3 text-emerald-500" />}
-              {day.delta !== null && day.delta <= -2 && <TrendingDown className="size-3 text-amber-500" />}
-            </div>
-          ))}
-        </div>
-
-        {(increasedDays.length > 0 || decreasedDays.length > 0) && (
-          <div className="grid gap-2 sm:grid-cols-2">
-            {increasedDays.length > 0 && <div className="rounded-lg border border-border bg-muted/30 p-2 text-xs text-muted-foreground">Your self-reported overall or mood rating increased by 2 or more points on {increasedDays.length} recorded day{increasedDays.length === 1 ? "" : "s"} compared with the previous recorded day.</div>}
-            {decreasedDays.length > 0 && <div className="rounded-lg border border-border bg-muted/30 p-2 text-xs text-muted-foreground">Your self-reported overall or mood rating decreased by 2 or more points on {decreasedDays.length} recorded day{decreasedDays.length === 1 ? "" : "s"} compared with the previous recorded day.</div>}
-          </div>
-        )}
-
-        {tracksSpecificBehaviour && validCheckins.length > 0 && (
-          <div className="grid gap-2 sm:grid-cols-2">
-            <div className="rounded-lg border border-border bg-muted/30 p-2.5">
-              <div className="text-xs font-medium text-muted-foreground">Recorded days with {behaviourLabel} reported</div>
-              <div className="text-2xl font-bold text-foreground">{behaviourDays}</div>
-            </div>
-            <div className="rounded-lg border border-border bg-muted/30 p-2.5">
-              <div className="text-xs font-medium text-muted-foreground">Recorded days without {behaviourLabel} reported</div>
-              <div className="text-2xl font-bold text-foreground">{noBehaviourDays}</div>
-            </div>
-            <p className="text-xs text-muted-foreground sm:col-span-2">These counts describe what you entered. Waypoint does not assume that one pattern defines your goals, recovery status or progress.</p>
-          </div>
-        )}
-
-        {hasAnyHistory && (
-          <div className="flex flex-wrap gap-2 text-[11px] text-muted-foreground">
-            <span>Average self-reported mood {avgMood.toFixed(1)}/10</span>
-            <span>Average self-reported urges {avgUrges.toFixed(1)}/10</span>
-            {avgUrges > 7 && <span className="font-medium">Average urge rating is above 7/10</span>}
-          </div>
-        )}
+        <p className="border-t border-border/60 pt-2 text-[9px] leading-snug text-muted-foreground">
+          These summaries describe what you entered. They do not determine recovery status, treatment outcome or whether your goals are being met.
+        </p>
       </CardContent>
     </Card>
   )
