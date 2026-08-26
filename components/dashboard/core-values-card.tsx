@@ -14,59 +14,50 @@ export default function CoreValuesCard({ values }: CoreValuesCardProps) {
   const hasValues = values.length > 0
 
   return (
-    <Card className="overflow-hidden border-border/50">
-      <CardHeader className="pb-3">
-        <div className="flex items-start gap-3">
-          <div className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-primary/25 bg-primary/10">
-            <Compass className="size-4.5 text-primary" />
+    <Card className="gap-3 overflow-hidden border-border/50 py-4">
+      <CardHeader className="px-4 pb-0">
+        <div className="flex items-center gap-2.5">
+          <div className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-primary/20 bg-primary/10">
+            <Compass className="size-4 text-primary" />
           </div>
-          <div className="min-w-0">
-            <CardTitle className="text-lg font-bold text-foreground">Your Core Values</CardTitle>
-            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-              {hasValues
-                ? "The three values you narrowed down in the values module. They sit alongside one another rather than being ranked first, second and third."
-                : "You have not chosen core values yet. Waypoint works without them, and you can explore what matters to you later if that would be useful."}
+          <div className="min-w-0 flex-1">
+            <CardTitle className="text-base font-bold text-foreground">Your Core Values</CardTitle>
+            <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground">
+              {hasValues ? "Directions you chose to keep close." : "Optional directions you can explore later."}
             </p>
           </div>
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-3 px-4">
         {hasValues ? (
-          <div className="grid gap-2.5">
+          <div className="flex flex-wrap gap-2">
             {values.map((value) => (
               <div
                 key={value.value_name}
-                className="flex items-center gap-3 rounded-xl border border-border/60 bg-secondary/20 p-3.5"
+                className="inline-flex min-h-9 items-center gap-2 rounded-xl border border-border/60 bg-secondary/20 px-3 py-1.5"
+                title={value.category || undefined}
               >
-                <div className="flex size-9 shrink-0 items-center justify-center rounded-full border border-primary/20 bg-primary/10">
-                  <Heart className="size-4 text-primary" />
-                </div>
-                <div className="min-w-0">
-                  <p className="font-semibold leading-tight text-foreground">{value.value_name}</p>
-                  {value.category && (
-                    <p className="mt-0.5 text-xs capitalize text-muted-foreground">{value.category}</p>
-                  )}
-                </div>
+                <Heart className="size-3.5 shrink-0 text-primary" />
+                <span className="text-sm font-semibold text-foreground">{value.value_name}</span>
               </div>
             ))}
           </div>
         ) : (
-          <div className="rounded-xl border border-dashed border-border p-4 text-sm leading-relaxed text-muted-foreground">
-            Core values are optional. The values module is there when you want a guided way to think about the directions and relationships that matter to you.
+          <div className="rounded-xl border border-dashed border-border px-3 py-2 text-xs leading-relaxed text-muted-foreground">
+            Waypoint works without core values. Use the values module if a guided reflection would be useful.
           </div>
         )}
 
-        <div className="rounded-xl border border-primary/15 bg-primary/5 p-3 text-xs leading-relaxed text-muted-foreground">
-          Values can change as life changes. They are prompts for direction, not labels you have to live up to perfectly.
+        <div className="flex items-center justify-between gap-3 border-t border-border/60 pt-2.5">
+          <p className="min-w-0 text-[10px] leading-snug text-muted-foreground">Values can change. They guide direction rather than measure success.</p>
+          <Link
+            href="/journey/learn/discovering-values"
+            className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-primary hover:underline"
+          >
+            {hasValues ? "Revisit" : "Explore"} <ArrowRight className="size-3.5" />
+          </Link>
         </div>
-
-        <Link
-          href="/journey/learn/discovering-values"
-          className="inline-flex min-h-10 items-center gap-2 text-sm font-semibold text-primary hover:underline"
-        >
-          {hasValues ? "Revisit the values module" : "Explore the values module"} <ArrowRight className="size-4" />
-        </Link>
       </CardContent>
     </Card>
   )
