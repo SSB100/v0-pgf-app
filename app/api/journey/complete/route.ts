@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { getSession } from "@/lib/session"
-import { sql } from "@/lib/db"
+import { dbTableExists, sql } from "@/lib/db"
 import { getJourneyContentRecord } from "@/lib/clinical-content-registry"
 import { LEGACY_CONTENT_VERSION } from "@/lib/content-evidence-registry.mjs"
 import {
@@ -88,6 +88,13 @@ export async function POST(request: NextRequest) {
         totalCredits: profileResult[0]?.level_credits || 0,
         content: { contentId, version: contentVersion },
       })
+    }
+
+    if (!(await dbTableExists("journey_module_responses"))) {
+      return NextResponse.json(
+        { error: "Journey response storage has not been activated on this environment yet" },
+        { status: 503 },
+      )
     }
 
     const valuesResult = await sql`

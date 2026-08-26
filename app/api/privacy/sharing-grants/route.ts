@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { getSession } from "@/lib/session"
-import { sql } from "@/lib/db"
+import { dbTableExists, sql } from "@/lib/db"
 import { governanceTableExists, recordConsentEvent } from "@/lib/governance"
 import { hasCurrentProfessionalAffiliation } from "@/lib/organisation-lifecycle-policy.mjs"
 import { parseJourneyResponseHistoryMode } from "@/lib/journey-response-policy"
@@ -23,10 +23,14 @@ export async function PATCH(request: NextRequest) {
       (await governanceTableExists("professional_accounts")) &&
       (await governanceTableExists("sharing_grants"))
 
-    if (!ready) return NextResponse.json({ error: "Professional sharing has not been activated on this environment." }, { status: 503 })
+    if (!ready) {
+      return NextResponse.json({ error: "Professional sharing has not been activated on this environment." }, { status: 503 })
+    }
 
     const body = await request.json()
-    if (!looksLikeUuid(body.linkId)) return NextResponse.json({ error: "Invalid professional connection" }, { status: 400 })
+    if (!looksLikeUuid(body.linkId)) {
+      return NextResponse.json({ error: "Invalid professional connection" }, { status: 400 })
+    }
 
     const scopes = normaliseProfessionalShareScopes(body.scopes)
     if (!Array.isArray(body.scopes) || scopes.length !== body.scopes.length) {
@@ -86,6 +90,13 @@ export async function PATCH(request: NextRequest) {
       )
     }
 
+    if (addingJourneyResponses && !(await dbTableExists("journey_module_responses"))) {
+      return NextResponse.json(
+        { error: "Journey response sharing has not been activated on this environment yet" },
+        { status: 503 },
+      )
+    }
+
     if (!currentAffiliation && scopes.some((scope) => !currentScopes.has(scope))) {
       return NextResponse.json(
         { error: "New sharing cannot be granted until the professional's current organisation affiliation is verified" },
@@ -132,7 +143,8 @@ export async function PATCH(request: NextRequest) {
           WHERE link_id = ${body.linkId}
             AND data_scope = 'journey_responses'
             AND status = 'active'
-          ORDER BY granted_at DESC LIMIT 1
+          ORDER BY granted_at DESC
+          LIMIT 1
         `
       : []
     const activeJourneyGrant = activeJourneyRows[0] ?? null

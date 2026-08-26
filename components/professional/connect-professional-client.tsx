@@ -17,6 +17,7 @@ type Preview = {
   professional: { name: string; role: string | null; organisation: string | null }
   requestedScopes: ProfessionalShareScope[]
   journeyResponseCount: number
+  journeyResponsesReady: boolean
   expiresAt: string
   monitoringNotice: string
 }
@@ -37,7 +38,11 @@ export default function ConnectProfessionalClient({ token }: { token: string }) 
         const data = await response.json()
         if (!response.ok) throw new Error(data.error || "Unable to load invitation")
         setPreview(data)
-        setSelected(data.requestedScopes)
+        setSelected(
+          data.requestedScopes.filter(
+            (scope: ProfessionalShareScope) => scope !== "journey_responses" || data.journeyResponsesReady === true,
+          ),
+        )
       } catch (caught) {
         setError(caught instanceof Error ? caught.message : "Unable to load invitation")
       } finally {
@@ -86,8 +91,13 @@ export default function ConnectProfessionalClient({ token }: { token: string }) 
   if (!preview) {
     return (
       <Card className="mx-auto max-w-xl">
-        <CardHeader><CardTitle>Invitation unavailable</CardTitle><CardDescription>{error || "This professional invitation cannot be used."}</CardDescription></CardHeader>
-        <CardContent><Button onClick={() => router.push("/dashboard")}>Return to dashboard</Button></CardContent>
+        <CardHeader>
+          <CardTitle>Invitation unavailable</CardTitle>
+          <CardDescription>{error || "This professional invitation cannot be used."}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button onClick={() => router.push("/dashboard")}>Return to dashboard</Button>
+        </CardContent>
       </Card>
     )
   }
@@ -104,7 +114,9 @@ export default function ConnectProfessionalClient({ token }: { token: string }) 
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2"><UserCheck className="size-5 text-primary" /> {preview.professional.name}</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <UserCheck className="size-5 text-primary" /> {preview.professional.name}
+          </CardTitle>
           <CardDescription>{[preview.professional.role, preview.professional.organisation].filter(Boolean).join(" · ")}</CardDescription>
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground">This invitation is available until {new Date(preview.expiresAt).toLocaleString("en-NZ")}.</CardContent>
@@ -112,22 +124,34 @@ export default function ConnectProfessionalClient({ token }: { token: string }) 
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2"><LockKeyhole className="size-5 text-primary" /> Requested information</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <LockKeyhole className="size-5 text-primary" /> Requested information
+          </CardTitle>
           <CardDescription>The professional requested these categories. You can grant all, some, or decline the connection.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          {requestedDefinitions.map((scope) => (
-            <label key={scope.id} className="flex cursor-pointer items-start gap-3 rounded-lg border p-4">
-              <Checkbox checked={selected.includes(scope.id)} onCheckedChange={(value) => toggle(scope.id, value === true)} />
-              <span>
-                <span className="flex flex-wrap items-center gap-2 font-medium text-foreground">
-                  {scope.label}
-                  {scope.sensitivity === "high" && <Badge variant="outline" className="border-amber-500/40 text-amber-700 dark:text-amber-300">High sensitivity</Badge>}
+          {requestedDefinitions.map((scope) => {
+            const unavailableJourneyResponses = scope.id === "journey_responses" && !preview.journeyResponsesReady
+            return (
+              <label key={scope.id} className={`flex items-start gap-3 rounded-lg border p-4 ${unavailableJourneyResponses ? "cursor-not-allowed opacity-60" : "cursor-pointer"}`}>
+                <Checkbox
+                  checked={selected.includes(scope.id)}
+                  disabled={unavailableJourneyResponses}
+                  onCheckedChange={(value) => toggle(scope.id, value === true)}
+                />
+                <span>
+                  <span className="flex flex-wrap items-center gap-2 font-medium text-foreground">
+                    {scope.label}
+                    {scope.sensitivity === "high" && <Badge variant="outline" className="border-amber-500/40 text-amber-700 dark:text-amber-300">High sensitivity</Badge>}
+                  </span>
+                  <span className="mt-1 block text-sm leading-5 text-muted-foreground">{scope.description}</span>
+                  {unavailableJourneyResponses && (
+                    <span className="mt-1 block text-xs text-amber-700 dark:text-amber-300">Journey response sharing is not active on this environment yet.</span>
+                  )}
                 </span>
-                <span className="mt-1 block text-sm leading-5 text-muted-foreground">{scope.description}</span>
-              </span>
-            </label>
-          ))}
+              </label>
+            )
+          })}
 
           {sharingJourneyResponses && (
             <div className="rounded-xl border border-amber-300/60 bg-amber-50/70 p-4 dark:border-amber-800 dark:bg-amber-950/20">

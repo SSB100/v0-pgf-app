@@ -39,3 +39,18 @@ test("response policy limits free text and canonicalises against registered modu
   assert.match(policy, /selectedOptionLabel: selectedOption.label/)
   assert.doesNotMatch(policy, /correct:/)
 })
+
+test("Journey response writes fail cleanly until the response schema is available", () => {
+  const completion = read("app/api/journey/complete/route.ts")
+  const sharing = read("app/api/privacy/sharing-grants/route.ts")
+  const invitation = read("app/api/connect/professional/route.ts")
+  const invitationClient = read("components/professional/connect-professional-client.tsx")
+
+  assert.match(completion, /dbTableExists\("journey_module_responses"\)/)
+  assert.match(completion, /Journey response storage has not been activated[\s\S]*status: 503/)
+  assert.match(sharing, /addingJourneyResponses && !\(await dbTableExists\("journey_module_responses"\)\)/)
+  assert.match(sharing, /Journey response sharing has not been activated[\s\S]*status: 503/)
+  assert.match(invitation, /wantsJourneyResponses && !\(await dbTableExists\("journey_module_responses"\)\)/)
+  assert.match(invitation, /journeyResponsesReady/)
+  assert.match(invitationClient, /disabled=\{unavailableJourneyResponses\}/)
+})
