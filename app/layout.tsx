@@ -1,5 +1,5 @@
 import type React from "react"
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
 import "./globals.css"
 
@@ -21,10 +21,16 @@ export const metadata: Metadata = {
   },
 }
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+}
+
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en-NZ">
-      <body className="font-sans antialiased">{children}</body>
+    <html lang="en-NZ" className="max-w-full overflow-x-clip">
+      <body className="min-h-dvh max-w-full overflow-x-clip font-sans antialiased">{children}</body>
     </html>
   )
 }

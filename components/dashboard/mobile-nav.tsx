@@ -39,8 +39,11 @@ export default function MobileNav() {
   ]
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-border/70 bg-card/95 shadow-[0_-8px_30px_rgba(0,0,0,0.08)] backdrop-blur-xl lg:hidden" aria-label="Primary navigation">
-      <div className="mx-auto grid max-w-lg grid-cols-5 gap-0.5 px-1.5 pt-1.5 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+    <nav
+      className="fixed inset-x-0 bottom-0 z-50 w-full max-w-full overflow-x-hidden border-t border-border/70 bg-card/95 shadow-[0_-8px_30px_rgba(0,0,0,0.08)] backdrop-blur-xl lg:hidden"
+      aria-label="Primary navigation"
+    >
+      <div className="mx-auto grid w-full max-w-lg grid-cols-5 gap-0.5 px-1.5 pt-1.5 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
         {navItems.map((item) => {
           const Icon = item.icon
 
