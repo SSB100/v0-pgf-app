@@ -227,7 +227,7 @@ export default async function Home() {
               {
                 n: "01",
                 title: "Set up your Waypoint",
-                desc: "Guided onboarding asks about your goals, values, strengths and the areas you want to work on so the experience can be personalised.",
+                desc: "Create your account, choose the areas you want Waypoint to support, and pick a Growth Companion. You can personalise the experience further later.",
               },
               {
                 n: "02",

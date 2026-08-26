@@ -67,3 +67,20 @@ test("minimal dashboard values and skill suggestions remain optional and truthfu
   assert.match(skills, /suggestions are shaped by information you recorded/)
   assert.doesNotMatch(skills, /Three Waypoint suggestions based on information you recorded/)
 })
+
+test("public getting-started copy matches the current minimum setup flow", async () => {
+  const home = await readSource("app/page.tsx")
+  const faq = await readSource("app/faq/page.tsx")
+  const footer = await readSource("components/layout/public-footer.tsx")
+
+  assert.match(home, /choose the areas you want Waypoint to support/)
+  assert.match(home, /pick a Growth Companion/)
+  assert.match(home, /personalise the experience further later/)
+  assert.doesNotMatch(home, /Guided onboarding asks about your goals, values, strengths/)
+
+  assert.match(faq, /brief setup gets you to your dashboard/)
+  assert.match(faq, /Daily check-ins, values work and other personalisation can be used later/)
+  assert.doesNotMatch(faq, /Create an account and complete guided onboarding/)
+
+  assert.match(footer, /© 2026 Waypoint/)
+})

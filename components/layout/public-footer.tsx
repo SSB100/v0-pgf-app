@@ -11,7 +11,7 @@ export function PublicFooter() {
               <AppLogo size="sm" showText={true} />
             </Link>
           </div>
-          <p className="text-sm text-primary/70">© 2025 Waypoint. Supporting recovery journeys.</p>
+          <p className="text-sm text-primary/70">© 2026 Waypoint. Supporting reflection, recovery and wellbeing.</p>
           <div className="flex gap-6 text-sm">
             <Link href="/terms" className="text-primary/70 hover:text-primary transition-colors">
               Terms
