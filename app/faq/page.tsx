@@ -39,7 +39,7 @@ export default function FAQPage() {
               <AccordionItem value="item-3" className="border rounded-lg px-6 bg-card">
                 <AccordionTrigger className="text-lg font-semibold text-primary hover:no-underline">What areas can I use Waypoint for?</AccordionTrigger>
                 <AccordionContent className="text-primary/70">
-                  Current onboarding can be personalised around gambling, alcohol, other substance use, mental wellbeing, gaming-related concerns and personal growth. Waypoint is not designed to diagnose any condition, and its tools may not be suitable for every person or situation.
+                  During setup, you can choose one or more focus areas including gambling, alcohol, other substance use, mental wellbeing, gaming-related concerns and personal growth. Waypoint is not designed to diagnose any condition, and its tools may not be suitable for every person or situation.
                 </AccordionContent>
               </AccordionItem>
 
@@ -95,7 +95,7 @@ export default function FAQPage() {
               <AccordionItem value="item-11" className="border rounded-lg px-6 bg-card">
                 <AccordionTrigger className="text-lg font-semibold text-primary hover:no-underline">How do I get started?</AccordionTrigger>
                 <AccordionContent className="text-primary/70">
-                  Create an account and complete guided onboarding. You can then explore journey modules, use daily check-ins, review your dashboard and choose whether to use the peer community. The current MVP is intended for people aged 18 and over.
+                  Create an adult account, choose what you want Waypoint to support, and pick a Growth Companion. That brief setup gets you to your dashboard. Daily check-ins, values work and other personalisation can be used later when they are useful to you. The current MVP is intended for people aged 18 and over.
                 </AccordionContent>
               </AccordionItem>
 
