@@ -47,8 +47,17 @@ export function ModuleCompletionDialog({
           <div className="bg-primary/10 rounded-lg p-4 flex items-center gap-3">
             <Sprout className="w-8 h-8 text-primary flex-shrink-0" />
             <div>
-              <p className="font-semibold text-sm">+{creditsAwarded} Growth Credit{creditsAwarded > 1 ? "s" : ""}</p>
-              <p className="text-xs text-muted-foreground">A record of Waypoint engagement, not a clinical recovery score.</p>
+              {creditsAwarded > 0 ? (
+                <>
+                  <p className="font-semibold text-sm">+{creditsAwarded} Growth Credit{creditsAwarded > 1 ? "s" : ""}</p>
+                  <p className="text-xs text-muted-foreground">A record of Waypoint engagement, not a clinical recovery score.</p>
+                </>
+              ) : (
+                <>
+                  <p className="font-semibold text-sm">No additional Growth Credit</p>
+                  <p className="text-xs text-muted-foreground">Repeating a module updates its saved response but does not add another credit.</p>
+                </>
+              )}
             </div>
           </div>
 

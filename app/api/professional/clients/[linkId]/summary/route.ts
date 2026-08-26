@@ -1,8 +1,15 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { sql } from "@/lib/db"
 import { recordAccessAuditEvent } from "@/lib/governance"
-import { getProfessionalSession, looksLikeUuid, professionalCanAccessClientData } from "@/lib/professional-access"
-import { normaliseProfessionalShareScopes, type ProfessionalShareScope } from "@/lib/sharing-policy"
+import {
+  getProfessionalSession,
+  looksLikeUuid,
+  professionalCanAccessClientData,
+} from "@/lib/professional-access"
+import {
+  normaliseProfessionalShareScopes,
+  type ProfessionalShareScope,
+} from "@/lib/sharing-policy"
 import {
   PROFESSIONAL_SUMMARY_BOUNDARY,
   PROFESSIONAL_SUMMARY_SCHEMA_VERSION,
@@ -17,11 +24,16 @@ export async function GET(request: NextRequest, context: { params: Promise<{ lin
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     if (!professional) return NextResponse.json({ error: "Professional account not found" }, { status: 404 })
     if (!professionalCanAccessClientData(professional, mfaVerified)) {
-      return NextResponse.json({ error: "Verified professional, organisation and MFA access are required" }, { status: 403 })
+      return NextResponse.json(
+        { error: "Verified professional, organisation and MFA access are required" },
+        { status: 403 },
+      )
     }
 
     const { linkId } = await context.params
-    if (!looksLikeUuid(linkId)) return NextResponse.json({ error: "Invalid client connection" }, { status: 400 })
+    if (!looksLikeUuid(linkId)) {
+      return NextResponse.json({ error: "Invalid client connection" }, { status: 400 })
+    }
 
     const daysRequested = Number(request.nextUrl.searchParams.get("days") || 14)
     const days = ALLOWED_WINDOWS.has(daysRequested) ? daysRequested : 14
@@ -33,7 +45,8 @@ export async function GET(request: NextRequest, context: { params: Promise<{ lin
         l.accepted_at,
         u.full_name AS client_name,
         COALESCE(
-          json_agg(DISTINCT g.data_scope) FILTER (WHERE g.id IS NOT NULL AND g.status = 'active'),
+          json_agg(DISTINCT g.data_scope)
+            FILTER (WHERE g.id IS NOT NULL AND g.status = 'active'),
           '[]'::json
         ) AS shared_scopes
       FROM client_professional_links l
@@ -47,7 +60,9 @@ export async function GET(request: NextRequest, context: { params: Promise<{ lin
     `
 
     const connection = rows[0]
-    if (!connection) return NextResponse.json({ error: "Active client connection not found" }, { status: 404 })
+    if (!connection) {
+      return NextResponse.json({ error: "Active client connection not found" }, { status: 404 })
+    }
 
     const authorisedScopes = normaliseProfessionalShareScopes(connection.shared_scopes)
     const scopes = new Set<ProfessionalShareScope>(authorisedScopes)
@@ -57,7 +72,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ lin
       generatedAt: new Date().toISOString(),
       sharedScopes: authorisedScopes,
       dataBoundary: PROFESSIONAL_SUMMARY_BOUNDARY,
-      monitoringNotice: "This is a user-authorised summary for later review. Waypoint is not continuously monitored, does not replace clinical assessment, and does not generate a clinical risk score.",
+      monitoringNotice: "This is user-authorised information for later review. Waypoint is not continuously monitored, does not replace clinical assessment, and does not generate a clinical risk score.",
     }
 
     if (scopes.has("daily_checkins_summary")) {
@@ -75,7 +90,13 @@ export async function GET(request: NextRequest, context: { params: Promise<{ lin
           AND date >= CURRENT_DATE - (${days - 1} * INTERVAL '1 day')
       `
       const recent = await sql`
-        SELECT date, mood_rating, urge_strength, overall_rating, gambling_occurred, behavior_occurred
+        SELECT
+          date,
+          mood_rating,
+          urge_strength,
+          overall_rating,
+          gambling_occurred,
+          behavior_occurred
         FROM daily_checkins
         WHERE user_id = ${connection.client_user_id}
           AND date >= CURRENT_DATE - (${days - 1} * INTERVAL '1 day')
@@ -108,18 +129,68 @@ export async function GET(request: NextRequest, context: { params: Promise<{ lin
       })
     }
 
+    let journeyResponseAudit: Record<string, unknown> = {}
+    if (scopes.has("journey_responses")) {
+      const grant = (await sql`
+        SELECT granted_at, include_pre_grant_data
+        FROM sharing_grants
+        WHERE link_id = ${linkId}
+          AND data_scope = 'journey_responses'
+          AND status = 'active'
+        ORDER BY granted_at DESC
+        LIMIT 1
+      `)[0]
+
+      if (grant) {
+        const includePrevious = grant.include_pre_grant_data === true
+        const responses = await sql`
+          SELECT
+            module_slug,
+            module_name,
+            content_id,
+            content_version,
+            response_schema_version,
+            response_data,
+            last_completed_at
+          FROM journey_module_responses
+          WHERE user_id = ${connection.client_user_id}
+            AND (${includePrevious} = TRUE OR last_completed_at >= ${grant.granted_at})
+          ORDER BY last_completed_at DESC
+        `
+
+        response.journeyResponses = {
+          status: "shared",
+          historyMode: includePrevious ? "include_previous" : "new_only",
+          grantedAt: grant.granted_at,
+          responses,
+        }
+        journeyResponseAudit = {
+          journeyResponseCount: responses.length,
+          journeyResponseHistoryMode: includePrevious ? "include_previous" : "new_only",
+        }
+      }
+    }
+
     if (scopes.has("skills_practice")) {
       const totals = await sql`
         SELECT
           COUNT(*)::int AS practice_count,
-          COUNT(*) FILTER (WHERE COALESCE(was_helpful, effectiveness_rating >= 4, FALSE))::int AS helpful_count,
+          COUNT(*) FILTER (
+            WHERE COALESCE(was_helpful, effectiveness_rating >= 4, FALSE)
+          )::int AS helpful_count,
           ROUND(AVG(effectiveness_rating)::numeric, 1) AS average_effectiveness,
           MAX(practiced_at) AS latest_practice
         FROM skills_practice
         WHERE user_id = ${connection.client_user_id}
       `
       const recent = await sql`
-        SELECT skill_name, skill_category, effectiveness_rating, was_helpful, practiced_at, content_version
+        SELECT
+          skill_name,
+          skill_category,
+          effectiveness_rating,
+          was_helpful,
+          practiced_at,
+          content_version
         FROM skills_practice
         WHERE user_id = ${connection.client_user_id}
         ORDER BY practiced_at DESC
@@ -154,10 +225,18 @@ export async function GET(request: NextRequest, context: { params: Promise<{ lin
       eventType: "professional_summary_view",
       resourceScope: authorisedScopes.join(","),
       purpose: "clinical_support",
-      metadata: { linkId, days, mfaVerified: true, summarySchemaVersion: PROFESSIONAL_SUMMARY_SCHEMA_VERSION },
+      metadata: {
+        linkId,
+        days,
+        mfaVerified: true,
+        summarySchemaVersion: PROFESSIONAL_SUMMARY_SCHEMA_VERSION,
+        ...journeyResponseAudit,
+      },
     })
 
-    return NextResponse.json(response, { headers: { "Cache-Control": "private, no-store, max-age=0" } })
+    return NextResponse.json(response, {
+      headers: { "Cache-Control": "private, no-store, max-age=0" },
+    })
   } catch (error) {
     console.error("[waypoint] Unable to load professional client summary", error)
     return NextResponse.json({ error: "Unable to load client summary" }, { status: 500 })
