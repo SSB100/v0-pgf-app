@@ -10,12 +10,20 @@ export async function GET() {
 
     const today = getAotearoaDateKey()
     const result = await sql`
-      SELECT id FROM daily_checkins
+      SELECT mood_rating, overall_rating
+      FROM daily_checkins
       WHERE user_id = ${user.id}::uuid AND date = ${today}::date
       LIMIT 1
     `
 
-    return NextResponse.json({ completed: result.length > 0, date: today })
+    const checkin = result[0] || null
+
+    return NextResponse.json({
+      completed: Boolean(checkin),
+      date: today,
+      moodRating: checkin?.mood_rating ?? null,
+      overallRating: checkin?.overall_rating ?? null,
+    })
   } catch (error) {
     console.error("[v0] Error checking daily check-in:", error)
     return NextResponse.json({ error: "Failed to check check-in status" }, { status: 500 })
