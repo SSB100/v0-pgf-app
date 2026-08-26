@@ -11,6 +11,8 @@ interface CoreValuesCardProps {
 }
 
 export default function CoreValuesCard({ values }: CoreValuesCardProps) {
+  const hasValues = values.length > 0
+
   return (
     <Card className="overflow-hidden border-border/50">
       <CardHeader className="pb-3">
@@ -21,14 +23,16 @@ export default function CoreValuesCard({ values }: CoreValuesCardProps) {
           <div className="min-w-0">
             <CardTitle className="text-lg font-bold text-foreground">Your Core Values</CardTitle>
             <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-              The three values you narrowed down in Life Garden. They sit alongside one another rather than being ranked first, second and third.
+              {hasValues
+                ? "The three values you narrowed down in the values module. They sit alongside one another rather than being ranked first, second and third."
+                : "You have not chosen core values yet. Waypoint works without them, and you can explore what matters to you later if that would be useful."}
             </p>
           </div>
         </div>
       </CardHeader>
 
       <CardContent className="space-y-4">
-        {values.length > 0 ? (
+        {hasValues ? (
           <div className="grid gap-2.5">
             {values.map((value) => (
               <div
@@ -48,8 +52,8 @@ export default function CoreValuesCard({ values }: CoreValuesCardProps) {
             ))}
           </div>
         ) : (
-          <div className="rounded-xl border border-dashed border-border p-4 text-sm text-muted-foreground">
-            No core values are currently recorded.
+          <div className="rounded-xl border border-dashed border-border p-4 text-sm leading-relaxed text-muted-foreground">
+            Core values are optional. The values module is there when you want a guided way to think about the directions and relationships that matter to you.
           </div>
         )}
 
@@ -61,7 +65,7 @@ export default function CoreValuesCard({ values }: CoreValuesCardProps) {
           href="/journey/learn/discovering-values"
           className="inline-flex min-h-10 items-center gap-2 text-sm font-semibold text-primary hover:underline"
         >
-          Revisit the values module <ArrowRight className="size-4" />
+          {hasValues ? "Revisit the values module" : "Explore the values module"} <ArrowRight className="size-4" />
         </Link>
       </CardContent>
     </Card>

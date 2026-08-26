@@ -45,7 +45,12 @@ export default async function DashboardPage() {
         last_substance_date,
         mental_health_areas,
         growth_goals,
-        growth_avatar
+        growth_avatar,
+        EXISTS (
+          SELECT 1
+          FROM daily_checkins history
+          WHERE history.user_id = user_profiles.user_id
+        ) AS has_check_in_history
       FROM user_profiles
       WHERE user_id = ${user.id}
     `
@@ -164,6 +169,7 @@ export default async function DashboardPage() {
     date: toDateKey(checkin.date) || String(checkin.date).slice(0, 10),
   }))
   const todayCheckIn = todayCheckInResult[0] || null
+  const hasCheckInHistory = profile.has_check_in_history === true
 
   const journeyTypes: string[] = profile.journey_types
     ? typeof profile.journey_types === "string"
@@ -304,12 +310,18 @@ export default async function DashboardPage() {
                 </div>
 
                 <h2 className="mt-5 text-xl font-bold tracking-tight text-foreground">
-                  {todayCheckIn ? "Today's check-in" : "How are things today?"}
+                  {todayCheckIn
+                    ? "Today's check-in"
+                    : hasCheckInHistory
+                      ? "How are things today?"
+                      : "Your first check-in, when you're ready"}
                 </h2>
                 <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
                   {todayCheckIn
-                    ? "Your entry is saved. This is the single dashboard snapshot; use Progress when you want to look at patterns over time."
-                    : "A short check-in can capture your mood, urges and anything that stood out. Skip it if today is not the day for it."}
+                    ? "Your entry is saved. The Weekly Overview below is where your recent self-reported patterns are reflected back over time."
+                    : hasCheckInHistory
+                      ? "A short check-in can capture your mood, urges and anything that stood out. Skip it if today is not the day for it."
+                      : "A check-in gives you a self-reported starting point that Waypoint can reflect back over time. It is optional, and you can explore the Journey first if you prefer."}
                 </p>
 
                 {todayCheckIn ? (
@@ -331,13 +343,13 @@ export default async function DashboardPage() {
                         Strongest emotion recorded: <span className="font-medium text-foreground">{todayCheckIn.strongest_emotion}</span>
                       </p>
                     )}
-                    <Link href="/progress" className="mt-5 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-border bg-background px-4 py-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-secondary/50">
-                      View progress <ArrowRight className="size-4" />
+                    <Link href="#weekly-overview" className="mt-5 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-border bg-background px-4 py-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-secondary/50">
+                      View weekly overview <ArrowRight className="size-4" />
                     </Link>
                   </>
                 ) : (
                   <Link href="/check-in" className="mt-5 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90">
-                    Start check-in <ArrowRight className="size-4" />
+                    {hasCheckInHistory ? "Start check-in" : "Record first check-in"} <ArrowRight className="size-4" />
                   </Link>
                 )}
               </div>
@@ -359,7 +371,9 @@ export default async function DashboardPage() {
 
         <section className="grid gap-5 lg:grid-cols-12 lg:gap-6" aria-label="Your Waypoint overview">
           <div className="space-y-5 lg:col-span-8 lg:min-w-0 lg:space-y-6">
-            <WeeklyOverviewCard checkins={weeklyCheckins} journeyTypes={journeyTypes} accountCreatedAt={user.created_at} />
+            <div id="weekly-overview" className="scroll-mt-24">
+              <WeeklyOverviewCard checkins={weeklyCheckins} journeyTypes={journeyTypes} accountCreatedAt={user.created_at} />
+            </div>
             <SuggestedSkillsCard awareness={latestAwareness} problems={primaryProblem} values={values} weeklyCheckins={weeklyCheckins} />
           </div>
 
