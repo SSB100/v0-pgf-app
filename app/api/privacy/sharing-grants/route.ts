@@ -1,8 +1,9 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { getSession } from "@/lib/session"
-import { sql } from "@/lib/db"
+import { dbTableExists, sql } from "@/lib/db"
 import { governanceTableExists, recordConsentEvent } from "@/lib/governance"
 import { hasCurrentProfessionalAffiliation } from "@/lib/organisation-lifecycle-policy.mjs"
+import { parseJourneyResponseHistoryMode } from "@/lib/journey-response-policy"
 import {
   normaliseProfessionalShareScopes,
   PROFESSIONAL_SHARING_CONSENT_VERSION,
@@ -16,16 +17,21 @@ export async function PATCH(request: NextRequest) {
   try {
     const user = await getSession()
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    if (user.role !== "client") return NextResponse.json({ error: "Forbidden" }, { status: 403 })
 
     const ready =
       (await governanceTableExists("client_professional_links")) &&
       (await governanceTableExists("professional_accounts")) &&
       (await governanceTableExists("sharing_grants"))
 
-    if (!ready) return NextResponse.json({ error: "Professional sharing has not been activated on this environment." }, { status: 503 })
+    if (!ready) {
+      return NextResponse.json({ error: "Professional sharing has not been activated on this environment." }, { status: 503 })
+    }
 
     const body = await request.json()
-    if (!looksLikeUuid(body.linkId)) return NextResponse.json({ error: "Invalid professional connection" }, { status: 400 })
+    if (!looksLikeUuid(body.linkId)) {
+      return NextResponse.json({ error: "Invalid professional connection" }, { status: 400 })
+    }
 
     const scopes = normaliseProfessionalShareScopes(body.scopes)
     if (!Array.isArray(body.scopes) || scopes.length !== body.scopes.length) {
@@ -67,15 +73,31 @@ export async function PATCH(request: NextRequest) {
     })
 
     const currentRows = await sql`
-      SELECT data_scope
+      SELECT data_scope, granted_at, include_pre_grant_data
       FROM sharing_grants
       WHERE link_id = ${body.linkId} AND status = 'active'
     `
     const currentScopes = new Set(currentRows.map((row: any) => row.data_scope))
+    const hadJourneyResponses = currentScopes.has("journey_responses")
+    const wantsJourneyResponses = scopes.includes("journey_responses")
+    const addingJourneyResponses = wantsJourneyResponses && !hadJourneyResponses
+    const revokingJourneyResponses = hadJourneyResponses && !wantsJourneyResponses
+    const historyMode = addingJourneyResponses ? parseJourneyResponseHistoryMode(body.journeyResponsesHistoryMode) : null
 
-    // A client must always be able to reduce or revoke sharing. When the
-    // professional's affiliation is no longer current, however, Waypoint must
-    // not allow a new category to be granted or an old category to be restored.
+    if (addingJourneyResponses && !historyMode) {
+      return NextResponse.json(
+        { error: "Choose whether this professional can see previous Journey responses or only new responses" },
+        { status: 400 },
+      )
+    }
+
+    if (addingJourneyResponses && !(await dbTableExists("journey_module_responses"))) {
+      return NextResponse.json(
+        { error: "Journey response sharing has not been activated on this environment yet" },
+        { status: 503 },
+      )
+    }
+
     if (!currentAffiliation && scopes.some((scope) => !currentScopes.has(scope))) {
       return NextResponse.json(
         { error: "New sharing cannot be granted until the professional's current organisation affiliation is verified" },
@@ -84,6 +106,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     const selectedScopesJson = JSON.stringify(scopes)
+    const includePrevious = historyMode === "include_previous"
 
     await sql`
       UPDATE sharing_grants
@@ -98,8 +121,12 @@ export async function PATCH(request: NextRequest) {
 
     if (scopes.length > 0) {
       await sql`
-        INSERT INTO sharing_grants (link_id, data_scope, status, consent_version, granted_at)
-        SELECT ${body.linkId}, selected.scope, 'active', ${PROFESSIONAL_SHARING_CONSENT_VERSION}, CURRENT_TIMESTAMP
+        INSERT INTO sharing_grants (
+          link_id, data_scope, status, consent_version, granted_at, include_pre_grant_data
+        )
+        SELECT
+          ${body.linkId}, selected.scope, 'active', ${PROFESSIONAL_SHARING_CONSENT_VERSION}, CURRENT_TIMESTAMP,
+          CASE WHEN selected.scope = 'journey_responses' THEN ${includePrevious} ELSE NULL END
         FROM jsonb_array_elements_text(${selectedScopesJson}::jsonb) AS selected(scope)
         WHERE NOT EXISTS (
           SELECT 1 FROM sharing_grants existing
@@ -110,6 +137,19 @@ export async function PATCH(request: NextRequest) {
       `
     }
 
+    const activeJourneyRows = wantsJourneyResponses
+      ? await sql`
+          SELECT granted_at, include_pre_grant_data
+          FROM sharing_grants
+          WHERE link_id = ${body.linkId}
+            AND data_scope = 'journey_responses'
+            AND status = 'active'
+          ORDER BY granted_at DESC
+          LIMIT 1
+        `
+      : []
+    const activeJourneyGrant = activeJourneyRows[0] ?? null
+
     await recordConsentEvent({
       subjectUserId: user.id,
       actorUserId: user.id,
@@ -119,14 +159,54 @@ export async function PATCH(request: NextRequest) {
       targetId: body.linkId,
       scope: { scopes, connectionStatus: link.status, organisationId: link.organisation_id },
       documentVersion: PROFESSIONAL_SHARING_CONSENT_VERSION,
-      metadata: {
-        source: "privacy_centre",
-        organisationId: link.organisation_id,
-        currentAffiliation,
-      },
+      metadata: { source: "privacy_centre", organisationId: link.organisation_id, currentAffiliation },
     })
 
-    return NextResponse.json({ linkId: body.linkId, scopes, consentVersion: PROFESSIONAL_SHARING_CONSENT_VERSION })
+    if (addingJourneyResponses && activeJourneyGrant) {
+      await recordConsentEvent({
+        subjectUserId: user.id,
+        actorUserId: user.id,
+        consentType: "professional_journey_response_sharing",
+        action: "granted",
+        targetType: "client_professional_link",
+        targetId: body.linkId,
+        scope: {
+          dataScope: "journey_responses",
+          historyMode,
+          includePrevious: activeJourneyGrant.include_pre_grant_data === true,
+          grantedAt: activeJourneyGrant.granted_at,
+        },
+        documentVersion: PROFESSIONAL_SHARING_CONSENT_VERSION,
+        metadata: { source: "privacy_centre", organisationId: link.organisation_id },
+      })
+    }
+
+    if (revokingJourneyResponses) {
+      await recordConsentEvent({
+        subjectUserId: user.id,
+        actorUserId: user.id,
+        consentType: "professional_journey_response_sharing",
+        action: "revoked",
+        targetType: "client_professional_link",
+        targetId: body.linkId,
+        scope: { dataScope: "journey_responses" },
+        documentVersion: PROFESSIONAL_SHARING_CONSENT_VERSION,
+        metadata: { source: "privacy_centre", organisationId: link.organisation_id },
+      })
+    }
+
+    return NextResponse.json({
+      linkId: body.linkId,
+      scopes,
+      consentVersion: PROFESSIONAL_SHARING_CONSENT_VERSION,
+      journeyResponses: activeJourneyGrant
+        ? {
+            active: true,
+            grantedAt: activeJourneyGrant.granted_at,
+            historyMode: activeJourneyGrant.include_pre_grant_data === true ? "include_previous" : "new_only",
+          }
+        : { active: false },
+    })
   } catch (error) {
     console.error("[waypoint] Unable to update professional sharing", error)
     return NextResponse.json({ error: "Unable to update sharing permissions" }, { status: 500 })

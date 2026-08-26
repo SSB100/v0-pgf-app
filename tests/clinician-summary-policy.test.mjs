@@ -6,9 +6,12 @@ import {
   sanitizeProfessionalSummarySection,
 } from "../lib/clinician-summary-policy.mjs"
 
-test("professional summary boundary remains explicitly non-clinical and excludes free text", () => {
-  assert.equal(PROFESSIONAL_SUMMARY_SCHEMA_VERSION, "professional-summary-v1")
-  assert.equal(PROFESSIONAL_SUMMARY_BOUNDARY.freeTextIncluded, false)
+test("professional summary boundary remains non-clinical and gates free text to explicit Journey response sharing", () => {
+  assert.equal(PROFESSIONAL_SUMMARY_SCHEMA_VERSION, "professional-summary-v2")
+  assert.equal(
+    PROFESSIONAL_SUMMARY_BOUNDARY.freeTextIncluded,
+    "journey_responses_only_with_explicit_permission",
+  )
   assert.equal(PROFESSIONAL_SUMMARY_BOUNDARY.clinicalRecord, false)
   assert.equal(PROFESSIONAL_SUMMARY_BOUNDARY.liveMonitoring, false)
   assert.equal(PROFESSIONAL_SUMMARY_BOUNDARY.riskScoreGenerated, false)

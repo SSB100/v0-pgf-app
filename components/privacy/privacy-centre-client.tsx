@@ -22,9 +22,12 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { PROFESSIONAL_SHARE_SCOPES, type ProfessionalShareScope } from "@/lib/sharing-policy"
+
+type JourneyHistoryMode = "include_previous" | "new_only"
 
 type SharingGrant = {
   scope: ProfessionalShareScope
@@ -33,6 +36,7 @@ type SharingGrant = {
   expiresAt: string | null
   revokedAt: string | null
   consentVersion: string
+  includePreGrantData: boolean | null
 }
 
 type ProfessionalConnection = {
@@ -75,6 +79,8 @@ type Overview = {
     formalResearchConsent: false
   }
   sharingInfrastructureReady: boolean
+  journeyResponsesReady: boolean
+  journeyResponseCount: number
   connections: ProfessionalConnection[]
   accessHistory: AccessEvent[]
   policyHistory: Array<{
@@ -115,6 +121,7 @@ export default function PrivacyCentreClient() {
   const [researchSaving, setResearchSaving] = useState(false)
   const [sharingSaving, setSharingSaving] = useState<string | null>(null)
   const [sharingDrafts, setSharingDrafts] = useState<Record<string, ProfessionalShareScope[]>>({})
+  const [journeyHistoryChoices, setJourneyHistoryChoices] = useState<Record<string, JourneyHistoryMode | undefined>>({})
   const [requestNote, setRequestNote] = useState("")
   const [requestSaving, setRequestSaving] = useState<"correction" | "deletion" | null>(null)
 
@@ -190,9 +197,25 @@ export default function PrivacyCentreClient() {
         : existing.filter((item) => item !== scope)
       return { ...current, [connectionId]: next }
     })
+    if (scope === "journey_responses" && !enabled) {
+      setJourneyHistoryChoices((current) => ({ ...current, [connectionId]: undefined }))
+    }
   }
 
   async function saveSharing(connectionId: string) {
+    if (!overview) return
+    const connection = overview.connections.find((item) => item.id === connectionId)
+    if (!connection) return
+    const scopes = sharingDrafts[connectionId] ?? []
+    const hasActiveJourneyGrant = connection.grants.some((grant) => grant.scope === "journey_responses" && grant.status === "active")
+    const addingJourneyResponses = scopes.includes("journey_responses") && !hasActiveJourneyGrant
+    const journeyResponsesHistoryMode = journeyHistoryChoices[connectionId]
+
+    if (addingJourneyResponses && !journeyResponsesHistoryMode) {
+      setError("Choose whether this professional can see previous Journey responses or only new responses.")
+      return
+    }
+
     setSharingSaving(connectionId)
     setNotice("")
     setError("")
@@ -200,10 +223,15 @@ export default function PrivacyCentreClient() {
       const response = await fetch("/api/privacy/sharing-grants", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ linkId: connectionId, scopes: sharingDrafts[connectionId] ?? [] }),
+        body: JSON.stringify({
+          linkId: connectionId,
+          scopes,
+          journeyResponsesHistoryMode: addingJourneyResponses ? journeyResponsesHistoryMode : undefined,
+        }),
       })
       const data = await response.json()
       if (!response.ok) throw new Error(data.error || "Unable to update sharing permissions")
+      setJourneyHistoryChoices((current) => ({ ...current, [connectionId]: undefined }))
       setNotice("Sharing permissions updated and recorded in your consent history.")
       await loadOverview()
     } catch (caught) {
@@ -321,7 +349,7 @@ export default function PrivacyCentreClient() {
                   <p className="mt-1 leading-5">The current MVP still stores your exact date of birth after checking the 18+ requirement. Waypoint is reviewing whether the final product can retain only an age-verification result or age band instead.</p>
                 </div>
               )}
-              <p className="leading-5 text-muted-foreground">Your recovery data can include onboarding answers, daily check-ins, Journey progress, skills, values, safeguards and community activity you choose to create. The data register is being refined before formal pilot use.</p>
+              <p className="leading-5 text-muted-foreground">Your recovery data can include onboarding answers, daily check-ins, saved Journey responses and progress, skills, values, safeguards and community activity you choose to create. The data register is being refined before formal pilot use.</p>
             </CardContent>
           </Card>
 
@@ -349,7 +377,7 @@ export default function PrivacyCentreClient() {
           </Card>
         </div>
 
-        <Card>
+        <Card id="professional-sharing" className="scroll-mt-6">
           <CardHeader>
             <CardTitle className="flex items-center gap-2"><HeartHandshake className="size-5 text-primary" /> Connected professionals &amp; sharing permissions</CardTitle>
             <CardDescription>Professional access must come from a verified relationship and an explicit sharing grant. Waypoint is not a live monitoring service.</CardDescription>
@@ -372,6 +400,10 @@ export default function PrivacyCentreClient() {
             {overview.connections.map((connection) => {
               const canEdit = connection.status === "active" && connection.professional_verification_status === "verified"
               const selected = sharingDrafts[connection.id] ?? []
+              const activeJourneyGrant = connection.grants.find((grant) => grant.scope === "journey_responses" && grant.status === "active")
+              const addingJourneyResponses = selected.includes("journey_responses") && !activeJourneyGrant
+              const journeyHistoryChoice = journeyHistoryChoices[connection.id]
+
               return (
                 <div key={connection.id} className="rounded-xl border p-4 sm:p-5">
                   <div className="flex flex-wrap items-start justify-between gap-3 border-b pb-4">
@@ -393,11 +425,19 @@ export default function PrivacyCentreClient() {
                           <Label htmlFor={`${connection.id}-${scope.id}`} className="font-semibold">{scope.label}</Label>
                           <p className="mt-1 max-w-3xl text-sm leading-5 text-muted-foreground">{scope.description}</p>
                           {scope.sensitivity === "high" && <p className="mt-1 text-xs font-medium text-amber-700 dark:text-amber-300">High-sensitivity category</p>}
+                          {scope.id === "journey_responses" && activeJourneyGrant && (
+                            <p className="mt-2 text-xs leading-5 text-muted-foreground">
+                              Current permission: {activeJourneyGrant.includePreGrantData === true ? "previous + future responses" : "new responses only"}. Granted {formatDate(activeJourneyGrant.grantedAt)}.
+                            </p>
+                          )}
+                          {scope.id === "journey_responses" && !overview.journeyResponsesReady && (
+                            <p className="mt-2 text-xs text-amber-700 dark:text-amber-300">Journey response storage is not active on this environment yet.</p>
+                          )}
                         </div>
                         <Switch
                           id={`${connection.id}-${scope.id}`}
                           checked={selected.includes(scope.id)}
-                          disabled={!canEdit}
+                          disabled={!canEdit || (scope.id === "journey_responses" && !overview.journeyResponsesReady)}
                           onCheckedChange={(checked) => toggleScope(connection.id, scope.id, checked)}
                           aria-label={`Share ${scope.label} with ${connection.professional_name}`}
                         />
@@ -405,9 +445,40 @@ export default function PrivacyCentreClient() {
                     ))}
                   </div>
 
+                  {addingJourneyResponses && (
+                    <div className="mb-4 rounded-xl border border-amber-300/60 bg-amber-50/70 p-4 dark:border-amber-800 dark:bg-amber-950/20">
+                      <p className="font-semibold">Choose which Journey responses {connection.professional_name} can see</p>
+                      <p className="mt-1 text-sm leading-5 text-muted-foreground">This choice is required before the separate Journey responses permission is granted. You currently have {overview.journeyResponseCount} saved response{overview.journeyResponseCount === 1 ? "" : "s"}.</p>
+                      <RadioGroup
+                        value={journeyHistoryChoice || ""}
+                        onValueChange={(value) => setJourneyHistoryChoices((current) => ({ ...current, [connection.id]: value as JourneyHistoryMode }))}
+                        className="mt-4 space-y-3"
+                      >
+                        <label className="flex cursor-pointer items-start gap-3 rounded-lg border bg-background p-3">
+                          <RadioGroupItem value="include_previous" id={`${connection.id}-journey-history`} className="mt-0.5" />
+                          <span>
+                            <Label htmlFor={`${connection.id}-journey-history`} className="cursor-pointer font-semibold">Share previous + future responses</Label>
+                            <span className="mt-1 block text-xs leading-5 text-muted-foreground">Your {overview.journeyResponseCount} existing saved response{overview.journeyResponseCount === 1 ? "" : "s"}, plus responses completed later, can be reviewed by this professional.</span>
+                          </span>
+                        </label>
+                        <label className="flex cursor-pointer items-start gap-3 rounded-lg border bg-background p-3">
+                          <RadioGroupItem value="new_only" id={`${connection.id}-journey-new-only`} className="mt-0.5" />
+                          <span>
+                            <Label htmlFor={`${connection.id}-journey-new-only`} className="cursor-pointer font-semibold">Share new responses only</Label>
+                            <span className="mt-1 block text-xs leading-5 text-muted-foreground">Existing saved responses stay private from this professional. Only responses completed after you save this permission can be reviewed.</span>
+                          </span>
+                        </label>
+                      </RadioGroup>
+                    </div>
+                  )}
+
                   <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-4">
-                    <p className="text-xs leading-5 text-muted-foreground">Private free-text reflections are not included in check-in summary sharing. Selected reflections require their own explicit sharing category.</p>
-                    <Button onClick={() => saveSharing(connection.id)} disabled={!canEdit || sharingSaving === connection.id} className="gap-2">
+                    <p className="text-xs leading-5 text-muted-foreground">Private check-in notes remain excluded. Completed Journey exercise and quick-check responses are available only through the separate Journey responses permission shown above.</p>
+                    <Button
+                      onClick={() => saveSharing(connection.id)}
+                      disabled={!canEdit || sharingSaving === connection.id || (addingJourneyResponses && !journeyHistoryChoice)}
+                      className="gap-2"
+                    >
                       <Save className="size-4" /> {sharingSaving === connection.id ? "Saving…" : "Save permissions"}
                     </Button>
                   </div>

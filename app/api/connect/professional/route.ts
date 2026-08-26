@@ -1,8 +1,9 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { sql } from "@/lib/db"
+import { dbTableExists, sql } from "@/lib/db"
 import { getSession } from "@/lib/session"
 import { hashProfessionalInvitationToken } from "@/lib/professional-access"
 import { hasCurrentProfessionalAffiliation } from "@/lib/organisation-lifecycle-policy.mjs"
+import { parseJourneyResponseHistoryMode } from "@/lib/journey-response-policy"
 import {
   normaliseRequestableProfessionalScopes,
   PROFESSIONAL_SHARING_CONSENT_VERSION,
@@ -55,6 +56,7 @@ export async function GET(request: NextRequest) {
   try {
     const user = await getSession()
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    if (user.role !== "client") return NextResponse.json({ error: "Forbidden" }, { status: 403 })
 
     const token = request.nextUrl.searchParams.get("token")?.trim() || ""
     if (token.length < 20) return NextResponse.json({ error: "Invalid invitation" }, { status: 400 })
@@ -67,13 +69,25 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "A professional cannot connect this invitation to their own account" }, { status: 409 })
     }
 
+    const requestedScopes = normaliseRequestableProfessionalScopes(invitation.requested_scopes)
+    const journeyResponsesReady = await dbTableExists("journey_module_responses")
+    const journeyResponseCount = requestedScopes.includes("journey_responses") && journeyResponsesReady
+      ? Number((await sql`
+          SELECT COUNT(*)::int AS count
+          FROM journey_module_responses
+          WHERE user_id = ${user.id}
+        `)[0]?.count || 0)
+      : 0
+
     return NextResponse.json({
       professional: {
         name: invitation.professional_name,
         role: invitation.professional_role,
         organisation: invitation.organisation_name,
       },
-      requestedScopes: normaliseRequestableProfessionalScopes(invitation.requested_scopes),
+      requestedScopes,
+      journeyResponseCount,
+      journeyResponsesReady,
       expiresAt: invitation.expires_at,
       monitoringNotice: "Waypoint is not monitored continuously. Sharing supports later professional review and does not create an emergency-response service.",
     })
@@ -87,11 +101,14 @@ export async function POST(request: NextRequest) {
   try {
     const user = await getSession()
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    if (user.role !== "client") return NextResponse.json({ error: "Forbidden" }, { status: 403 })
 
     const body = await request.json()
     const token = typeof body.token === "string" ? body.token.trim() : ""
     const action = body.action === "accept" || body.action === "decline" ? body.action : null
-    if (token.length < 20 || !action) return NextResponse.json({ error: "Invalid invitation action" }, { status: 400 })
+    if (token.length < 20 || !action) {
+      return NextResponse.json({ error: "Invalid invitation action" }, { status: 400 })
+    }
 
     const invitation = await getInvitation(token)
     if (!invitationAvailable(invitation)) {
@@ -113,16 +130,32 @@ export async function POST(request: NextRequest) {
           RETURNING professional_account_id
         )
         INSERT INTO consent_events (
-          subject_user_id, actor_user_id, consent_type, action, target_type, target_id, scope, document_version, metadata
+          subject_user_id,
+          actor_user_id,
+          consent_type,
+          action,
+          target_type,
+          target_id,
+          scope,
+          document_version,
+          metadata
         )
         SELECT
-          ${user.id}, ${user.id}, 'professional_connection_invitation', 'declined',
-          'professional_account', changed.professional_account_id, '{}'::jsonb,
-          ${PROFESSIONAL_SHARING_CONSENT_VERSION}, '{"source":"connection_invitation"}'::jsonb
+          ${user.id},
+          ${user.id},
+          'professional_connection_invitation',
+          'declined',
+          'professional_account',
+          changed.professional_account_id,
+          '{}'::jsonb,
+          ${PROFESSIONAL_SHARING_CONSENT_VERSION},
+          '{"source":"connection_invitation"}'::jsonb
         FROM changed
         RETURNING id
       `
-      if (declined.length === 0) return NextResponse.json({ error: "Invitation is no longer available" }, { status: 410 })
+      if (declined.length === 0) {
+        return NextResponse.json({ error: "Invitation is no longer available" }, { status: 410 })
+      }
       return NextResponse.json({ success: true, status: "declined" })
     }
 
@@ -131,12 +164,38 @@ export async function POST(request: NextRequest) {
     if (!Array.isArray(body.scopes) || selectedScopes.length !== body.scopes.length || selectedScopes.length === 0) {
       return NextResponse.json({ error: "Select at least one sharing category" }, { status: 400 })
     }
+
     const requestedSet = new Set(requestedScopes)
     if (selectedScopes.some((scope) => !requestedSet.has(scope))) {
       return NextResponse.json({ error: "You can only grant categories requested in this invitation" }, { status: 400 })
     }
 
-    const profile = await sql`SELECT onboarding_completed FROM user_profiles WHERE user_id = ${user.id} LIMIT 1`
+    const wantsJourneyResponses = selectedScopes.includes("journey_responses")
+    const journeyHistoryMode = wantsJourneyResponses
+      ? parseJourneyResponseHistoryMode(body.journeyResponsesHistoryMode)
+      : null
+
+    if (wantsJourneyResponses && !journeyHistoryMode) {
+      return NextResponse.json(
+        { error: "Choose whether to share previous Journey responses or only new responses" },
+        { status: 400 },
+      )
+    }
+
+    if (wantsJourneyResponses && !(await dbTableExists("journey_module_responses"))) {
+      return NextResponse.json(
+        { error: "Journey response sharing has not been activated on this environment yet" },
+        { status: 503 },
+      )
+    }
+
+    const includePrevious = journeyHistoryMode === "include_previous"
+    const profile = await sql`
+      SELECT onboarding_completed
+      FROM user_profiles
+      WHERE user_id = ${user.id}
+      LIMIT 1
+    `
     if (!profile[0]?.onboarding_completed) {
       return NextResponse.json({ error: "Complete your Waypoint onboarding before connecting a professional" }, { status: 409 })
     }
@@ -177,8 +236,14 @@ export async function POST(request: NextRequest) {
           invitation_expires_at
         )
         SELECT
-          ${user.id}, professional_account_id, 'active', 'professional', requested_scopes,
-          created_at, CURRENT_TIMESTAMP, expires_at
+          ${user.id},
+          professional_account_id,
+          'active',
+          'professional',
+          requested_scopes,
+          created_at,
+          CURRENT_TIMESTAMP,
+          expires_at
         FROM verified_invite
         RETURNING id, professional_account_id
       ),
@@ -188,44 +253,121 @@ export async function POST(request: NextRequest) {
         JOIN verified_invite vi ON vi.professional_account_id = nl.professional_account_id
       ),
       new_grants AS (
-        INSERT INTO sharing_grants (link_id, data_scope, status, consent_version, granted_at)
+        INSERT INTO sharing_grants (
+          link_id,
+          data_scope,
+          status,
+          consent_version,
+          granted_at,
+          include_pre_grant_data
+        )
         SELECT
           connection_context.id,
           selected.scope,
           'active',
           ${PROFESSIONAL_SHARING_CONSENT_VERSION},
-          CURRENT_TIMESTAMP
+          CURRENT_TIMESTAMP,
+          CASE WHEN selected.scope = 'journey_responses' THEN ${includePrevious} ELSE NULL END
         FROM connection_context
         CROSS JOIN jsonb_array_elements_text(${selectedJson}::jsonb) AS selected(scope)
         RETURNING id
       ),
       connection_consent AS (
         INSERT INTO consent_events (
-          subject_user_id, actor_user_id, consent_type, action, target_type, target_id, scope, document_version, metadata
+          subject_user_id,
+          actor_user_id,
+          consent_type,
+          action,
+          target_type,
+          target_id,
+          scope,
+          document_version,
+          metadata
         )
         SELECT
-          ${user.id}, ${user.id}, 'professional_connection', 'accepted', 'client_professional_link', connection_context.id,
-          jsonb_build_object('scopes', ${selectedJson}::jsonb, 'organisationId', connection_context.organisation_id),
+          ${user.id},
+          ${user.id},
+          'professional_connection',
+          'accepted',
+          'client_professional_link',
+          connection_context.id,
+          jsonb_build_object(
+            'scopes', ${selectedJson}::jsonb,
+            'organisationId', connection_context.organisation_id
+          ),
           ${PROFESSIONAL_SHARING_CONSENT_VERSION},
-          jsonb_build_object('source', 'professional_invitation', 'organisationId', connection_context.organisation_id)
+          jsonb_build_object(
+            'source', 'professional_invitation',
+            'organisationId', connection_context.organisation_id
+          )
         FROM connection_context
+        RETURNING id
+      ),
+      journey_consent AS (
+        INSERT INTO consent_events (
+          subject_user_id,
+          actor_user_id,
+          consent_type,
+          action,
+          target_type,
+          target_id,
+          scope,
+          document_version,
+          metadata
+        )
+        SELECT
+          ${user.id},
+          ${user.id},
+          'professional_journey_response_sharing',
+          'granted',
+          'client_professional_link',
+          connection_context.id,
+          jsonb_build_object(
+            'dataScope', 'journey_responses',
+            'historyMode', ${journeyHistoryMode},
+            'includePrevious', ${includePrevious}
+          ),
+          ${PROFESSIONAL_SHARING_CONSENT_VERSION},
+          jsonb_build_object(
+            'source', 'professional_invitation',
+            'organisationId', connection_context.organisation_id
+          )
+        FROM connection_context
+        WHERE ${wantsJourneyResponses} = TRUE
         RETURNING id
       ),
       audit_event AS (
         INSERT INTO access_audit_events (
-          subject_user_id, actor_user_id, professional_account_id, organisation_id, event_type, resource_scope, purpose, metadata
+          subject_user_id,
+          actor_user_id,
+          professional_account_id,
+          organisation_id,
+          event_type,
+          resource_scope,
+          purpose,
+          metadata
         )
         SELECT
-          ${user.id}, ${user.id}, connection_context.professional_account_id, connection_context.organisation_id,
-          'professional_connection_accepted', 'connection', 'clinical_support',
-          jsonb_build_object('scopes', ${selectedJson}::jsonb, 'organisationId', connection_context.organisation_id)
+          ${user.id},
+          ${user.id},
+          connection_context.professional_account_id,
+          connection_context.organisation_id,
+          'professional_connection_accepted',
+          'connection',
+          'clinical_support',
+          jsonb_build_object(
+            'scopes', ${selectedJson}::jsonb,
+            'organisationId', connection_context.organisation_id
+          )
         FROM connection_context
         RETURNING id
       )
       SELECT id FROM connection_context
     `
 
-    if (accepted.length === 0) return NextResponse.json({ error: "Invitation could not be accepted" }, { status: 409 })
+    if (accepted.length === 0) {
+      return NextResponse.json({ error: "Invitation could not be accepted" }, { status: 409 })
+    }
 
     return NextResponse.json({
       success: true,

@@ -19,9 +19,10 @@ import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { ModuleCompletionDialog } from "@/components/journey/module-completion-dialog"
 import JourneyConceptVisual from "@/components/journey/journey-concept-visual"
-import JourneyExercise from "@/components/journey/journey-exercise"
+import JourneyExercise, { type JourneyExerciseResponseInput } from "@/components/journey/journey-exercise"
 import JourneyFormattedContent from "@/components/journey/journey-formatted-content"
 import JourneyModuleHeroImage from "@/components/journey/journey-module-hero-image"
+import JourneyResponsePrivacyNotice from "@/components/journey/journey-response-privacy-notice"
 import { getJourneyExercise } from "@/lib/journey-exercises"
 import type { JourneyModuleDefinition } from "@/lib/journey-curriculum"
 
@@ -44,9 +45,11 @@ export default function GuidedLearningModuleV2({ module, moduleNumber, coreValue
   const [hasRestoredStep, setHasRestoredStep] = useState(false)
   const [selectedCheck, setSelectedCheck] = useState("")
   const [exerciseReady, setExerciseReady] = useState(false)
+  const [exerciseResponse, setExerciseResponse] = useState<JourneyExerciseResponseInput | null>(null)
   const [showCompletion, setShowCompletion] = useState(false)
   const [isCompleting, setIsCompleting] = useState(false)
   const [attemptedCompletion, setAttemptedCompletion] = useState(false)
+  const [creditsAwarded, setCreditsAwarded] = useState(0)
 
   const exercise = useMemo(() => getJourneyExercise(module.slug), [module.slug])
   const checkStep = 1 + module.sections.length
@@ -58,9 +61,9 @@ export default function GuidedLearningModuleV2({ module, moduleNumber, coreValue
     try {
       const saved = Number(window.localStorage.getItem(storageKey))
       if (Number.isInteger(saved) && saved > 0) {
-        // Only the learning position is remembered. Check answers and exercise
-        // responses stay in the current browser session and are not sent when
-        // module completion is recorded.
+        // Only the learning position is remembered between visits. Quick-check
+        // and exercise responses stay in the current browser session until the
+        // user explicitly completes the module.
         setActiveStep(Math.min(saved, checkStep))
       }
     } catch {
@@ -90,7 +93,7 @@ export default function GuidedLearningModuleV2({ module, moduleNumber, coreValue
     [module.check.options],
   )
 
-  const canComplete = Boolean(selectedOption) && exerciseReady
+  const canComplete = Boolean(selectedOption) && exerciseReady && Boolean(exerciseResponse)
   const learningSectionIndex = activeStep >= 1 && activeStep < checkStep ? activeStep - 1 : -1
   const progressPercent = activeStep === 0 ? 0 : Math.round((activeStep / finishStep) * 100)
 
@@ -99,17 +102,25 @@ export default function GuidedLearningModuleV2({ module, moduleNumber, coreValue
 
   const handleComplete = async () => {
     setAttemptedCompletion(true)
-    if (!canComplete) return
+    if (!canComplete || !exerciseResponse) return
 
     setIsCompleting(true)
     try {
       const response = await fetch("/api/journey/complete", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ moduleSlug: module.slug }),
+        body: JSON.stringify({
+          moduleSlug: module.slug,
+          response: {
+            quickCheck: { selectedOptionIndex: Number(selectedCheck) },
+            exercise: exerciseResponse,
+          },
+        }),
       })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(data.error || "Failed to record module activity")
 
-      if (!response.ok) throw new Error("Failed to record module activity")
+      setCreditsAwarded(Number(data.creditsAwarded) || 0)
       try {
         window.localStorage.removeItem(storageKey)
       } catch {
@@ -118,7 +129,7 @@ export default function GuidedLearningModuleV2({ module, moduleNumber, coreValue
       setShowCompletion(true)
     } catch (error) {
       console.error("Error recording guided module activity:", error)
-      alert("Unable to record this module right now. Please try again.")
+      alert(error instanceof Error ? error.message : "Unable to record this module right now. Please try again.")
     } finally {
       setIsCompleting(false)
     }
@@ -290,7 +301,12 @@ export default function GuidedLearningModuleV2({ module, moduleNumber, coreValue
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-5">
-                  <JourneyExercise exercise={exercise} coreValues={coreValues} onReadyChange={setExerciseReady} />
+                  <JourneyExercise
+                    exercise={exercise}
+                    coreValues={coreValues}
+                    onReadyChange={setExerciseReady}
+                    onResponseChange={setExerciseResponse}
+                  />
                   {navigation(exerciseReady, "Finish module")}
                 </CardContent>
               </Card>
@@ -309,6 +325,12 @@ export default function GuidedLearningModuleV2({ module, moduleNumber, coreValue
                     </div>
                   </CardContent>
                 </Card>
+
+                <JourneyResponsePrivacyNotice />
+
+                <div className="rounded-xl border bg-muted/20 p-4 text-xs leading-5 text-muted-foreground">
+                  If you have completed this module before, completing it again replaces your previous saved response for this module. Repeats do not add another Growth Credit.
+                </div>
 
                 {attemptedCompletion && !canComplete && (
                   <div className="space-y-1 rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm">
@@ -336,7 +358,7 @@ export default function GuidedLearningModuleV2({ module, moduleNumber, coreValue
         onOpenChange={setShowCompletion}
         moduleTitle={module.title}
         keyLearning={module.keyLearning}
-        creditsAwarded={1}
+        creditsAwarded={creditsAwarded}
       />
     </div>
   )

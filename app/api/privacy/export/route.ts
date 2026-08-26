@@ -8,7 +8,10 @@ export async function GET() {
     const user = await getSession()
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-    const demographicsReady = await dbTableExists("user_demographics")
+    const [demographicsReady, journeyResponsesReady] = await Promise.all([
+      dbTableExists("user_demographics"),
+      dbTableExists("journey_module_responses"),
+    ])
 
     const [
       account,
@@ -20,6 +23,7 @@ export async function GET() {
       problemAreas,
       dailyCheckins,
       journeyCompletions,
+      journeyResponses,
       sosAlerts,
       directMessages,
       peerSupportRelationships,
@@ -30,11 +34,25 @@ export async function GET() {
       groupSwitchReasons,
     ] = await Promise.all([
       sql`
-        SELECT id, email, full_name, role, created_at, updated_at,
-          data_consent, data_consent_date, terms_accepted, terms_accepted_date,
-          date_of_birth, age_verified_18_plus, age_verified_at, age_band,
-          country, gender
-        FROM users WHERE id = ${user.id}
+        SELECT
+          id,
+          email,
+          full_name,
+          role,
+          created_at,
+          updated_at,
+          data_consent,
+          data_consent_date,
+          terms_accepted,
+          terms_accepted_date,
+          date_of_birth,
+          age_verified_18_plus,
+          age_verified_at,
+          age_band,
+          country,
+          gender
+        FROM users
+        WHERE id = ${user.id}
       `,
       demographicsReady
         ? sql`SELECT * FROM user_demographics WHERE user_id = ${user.id}`
@@ -46,9 +64,27 @@ export async function GET() {
       sql`SELECT * FROM problem_areas WHERE user_id = ${user.id} ORDER BY identified_at`,
       sql`SELECT * FROM daily_checkins WHERE user_id = ${user.id} ORDER BY date`,
       sql`SELECT * FROM journey_completions WHERE user_id = ${user.id} ORDER BY completed_at`,
+      journeyResponsesReady
+        ? sql`
+            SELECT *
+            FROM journey_module_responses
+            WHERE user_id = ${user.id}
+            ORDER BY last_completed_at
+          `
+        : Promise.resolve([]),
       sql`SELECT * FROM sos_alerts WHERE user_id = ${user.id} ORDER BY created_at`,
-      sql`SELECT * FROM messages WHERE sender_id = ${user.id} OR recipient_id = ${user.id} ORDER BY created_at`,
-      sql`SELECT * FROM peer_support_relationships WHERE client_id = ${user.id} OR peer_supporter_id = ${user.id} ORDER BY created_at`,
+      sql`
+        SELECT *
+        FROM messages
+        WHERE sender_id = ${user.id} OR recipient_id = ${user.id}
+        ORDER BY created_at
+      `,
+      sql`
+        SELECT *
+        FROM peer_support_relationships
+        WHERE client_id = ${user.id} OR peer_supporter_id = ${user.id}
+        ORDER BY created_at
+      `,
       sql`SELECT * FROM community_profiles WHERE user_id = ${user.id}`,
       sql`SELECT * FROM group_memberships WHERE user_id = ${user.id} ORDER BY joined_at`,
       sql`SELECT * FROM community_messages WHERE user_id = ${user.id} ORDER BY created_at`,
@@ -117,13 +153,13 @@ export async function GET() {
       eventType: "user_data_export",
       resourceScope: "user_owned_waypoint_data",
       purpose: "User requested a copy of their Waypoint information",
-      metadata: { format: "json", formatVersion: "1.1", initiatedBy: "user" },
+      metadata: { format: "json", formatVersion: "1.2", initiatedBy: "user" },
     })
 
     const exportData = {
       export: {
         generatedAt: new Date().toISOString(),
-        formatVersion: "1.1",
+        formatVersion: "1.2",
         note: "This export contains user-owned Waypoint data available through the current MVP. Reports made by other community members about the user are not automatically included because they may contain another person's confidential information and require a reviewed access process.",
       },
       identityAndAccount: account[0] ?? null,
@@ -136,6 +172,7 @@ export async function GET() {
         problemAreas,
         dailyCheckins,
         journeyCompletions,
+        journeyResponses,
         sosAlerts,
       },
       supportAndMessaging: {
