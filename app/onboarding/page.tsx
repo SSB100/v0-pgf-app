@@ -41,7 +41,7 @@ export default async function OnboardingPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-muted/40">
-      <header className="sticky top-0 z-50 hidden border-b border-border bg-card/90 backdrop-blur-sm sm:block">
+      <header className="sticky top-0 z-50 hidden border-b border-border bg-card/90 backdrop-blur-sm lg:block">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-4">
           <div className="flex min-w-0 items-center gap-3">
             <Link href="/">
