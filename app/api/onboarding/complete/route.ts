@@ -3,25 +3,12 @@ import { neon } from "@neondatabase/serverless"
 import { getSession } from "@/lib/session"
 import { getAotearoaDateKey } from "@/lib/aotearoa-date"
 import { VALUE_DOMAINS } from "@/lib/onboarding-data"
+import { GROWTH_PRESENTATION_IDS, WAYPOINT_FOCUS_AREAS } from "@/lib/waypoint-preferences-policy.mjs"
 
 const db = neon(process.env.NEON_DATABASE_URL!)
 
-const ALLOWED_JOURNEY_TYPES = new Set([
-  "gambling",
-  "alcohol",
-  "substances",
-  "gaming",
-  "mental_health",
-  "personal_growth",
-])
-
-const ALLOWED_AVATARS = new Set([
-  "growth_tree",
-  "rising_phoenix",
-  "dragon_hatchling",
-  "crystal_sentinel",
-  "spirit_fox",
-])
+const ALLOWED_JOURNEY_TYPES = new Set(WAYPOINT_FOCUS_AREAS)
+const ALLOWED_GROWTH_PRESENTATIONS = new Set(GROWTH_PRESENTATION_IDS)
 
 const VALUE_CATEGORY_BY_NAME = new Map(
   VALUE_DOMAINS.flatMap((domain) => domain.values.map((value) => [value, domain.domain] as const)),
@@ -276,7 +263,10 @@ export async function POST(request: NextRequest) {
     const effectiveLastDrinkDate = latestDate(lastDrinkDate, initialDailyCheckIn.alcoholOccurred ? checkInDate : null)
     const effectiveLastSubstanceDate = latestDate(lastSubstanceDate, initialDailyCheckIn.substanceOccurred ? checkInDate : null)
 
-    const growthAvatar = ALLOWED_AVATARS.has(data.growthAvatar) ? data.growthAvatar : "growth_tree"
+    if (typeof data.growthAvatar !== "string" || !ALLOWED_GROWTH_PRESENTATIONS.has(data.growthAvatar)) {
+      throw new InputError("Please choose a Growth Companion or Progress only")
+    }
+    const growthAvatar = data.growthAvatar
     const stillExperiencing = typeof data.stillExperiencing === "boolean" ? data.stillExperiencing : null
 
     const gamblingFrequency = cleanText(data.gamblingFrequency, 100)

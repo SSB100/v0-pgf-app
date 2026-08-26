@@ -2,14 +2,16 @@ import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 import { createUser, getUserByEmail } from "@/lib/auth"
 import { encrypt } from "@/lib/session"
-import { dbColumnExists, sql } from "@/lib/db"
+import { dbColumnExists, dbTableExists, sql } from "@/lib/db"
 import { getAotearoaDateKey } from "@/lib/aotearoa-date"
-import { governanceTableExists } from "@/lib/governance"
+import { governanceTableExists, recordConsentEvent } from "@/lib/governance"
+import { sanitizeDemographicsInput } from "@/lib/demographics-policy.mjs"
 import { AUTH_RATE_LIMITS } from "@/lib/auth-abuse-policy.mjs"
 import { consumeAuthRateLimit, getAuthRequestNetworkSubject } from "@/lib/auth-rate-limit"
 
 const TERMS_VERSION = "0.3"
 const PRIVACY_POLICY_VERSION = "0.1"
+const ALLOWED_GENDER_RESPONSES = new Set(["male", "female", "other", "prefer-not-to-say"])
 
 function calculateAge(dateOfBirth: string) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dateOfBirth)) return null
@@ -62,10 +64,18 @@ export async function POST(request: NextRequest) {
     const password = typeof body.password === "string" ? body.password : ""
     const fullName = typeof body.fullName === "string" ? body.fullName.trim().slice(0, 150) : ""
     const dateOfBirth = typeof body.dateOfBirth === "string" ? body.dateOfBirth : ""
+    const country = typeof body.country === "string" ? body.country.trim().slice(0, 100) : ""
+    const gender = typeof body.gender === "string" ? body.gender.trim().slice(0, 50) : ""
     const termsAccepted = body.termsAccepted === true
+    const dataConsent = body.dataConsent === true
+    const demographics = sanitizeDemographicsInput(body)
 
-    if (!email || !password || !fullName || !dateOfBirth) {
-      return NextResponse.json({ error: "Name, email, password and date of birth are required" }, { status: 400 })
+    if (!email || !password || !fullName || !dateOfBirth || !country || !gender) {
+      return NextResponse.json({ error: "Name, email, password, date of birth, country and a gender response are required" }, { status: 400 })
+    }
+
+    if (!ALLOWED_GENDER_RESPONSES.has(gender)) {
+      return NextResponse.json({ error: "Please select a valid gender response" }, { status: 400 })
     }
 
     const identityGate = await consumeAuthRateLimit(AUTH_RATE_LIMITS.clientSignupIdentity, email)
@@ -79,6 +89,10 @@ export async function POST(request: NextRequest) {
     if (age === null || age < 0 || age > 120) return NextResponse.json({ error: "Please enter a valid date of birth" }, { status: 400 })
     if (age < 18) return NextResponse.json({ error: "The current Waypoint MVP is available to adults aged 18 and over." }, { status: 400 })
 
+    if (!(await dbTableExists("user_demographics"))) {
+      return NextResponse.json({ error: "Waypoint account creation is temporarily unavailable while a required data update is being applied." }, { status: 503 })
+    }
+
     const existingUser = await getUserByEmail(email)
     if (existingUser) return NextResponse.json({ error: "An account with this email already exists" }, { status: 409 })
 
@@ -89,25 +103,66 @@ export async function POST(request: NextRequest) {
     if (ageMinimisationReady) {
       await sql`
         UPDATE users SET
+          data_consent = ${dataConsent},
+          data_consent_date = ${now},
           terms_accepted = true,
           terms_accepted_date = ${now},
           date_of_birth = NULL,
           age_verified_18_plus = true,
           age_verified_at = ${now},
           age_band = ${ageBandForAge(age)},
+          country = ${country},
+          gender = ${gender},
           updated_at = CURRENT_TIMESTAMP
         WHERE id = ${user.id}
       `
     } else {
       await sql`
         UPDATE users SET
+          data_consent = ${dataConsent},
+          data_consent_date = ${now},
           terms_accepted = true,
           terms_accepted_date = ${now},
           date_of_birth = ${dateOfBirth},
+          country = ${country},
+          gender = ${gender},
           updated_at = CURRENT_TIMESTAMP
         WHERE id = ${user.id}
       `
     }
+
+    await sql`
+      INSERT INTO user_demographics (
+        user_id,
+        ethnicity_responses,
+        ethnicity_response_status,
+        iwi_affiliations,
+        iwi_response_status,
+        collection_notice_version,
+        ethnicity_standard_version,
+        iwi_standard_version,
+        updated_at
+      ) VALUES (
+        ${user.id},
+        ${JSON.stringify(demographics.ethnicityResponses)}::jsonb,
+        ${demographics.ethnicityResponseStatus},
+        ${JSON.stringify(demographics.iwiAffiliations)}::jsonb,
+        ${demographics.iwiResponseStatus},
+        ${demographics.collectionNoticeVersion},
+        ${demographics.ethnicityStandardVersion},
+        ${demographics.iwiStandardVersion},
+        CURRENT_TIMESTAMP
+      )
+      ON CONFLICT (user_id) DO UPDATE SET
+        ethnicity_responses = EXCLUDED.ethnicity_responses,
+        ethnicity_response_status = EXCLUDED.ethnicity_response_status,
+        iwi_affiliations = EXCLUDED.iwi_affiliations,
+        iwi_response_status = EXCLUDED.iwi_response_status,
+        collection_notice_version = EXCLUDED.collection_notice_version,
+        ethnicity_standard_version = EXCLUDED.ethnicity_standard_version,
+        iwi_standard_version = EXCLUDED.iwi_standard_version,
+        updated_at = CURRENT_TIMESTAMP
+    `
 
     try {
       if (await governanceTableExists("policy_acceptances")) {
@@ -115,11 +170,26 @@ export async function POST(request: NextRequest) {
           INSERT INTO policy_acceptances (user_id, policy_type, policy_version, action, occurred_at, metadata)
           VALUES
             (${user.id}, 'terms', ${TERMS_VERSION}, 'accepted', ${now}, '{"source":"signup"}'::jsonb),
-            (${user.id}, 'privacy_policy', ${PRIVACY_POLICY_VERSION}, 'acknowledged', ${now}, '{"source":"signup","acknowledgement":true}'::jsonb)
+            (${user.id}, 'privacy_policy', ${PRIVACY_POLICY_VERSION}, 'acknowledged', ${now}, '{"source":"signup","acknowledgement":true}'::jsonb),
+            (${user.id}, 'demographics_collection_notice', ${demographics.collectionNoticeVersion}, 'acknowledged', ${now}, ${JSON.stringify({ source: "signup", optional: true, ethnicityResponseStatus: demographics.ethnicityResponseStatus, iwiResponseStatus: demographics.iwiResponseStatus, valuesIncludedInAudit: false })}::jsonb)
         `
       }
+
+      await recordConsentEvent({
+        subjectUserId: user.id,
+        actorUserId: user.id,
+        consentType: "future_research_interest",
+        action: dataConsent ? "granted" : "declined",
+        documentVersion: "future-research-interest-v1",
+        scope: {},
+        metadata: {
+          formalResearchConsent: false,
+          professionalSharingConsent: false,
+          source: "signup",
+        },
+      })
     } catch (governanceError) {
-      console.warn("[waypoint] Account created but policy acknowledgement history could not be recorded", governanceError)
+      console.warn("[waypoint] Account created but governance history could not be recorded", governanceError)
     }
 
     const token = await encrypt({ userId: user.id })

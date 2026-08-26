@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { getSession } from "@/lib/session"
 import { sql } from "@/lib/db"
-import { sanitizeMinimumOnboardingInput } from "@/lib/minimum-onboarding-policy.mjs"
+import { sanitizeWaypointPreferencesInput } from "@/lib/waypoint-preferences-policy.mjs"
 
 const MAX_PAYLOAD_BYTES = 8_000
 const NO_STORE_HEADERS = { "Cache-Control": "no-store" }
@@ -70,7 +70,7 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: "Waypoint preferences are too large" }, { status: 413, headers: NO_STORE_HEADERS })
     }
 
-    const result = sanitizeMinimumOnboardingInput(body as Record<string, unknown>)
+    const result = sanitizeWaypointPreferencesInput(body as Record<string, unknown>)
     if (!result.ok) {
       return NextResponse.json({ error: result.error }, { status: 400, headers: NO_STORE_HEADERS })
     }

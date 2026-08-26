@@ -6,7 +6,7 @@ import { Check, Compass, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { AVATAR_OPTIONS } from "@/lib/onboarding-data"
-import { NO_COMPANION_ID } from "@/lib/minimum-onboarding-policy.mjs"
+import { NO_COMPANION_ID } from "@/lib/waypoint-preferences-policy.mjs"
 
 const FOCUS_OPTIONS = [
   { id: "gambling", label: "Gambling", description: "Gambling, betting, casinos, pokies or related spending and urges" },
