@@ -104,7 +104,11 @@ export async function PATCH(request: NextRequest) {
       resolutionNote,
       confirmation,
     })
-    if (!validation.ok) return NextResponse.json({ error: validation.errors[0], errors: validation.errors }, { status: 400 })
+    if (!validation.ok || !validation.value) {
+      const errors = validation.errors ?? ["Invalid privacy-request action"]
+      return NextResponse.json({ error: errors[0], errors }, { status: 400 })
+    }
+    const validated = validation.value
 
     const auditMetadata = JSON.stringify({
       source: "admin_portal",
@@ -137,13 +141,13 @@ export async function PATCH(request: NextRequest) {
       await dbTransaction((tx) => [
         tx`
           UPDATE privacy_requests
-          SET status = ${nextStatus}, completed_at = CURRENT_TIMESTAMP, resolution_note = ${validation.value.resolutionNote},
+          SET status = ${nextStatus}, completed_at = CURRENT_TIMESTAMP, resolution_note = ${validated.resolutionNote},
             metadata = metadata || ${JSON.stringify({ resolvedBy: "admin", resolutionAction: action })}::jsonb
           WHERE id = ${requestId} AND status IN ('requested', 'in_review')
         `,
         tx`
           INSERT INTO administrative_audit_events (actor_user_id, action, target_type, target_id, reason, metadata)
-          VALUES (${admin.user.id}, ${adminAction}, 'privacy_request', ${requestId}, ${validation.value.resolutionNote}, ${auditMetadata}::jsonb)
+          VALUES (${admin.user.id}, ${adminAction}, 'privacy_request', ${requestId}, ${validated.resolutionNote}, ${auditMetadata}::jsonb)
         `,
         tx`
           INSERT INTO access_audit_events (subject_user_id, actor_user_id, event_type, resource_scope, purpose, metadata)
@@ -211,7 +215,7 @@ export async function PATCH(request: NextRequest) {
         `,
         tx`
           INSERT INTO administrative_audit_events (actor_user_id, action, target_type, target_id, reason, metadata)
-          VALUES (${admin.user.id}, 'privacy_deletion_completed', 'privacy_request', ${requestId}, ${validation.value.resolutionNote}, ${deletionMetadata}::jsonb)
+          VALUES (${admin.user.id}, 'privacy_deletion_completed', 'privacy_request', ${requestId}, ${validated.resolutionNote}, ${deletionMetadata}::jsonb)
         `,
         tx`DELETE FROM users WHERE id = ${privacyRequest.user_id} AND role = 'client'`,
         tx`
@@ -222,7 +226,7 @@ export async function PATCH(request: NextRequest) {
         `,
         tx`
           UPDATE privacy_requests
-          SET status = 'completed', completed_at = CURRENT_TIMESTAMP, resolution_note = ${validation.value.resolutionNote},
+          SET status = 'completed', completed_at = CURRENT_TIMESTAMP, resolution_note = ${validated.resolutionNote},
             metadata = metadata || ${JSON.stringify({ resolvedBy: "admin", resolutionAction: "complete_deletion" })}::jsonb
           WHERE id = ${requestId} AND status IN ('requested', 'in_review')
         `,
