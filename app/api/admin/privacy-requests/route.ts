@@ -171,7 +171,31 @@ export async function PATCH(request: NextRequest) {
     })
 
     await dbTransaction((tx) => {
-      const queries: unknown[] = []
+      const queries: unknown[] = [
+        tx`
+          SELECT CASE
+            WHEN EXISTS (
+              SELECT 1 FROM privacy_requests
+              WHERE id = ${requestId}
+                AND request_type = 'deletion'
+                AND status IN ('requested', 'in_review')
+            ) THEN 1
+            ELSE CAST('privacy_request_not_open' AS integer)
+          END AS request_state_guard
+        `,
+        tx`
+          SELECT CASE
+            WHEN EXISTS (
+              SELECT 1 FROM users
+              WHERE id = ${privacyRequest.user_id} AND role = 'client'
+            ) AND NOT EXISTS (
+              SELECT 1 FROM professional_accounts
+              WHERE user_id = ${privacyRequest.user_id}
+            ) THEN 1
+            ELSE CAST('privacy_deletion_subject_invalid' AS integer)
+          END AS subject_state_guard
+        `,
+      ]
 
       if (legacySosTableExists) {
         queries.push(tx`
@@ -191,7 +215,10 @@ export async function PATCH(request: NextRequest) {
         `,
         tx`DELETE FROM users WHERE id = ${privacyRequest.user_id} AND role = 'client'`,
         tx`
-          SELECT COALESCE((SELECT role::integer FROM users WHERE id = ${privacyRequest.user_id}), 1) AS deletion_guard
+          SELECT CASE
+            WHEN NOT EXISTS (SELECT 1 FROM users WHERE id = ${privacyRequest.user_id}) THEN 1
+            ELSE CAST('privacy_account_delete_failed' AS integer)
+          END AS deletion_guard
         `,
         tx`
           UPDATE privacy_requests
