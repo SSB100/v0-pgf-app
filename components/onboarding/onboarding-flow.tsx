@@ -308,10 +308,10 @@ export default function OnboardingFlow({ userId, userName, initialStep = 1, init
   }
 
   return (
-    <div className="flex h-[100dvh] flex-col overflow-hidden bg-gradient-to-br from-secondary via-background to-muted sm:block sm:h-auto sm:min-h-screen sm:overflow-visible">
+    <div className="flex h-[100dvh] flex-col overflow-hidden bg-gradient-to-br from-secondary via-background to-muted lg:block lg:h-auto lg:min-h-screen lg:overflow-visible">
       {currentStep !== "completion" && (
         <>
-          <div className="shrink-0 border-b border-border/70 bg-card/95 backdrop-blur-xl sm:hidden">
+          <div className="shrink-0 border-b border-border/70 bg-card/95 backdrop-blur-xl lg:hidden">
             <div className="mx-auto max-w-2xl px-4 pb-2.5 pt-[max(0.65rem,env(safe-area-inset-top))]">
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
@@ -335,7 +335,7 @@ export default function OnboardingFlow({ userId, userName, initialStep = 1, init
             </div>
           </div>
 
-          <div className="sticky top-[73px] z-40 hidden border-b border-border bg-card/80 backdrop-blur-sm sm:block">
+          <div className="sticky top-[73px] z-40 hidden border-b border-border bg-card/80 backdrop-blur-sm lg:block">
             <div className="mx-auto flex max-w-2xl justify-end px-4 py-2">
               <Button variant="ghost" size="sm" onClick={saveProgress} disabled={isSaving} className="text-xs">
                 <Save className="mr-1 size-3" />
@@ -348,7 +348,7 @@ export default function OnboardingFlow({ userId, userName, initialStep = 1, init
 
       <div
         ref={scrollViewportRef}
-        className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-3 pb-28 sm:overflow-visible sm:px-4 sm:py-6 sm:pb-20"
+        className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-3 pb-28 lg:overflow-visible lg:px-4 lg:py-6 lg:pb-20"
       >
         <div className="onboarding-step-viewport mx-auto max-w-2xl">{renderCurrentStep()}</div>
       </div>
