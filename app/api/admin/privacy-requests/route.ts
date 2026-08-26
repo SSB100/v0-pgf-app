@@ -182,12 +182,6 @@ export async function PATCH(request: NextRequest) {
 
       queries.push(
         tx`
-          UPDATE privacy_requests
-          SET status = 'completed', completed_at = CURRENT_TIMESTAMP, resolution_note = ${validation.value.resolutionNote},
-            metadata = metadata || ${JSON.stringify({ resolvedBy: "admin", resolutionAction: "complete_deletion" })}::jsonb
-          WHERE id = ${requestId} AND status IN ('requested', 'in_review')
-        `,
-        tx`
           INSERT INTO access_audit_events (subject_user_id, actor_user_id, event_type, resource_scope, purpose, metadata)
           VALUES (${privacyRequest.user_id}, ${admin.user.id}, 'privacy_deletion_fulfilled', 'account_data', 'privacy_request_fulfilment', ${deletionMetadata}::jsonb)
         `,
@@ -196,6 +190,15 @@ export async function PATCH(request: NextRequest) {
           VALUES (${admin.user.id}, 'privacy_deletion_completed', 'privacy_request', ${requestId}, ${validation.value.resolutionNote}, ${deletionMetadata}::jsonb)
         `,
         tx`DELETE FROM users WHERE id = ${privacyRequest.user_id} AND role = 'client'`,
+        tx`
+          SELECT COALESCE((SELECT role::integer FROM users WHERE id = ${privacyRequest.user_id}), 1) AS deletion_guard
+        `,
+        tx`
+          UPDATE privacy_requests
+          SET status = 'completed', completed_at = CURRENT_TIMESTAMP, resolution_note = ${validation.value.resolutionNote},
+            metadata = metadata || ${JSON.stringify({ resolvedBy: "admin", resolutionAction: "complete_deletion" })}::jsonb
+          WHERE id = ${requestId} AND status IN ('requested', 'in_review')
+        `,
       )
 
       return queries
