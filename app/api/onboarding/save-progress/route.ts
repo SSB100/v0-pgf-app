@@ -2,16 +2,17 @@ import { NextRequest, NextResponse } from "next/server"
 import { sql } from "@/lib/db"
 import { deleteSession, getSession } from "@/lib/session"
 
-const MAX_ONBOARDING_DRAFT_BYTES = 100_000
+const MAX_ONBOARDING_DRAFT_BYTES = 8_000
 
 export async function POST(request: NextRequest) {
   try {
     const user = await getSession()
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    if (user.role !== "client") return NextResponse.json({ error: "Forbidden" }, { status: 403 })
 
     const { currentStep, data } = await request.json()
 
-    if (!Number.isInteger(currentStep) || currentStep < 1 || currentStep > 50 || !data || typeof data !== "object") {
+    if (!Number.isInteger(currentStep) || currentStep < 1 || currentStep > 3 || !data || typeof data !== "object") {
       return NextResponse.json({ error: "Invalid onboarding progress" }, { status: 400 })
     }
 
@@ -20,18 +21,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Onboarding progress is too large to save" }, { status: 413 })
     }
 
-    await sql`
+    const updated = await sql`
       UPDATE user_profiles
       SET
         onboarding_current_step = ${currentStep},
-        onboarding_data = ${serializedData},
+        onboarding_data = ${serializedData}::jsonb,
         onboarding_last_saved = CURRENT_TIMESTAMP
-      WHERE user_id = ${user.id}
+      WHERE user_id = ${user.id}::uuid
+        AND COALESCE(onboarding_completed, false) = false
+      RETURNING user_id
     `
 
+    if (updated.length === 0) {
+      return NextResponse.json({ error: "Setup is already complete or unavailable" }, { status: 409 })
+    }
+
     // "Save & Finish Later" is an explicit exit from setup. End the current
-    // session so the subsequent sign-in page does not immediately bounce the
-    // person through /dashboard and back into onboarding.
+    // session only after the minimum setup draft has been saved successfully.
     await deleteSession()
 
     return NextResponse.json({ success: true, message: "Progress saved" })
