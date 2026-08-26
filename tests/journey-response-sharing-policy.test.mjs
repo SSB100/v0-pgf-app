@@ -40,6 +40,17 @@ test("completion validates server-owned responses, overwrites repeats and only r
   assert.match(route, /responseSaved: true/)
 })
 
+test("client-owned Journey and sharing routes reject non-client sessions", () => {
+  const completion = read("app/api/journey/complete/route.ts")
+  const sharing = read("app/api/privacy/sharing-grants/route.ts")
+  const invitation = read("app/api/connect/professional/route.ts")
+  const clientRoleGuard = /user\.role !== "client"[\s\S]*status: 403/
+
+  assert.match(completion, clientRoleGuard)
+  assert.match(sharing, clientRoleGuard)
+  assert.match(invitation, clientRoleGuard)
+})
+
 test("response policy limits free text and canonicalises against registered module content", () => {
   const policy = read("lib/journey-response-policy.ts")
   assert.match(policy, /MAX_JOURNEY_RESPONSE_TEXT_CHARS = 4_000/)

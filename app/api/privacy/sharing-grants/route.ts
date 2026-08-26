@@ -17,6 +17,7 @@ export async function PATCH(request: NextRequest) {
   try {
     const user = await getSession()
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    if (user.role !== "client") return NextResponse.json({ error: "Forbidden" }, { status: 403 })
 
     const ready =
       (await governanceTableExists("client_professional_links")) &&

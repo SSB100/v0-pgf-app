@@ -56,6 +56,7 @@ export async function GET(request: NextRequest) {
   try {
     const user = await getSession()
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    if (user.role !== "client") return NextResponse.json({ error: "Forbidden" }, { status: 403 })
 
     const token = request.nextUrl.searchParams.get("token")?.trim() || ""
     if (token.length < 20) return NextResponse.json({ error: "Invalid invitation" }, { status: 400 })
@@ -100,6 +101,7 @@ export async function POST(request: NextRequest) {
   try {
     const user = await getSession()
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    if (user.role !== "client") return NextResponse.json({ error: "Forbidden" }, { status: 403 })
 
     const body = await request.json()
     const token = typeof body.token === "string" ? body.token.trim() : ""
