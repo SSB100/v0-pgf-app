@@ -41,115 +41,92 @@ export default function JourneyProgressCard({
   const getJourneyData = (type: string) => {
     switch (type) {
       case "gambling":
-        return { problem: gamblingProblem, lastDate: gamblingProblem?.last_bet_date || gamblingProblem?.last_occurrence_date, dateLabel: "Last gambling date recorded" }
+        return { problem: gamblingProblem, lastDate: gamblingProblem?.last_bet_date || gamblingProblem?.last_occurrence_date }
       case "alcohol":
-        return { problem: alcoholProblem, lastDate: alcoholProblem?.last_occurrence_date || profile?.last_drink_date, dateLabel: "Last alcohol-use date recorded" }
+        return { problem: alcoholProblem, lastDate: alcoholProblem?.last_occurrence_date || profile?.last_drink_date }
       case "substances":
-        return { problem: substancesProblem, lastDate: substancesProblem?.last_occurrence_date || profile?.last_substance_date, dateLabel: "Last substance-use date recorded" }
+        return { problem: substancesProblem, lastDate: substancesProblem?.last_occurrence_date || profile?.last_substance_date }
       case "mental_health":
-        return { problem: mentalHealthProblem, lastDate: null, dateLabel: "Mental wellbeing focus" }
+        return { problem: mentalHealthProblem, lastDate: null }
       case "personal_growth":
-        return { problem: personalGrowthProblem, lastDate: null, dateLabel: "Personal growth focus" }
-      case "gaming":
-        return { problem: null, lastDate: null, dateLabel: "Gaming or internet focus" }
+        return { problem: personalGrowthProblem, lastDate: null }
       default:
-        return { problem: null, lastDate: null, dateLabel: "" }
+        return { problem: null, lastDate: null }
     }
   }
 
-  const datedTypes = journeyTypes.filter((type) => ["gambling", "alcohol", "substances"].includes(type))
-  const otherTypes = journeyTypes.filter((type) => ["mental_health", "personal_growth", "gaming"].includes(type))
-
   return (
-    <Card className="soft-shadow border-border/50">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-lg sm:text-xl text-foreground flex items-center gap-2"><Map className="w-5 h-5 text-primary" /> Your Focus Areas</CardTitle>
-        <p className="text-sm text-muted-foreground">
-          This card summarises the areas and dates you recorded in Waypoint. It is not a clinical progress score and does not assume that abstinence is every person's goal.
-        </p>
+    <Card className="gap-3 border-border/50 py-4 soft-shadow">
+      <CardHeader className="px-4 pb-0">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex min-w-0 items-center gap-2.5">
+            <div className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-primary/20 bg-primary/10">
+              <Map className="size-4 text-primary" />
+            </div>
+            <div className="min-w-0">
+              <CardTitle className="text-base text-foreground">Your Focus Areas</CardTitle>
+              <p className="mt-0.5 text-[10px] leading-snug text-muted-foreground">Your recorded areas and dates, not a clinical progress score.</p>
+            </div>
+          </div>
+          <span className="shrink-0 rounded-full bg-secondary/50 px-2 py-1 text-[10px] font-semibold text-muted-foreground">{journeyTypes.length} selected</span>
+        </div>
       </CardHeader>
 
-      <CardContent className="space-y-4">
-        {datedTypes.length > 0 && (
-          <div className="space-y-3">
-            <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Dates you recorded</div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {datedTypes.map((type) => {
-                const config = JOURNEY_CONFIG[type]
-                const data = getJourneyData(type)
-                const dateKey = normaliseDateKey(data.lastDate)
-                const daysSince = calculateDaysSince(data.lastDate)
-                const Icon = config.icon
+      <CardContent className="px-4">
+        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+          {journeyTypes.map((type) => {
+            const config = JOURNEY_CONFIG[type]
+            if (!config) return null
 
-                return (
-                  <div key={type} className={`${config.bgColor} ${config.borderColor} border rounded-xl p-4 space-y-2`}>
-                    <div className="flex items-center gap-2">
-                      <div className={`w-8 h-8 rounded-full ${config.bgColor} flex items-center justify-center border ${config.borderColor}`}><Icon className={`w-4 h-4 ${config.color}`} /></div>
-                      <span className={`font-semibold ${config.color}`}>{config.label}</span>
-                    </div>
+            const data = getJourneyData(type)
+            const dateKey = normaliseDateKey(data.lastDate)
+            const daysSince = calculateDaysSince(data.lastDate)
+            const Icon = config.icon
+            const dated = ["gambling", "alcohol", "substances"].includes(type)
 
-                    {dateKey && daysSince !== null ? (
-                      <>
-                        <div className="flex items-baseline gap-1"><span className={`text-3xl font-bold ${config.color}`}>{daysSince}</span><span className="text-sm text-muted-foreground">days</span></div>
-                        <p className="text-xs text-muted-foreground">Since the last date you recorded for this behaviour.</p>
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground pt-1 border-t border-border/20">
-                          <Calendar className="w-3 h-3" />
-                          <span>{data.dateLabel}: {formatDateKeyEnNz(dateKey)}</span>
-                        </div>
-                      </>
-                    ) : (
-                      <p className="text-xs text-muted-foreground">No last-occurrence date has been recorded for this area.</p>
-                    )}
+            let focusAreas: string[] = []
+            if ((type === "mental_health" || type === "personal_growth") && data.problem?.specific_types) {
+              try {
+                focusAreas = typeof data.problem.specific_types === "string" ? JSON.parse(data.problem.specific_types) : data.problem.specific_types
+              } catch {
+                focusAreas = []
+              }
+            }
+
+            return (
+              <div key={type} className={`min-w-0 rounded-xl border ${config.borderColor} ${config.bgColor} p-3`}>
+                <div className="flex items-center gap-2">
+                  <div className={`flex size-7 shrink-0 items-center justify-center rounded-lg border ${config.borderColor} bg-background/55`}>
+                    <Icon className={`size-3.5 ${config.color}`} />
                   </div>
-                )
-              })}
-            </div>
-          </div>
-        )}
+                  <span className={`truncate text-xs font-semibold ${config.color}`}>{config.label}</span>
+                </div>
 
-        {otherTypes.length > 0 && (
-          <div className="space-y-3">
-            <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Other focus areas</div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {otherTypes.map((type) => {
-                const config = JOURNEY_CONFIG[type]
-                const data = getJourneyData(type)
-                const Icon = config.icon
-
-                let focusAreas: string[] = []
-                if ((type === "mental_health" || type === "personal_growth") && data.problem?.specific_types) {
-                  focusAreas = typeof data.problem.specific_types === "string" ? JSON.parse(data.problem.specific_types) : data.problem.specific_types
-                }
-
-                return (
-                  <div key={type} className={`${config.bgColor} ${config.borderColor} border rounded-xl p-4 space-y-2`}>
-                    <div className="flex items-center gap-2">
-                      <div className={`w-8 h-8 rounded-full ${config.bgColor} flex items-center justify-center border ${config.borderColor}`}><Icon className={`w-4 h-4 ${config.color}`} /></div>
-                      <span className={`font-semibold ${config.color}`}>{config.label}</span>
-                    </div>
-
-                    {focusAreas.length > 0 ? (
-                      <div className="space-y-1">
-                        <div className="text-xs text-muted-foreground">Areas you selected:</div>
-                        <div className="flex flex-wrap gap-1">
-                          {focusAreas.slice(0, 3).map((area, index) => <span key={`${area}-${index}`} className={`px-2 py-0.5 rounded-full text-xs ${config.bgColor} ${config.color} border ${config.borderColor}`}>{area}</span>)}
-                          {focusAreas.length > 3 && <span className="text-xs text-muted-foreground">+{focusAreas.length - 3} more</span>}
-                        </div>
+                {dated ? (
+                  dateKey && daysSince !== null ? (
+                    <div className="mt-2 flex items-end justify-between gap-2">
+                      <div className="flex items-baseline gap-1">
+                        <span className={`text-xl font-bold leading-none ${config.color}`}>{daysSince}</span>
+                        <span className="text-[10px] text-muted-foreground">days since recorded date</span>
                       </div>
-                    ) : (
-                      <p className="text-xs text-muted-foreground">Selected as a Waypoint focus area.</p>
-                    )}
+                      <span className="flex shrink-0 items-center gap-1 text-[9px] text-muted-foreground"><Calendar className="size-2.5" />{formatDateKeyEnNz(dateKey)}</span>
+                    </div>
+                  ) : (
+                    <p className="mt-2 text-[10px] leading-snug text-muted-foreground">No last-occurrence date recorded.</p>
+                  )
+                ) : focusAreas.length > 0 ? (
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    {focusAreas.slice(0, 2).map((area, index) => (
+                      <span key={`${area}-${index}`} className="max-w-full truncate rounded-full border border-border/50 bg-background/55 px-2 py-0.5 text-[9px] text-foreground">{area}</span>
+                    ))}
+                    {focusAreas.length > 2 && <span className="px-1 text-[9px] text-muted-foreground">+{focusAreas.length - 2}</span>}
                   </div>
-                )
-              })}
-            </div>
-          </div>
-        )}
-
-        <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 mt-4">
-          <p className="text-sm text-muted-foreground">
-            Dates, focus areas and app activity can help you reflect on patterns, but they do not by themselves show whether your health or recovery is improving.
-          </p>
+                ) : (
+                  <p className="mt-2 text-[10px] leading-snug text-muted-foreground">Selected as a Waypoint focus area.</p>
+                )}
+              </div>
+            )
+          })}
         </div>
       </CardContent>
     </Card>

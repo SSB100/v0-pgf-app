@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { useState } from "react"
-import { Sparkles, Info } from "lucide-react"
+import { Sparkles, Info, Flame } from "lucide-react"
 import Image from "next/image"
 
 interface GrowthAvatarCardProps {
@@ -106,20 +106,20 @@ export default function GrowthAvatarCard({ avatarType, level, levelCredits, stre
   }
 
   return (
-    <Card className="overflow-hidden border-border/50 shadow-sm">
-      <div className="relative h-24 overflow-hidden">
+    <Card className="gap-0 overflow-hidden border-border/50 py-0 shadow-sm">
+      <div className="relative h-16 overflow-hidden">
         <Image src="/images/growth-journey.jpg" alt="" fill className="object-cover object-center" />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/40 to-card" />
-        <div className="absolute bottom-0 left-0 right-0 flex items-end justify-between px-4 pb-3">
+        <div className="absolute inset-0 bg-gradient-to-r from-black/55 via-black/35 to-card/20" />
+        <div className="absolute inset-0 flex items-center justify-between px-4">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-primary/90">Growth &amp; Progress</p>
-            <h3 className="text-base font-bold leading-tight text-white">{progressOnly ? "Progress only" : `Your ${config.name}`}</h3>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-white/70">Growth &amp; Progress</p>
+            <h3 className="text-sm font-bold leading-tight text-white">{progressOnly ? "Progress only" : config.name}</h3>
           </div>
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <button className="flex h-7 w-7 items-center justify-center rounded-full bg-black/40" aria-label="About Growth and Progress">
-                  <Info className="h-3.5 w-3.5 text-white/70" />
+                <button className="flex size-7 items-center justify-center rounded-full bg-black/35" aria-label="About Growth and Progress">
+                  <Info className="size-3.5 text-white/80" />
                 </button>
               </TooltipTrigger>
               <TooltipContent className="max-w-xs">
@@ -130,61 +130,51 @@ export default function GrowthAvatarCard({ avatarType, level, levelCredits, stre
         </div>
       </div>
 
-      <CardContent className="space-y-4 pt-4">
-        <div className="flex items-center gap-4">
+      <CardContent className="space-y-3 p-4">
+        <div className="flex items-center gap-3">
           {progressOnly ? (
-            <div className="flex h-24 w-24 flex-shrink-0 items-center justify-center rounded-xl border-2 border-primary/30 bg-primary/10">
-              <Sparkles className="size-9 text-primary" />
+            <div className="flex size-20 shrink-0 items-center justify-center rounded-xl border border-primary/25 bg-primary/10">
+              <Sparkles className="size-7 text-primary" />
             </div>
           ) : (
-            <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-xl border-2 border-primary/30 bg-secondary/30">
+            <div className="relative size-20 shrink-0 overflow-hidden rounded-xl border border-primary/25 bg-secondary/20">
               <Image id="growth-avatar-image" src={avatar.image || "/placeholder.svg"} alt={avatar.stage} fill className="object-contain p-1 transition-all duration-700 ease-in-out" priority />
             </div>
           )}
+
           <div className="min-w-0 flex-1">
-            <div className={`text-xl font-bold ${progressOnly ? "text-primary" : avatar.color}`}>{progressOnly ? `Level ${currentLevel}` : avatar.stage}</div>
-            <div className="text-sm font-medium text-muted-foreground">Engagement level {currentLevel}</div>
-            <div className="mt-0.5 text-pretty text-xs leading-snug text-muted-foreground">
+            <div className={`truncate text-lg font-bold ${progressOnly ? "text-primary" : avatar.color}`}>{progressOnly ? `Level ${currentLevel}` : avatar.stage}</div>
+            <div className="text-xs font-medium text-muted-foreground">Engagement level {currentLevel}</div>
+            <div className="mt-1 line-clamp-2 text-xs leading-snug text-muted-foreground">
               {progressOnly ? "Your engagement progress without a character or creature." : avatar.description}
             </div>
           </div>
         </div>
 
-        <div className="flex items-center justify-between gap-3 rounded-xl border border-border/50 bg-secondary/30 px-4 py-3">
-          <div>
-            <div className="mb-0.5 text-xs font-medium text-muted-foreground">Current check-in run</div>
-            <p className="text-pretty text-xs leading-snug text-muted-foreground">
-              This counts consecutive recorded check-ins. Missing a day does not erase earlier entries or mean you have failed.
-            </p>
+        <div className="grid grid-cols-2 gap-2">
+          <div className="rounded-xl border border-border/60 bg-secondary/25 px-3 py-2">
+            <div className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground"><Flame className="size-3 text-primary" /> Check-in run</div>
+            <div className="mt-0.5 flex items-baseline gap-1"><span className="text-xl font-bold text-foreground">{streak}</span><span className="text-[10px] text-muted-foreground">days</span></div>
+            {longestStreak > 0 && <div className="truncate text-[9px] text-muted-foreground">Longest {longestStreak}</div>}
           </div>
-          <div className="flex-shrink-0 text-right">
-            <div className="text-2xl font-bold text-primary">{streak}</div>
-            <div className="text-xs text-muted-foreground">days</div>
-            {longestStreak > 0 && <div className="text-[10px] text-muted-foreground">Longest recorded run: {longestStreak}</div>}
+
+          <div className="rounded-xl border border-primary/20 bg-primary/5 px-3 py-2">
+            <div className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Credits waiting</div>
+            <div className="mt-0.5 flex items-baseline gap-1"><span className="text-xl font-bold text-primary">{credits}</span><span className="text-[10px] text-muted-foreground">credits</span></div>
+            <div className="text-[9px] text-muted-foreground">Use when you choose</div>
           </div>
         </div>
 
         {credits > 0 && (
-          <div className="rounded-xl border border-primary/25 bg-gradient-to-br from-primary/15 to-primary/5 p-4">
-            <div className="mb-3 flex items-center justify-between">
-              <div>
-                <div className="text-sm font-semibold text-foreground">Growth Credits</div>
-                <div className="text-xs text-muted-foreground">Credits earned through selected Waypoint activities</div>
-              </div>
-              <div className="flex h-10 w-10 items-center justify-center rounded-full border border-primary/30 bg-primary/20"><span className="text-lg font-bold text-primary">{credits}</span></div>
-            </div>
-            <Button onClick={handleLevelUp} disabled={isLevelingUp} className="w-full bg-primary font-semibold hover:bg-primary/90" size="sm">
-              <Sparkles className="mr-2 h-4 w-4" />
-              {isLevelingUp ? "Applying credit..." : "Apply a Growth Credit"}
-            </Button>
-          </div>
+          <Button onClick={handleLevelUp} disabled={isLevelingUp} className="h-9 w-full bg-primary text-xs font-semibold hover:bg-primary/90" size="sm">
+            <Sparkles className="mr-1.5 size-3.5" />
+            {isLevelingUp ? "Applying credit..." : "Apply a Growth Credit"}
+          </Button>
         )}
 
-        <div className="text-pretty text-center text-xs text-muted-foreground">
-          {progressOnly
-            ? "Progress-only levels are a record of Waypoint engagement. They do not measure recovery, wellbeing or treatment outcomes."
-            : "Growth Companion stages are a visual record of Waypoint engagement only. They do not measure recovery, wellbeing or treatment outcomes."}
-        </div>
+        <p className="text-center text-[10px] leading-snug text-muted-foreground">
+          {progressOnly ? "Levels record Waypoint engagement, not recovery." : "Companion stages record Waypoint engagement, not recovery."}
+        </p>
       </CardContent>
     </Card>
   )
