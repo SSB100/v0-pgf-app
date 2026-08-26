@@ -7,6 +7,7 @@ import {
   CalendarDays,
   Home,
   LifeBuoy,
+  Share2,
   Shield,
   Users,
 } from "lucide-react"
@@ -18,6 +19,7 @@ const items = [
   { label: "Journey", href: "/journey", icon: BookOpenCheck },
   { label: "Weekly overview", href: "#weekly-overview", icon: BarChart3 },
   { label: "Safeguards", href: "/safeguards", icon: Shield },
+  { label: "Privacy & sharing", href: "/privacy#professional-sharing", icon: Share2 },
   { label: "Community", href: "/community", icon: Users },
   { label: "Support", href: "/support", icon: LifeBuoy, urgent: true },
 ]
