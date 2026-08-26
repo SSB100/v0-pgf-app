@@ -7,11 +7,16 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
+import { Label } from "@/components/ui/label"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { PROFESSIONAL_SHARE_SCOPES, type ProfessionalShareScope } from "@/lib/sharing-policy"
+
+type JourneyHistoryMode = "include_previous" | "new_only"
 
 type Preview = {
   professional: { name: string; role: string | null; organisation: string | null }
   requestedScopes: ProfessionalShareScope[]
+  journeyResponseCount: number
   expiresAt: string
   monitoringNotice: string
 }
@@ -20,6 +25,7 @@ export default function ConnectProfessionalClient({ token }: { token: string }) 
   const router = useRouter()
   const [preview, setPreview] = useState<Preview | null>(null)
   const [selected, setSelected] = useState<ProfessionalShareScope[]>([])
+  const [journeyHistoryMode, setJourneyHistoryMode] = useState<JourneyHistoryMode | "">("")
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
@@ -45,9 +51,11 @@ export default function ConnectProfessionalClient({ token }: { token: string }) 
     () => PROFESSIONAL_SHARE_SCOPES.filter((scope) => preview?.requestedScopes.includes(scope.id)),
     [preview],
   )
+  const sharingJourneyResponses = selected.includes("journey_responses")
 
   function toggle(scope: ProfessionalShareScope, checked: boolean) {
     setSelected((current) => checked ? [...new Set([...current, scope])] : current.filter((value) => value !== scope))
+    if (scope === "journey_responses" && !checked) setJourneyHistoryMode("")
   }
 
   async function respond(action: "accept" | "decline") {
@@ -57,7 +65,12 @@ export default function ConnectProfessionalClient({ token }: { token: string }) 
       const response = await fetch("/api/connect/professional", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token, action, scopes: selected }),
+        body: JSON.stringify({
+          token,
+          action,
+          scopes: selected,
+          journeyResponsesHistoryMode: sharingJourneyResponses ? journeyHistoryMode : undefined,
+        }),
       })
       const data = await response.json()
       if (!response.ok) throw new Error(data.error || "Unable to process invitation")
@@ -107,23 +120,56 @@ export default function ConnectProfessionalClient({ token }: { token: string }) 
             <label key={scope.id} className="flex cursor-pointer items-start gap-3 rounded-lg border p-4">
               <Checkbox checked={selected.includes(scope.id)} onCheckedChange={(value) => toggle(scope.id, value === true)} />
               <span>
-                <span className="block font-medium text-foreground">{scope.label}</span>
+                <span className="flex flex-wrap items-center gap-2 font-medium text-foreground">
+                  {scope.label}
+                  {scope.sensitivity === "high" && <Badge variant="outline" className="border-amber-500/40 text-amber-700 dark:text-amber-300">High sensitivity</Badge>}
+                </span>
                 <span className="mt-1 block text-sm leading-5 text-muted-foreground">{scope.description}</span>
               </span>
             </label>
           ))}
+
+          {sharingJourneyResponses && (
+            <div className="rounded-xl border border-amber-300/60 bg-amber-50/70 p-4 dark:border-amber-800 dark:bg-amber-950/20">
+              <p className="font-semibold">Choose which Journey responses this professional can see</p>
+              <p className="mt-1 text-sm leading-5 text-muted-foreground">This choice applies only to the separate Journey responses permission. You currently have {preview.journeyResponseCount} saved Journey response{preview.journeyResponseCount === 1 ? "" : "s"}.</p>
+              <RadioGroup value={journeyHistoryMode} onValueChange={(value) => setJourneyHistoryMode(value as JourneyHistoryMode)} className="mt-4 space-y-3">
+                <label className="flex cursor-pointer items-start gap-3 rounded-lg border bg-background p-3">
+                  <RadioGroupItem value="include_previous" id="invite-journey-history" className="mt-0.5" />
+                  <span>
+                    <Label htmlFor="invite-journey-history" className="cursor-pointer font-semibold">Share previous + future responses</Label>
+                    <span className="mt-1 block text-xs leading-5 text-muted-foreground">Your {preview.journeyResponseCount} existing saved response{preview.journeyResponseCount === 1 ? "" : "s"}, plus responses you complete later, can be reviewed.</span>
+                  </span>
+                </label>
+                <label className="flex cursor-pointer items-start gap-3 rounded-lg border bg-background p-3">
+                  <RadioGroupItem value="new_only" id="invite-journey-new-only" className="mt-0.5" />
+                  <span>
+                    <Label htmlFor="invite-journey-new-only" className="cursor-pointer font-semibold">Share new responses only</Label>
+                    <span className="mt-1 block text-xs leading-5 text-muted-foreground">Existing saved responses stay private from this professional. Only responses completed after this permission is granted can be reviewed.</span>
+                  </span>
+                </label>
+              </RadioGroup>
+            </div>
+          )}
+
           <div className="rounded-lg border border-amber-300/60 bg-amber-50 p-4 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100">
             <div className="flex gap-2"><AlertTriangle className="mt-0.5 size-4 shrink-0" /><p>{preview.monitoringNotice}</p></div>
           </div>
           <div className="rounded-lg border bg-muted/20 p-4 text-sm text-muted-foreground">
-            Private free-text notes and reflections are not included in these summary categories. You can change sharing permissions later from Privacy &amp; Sharing.
+            Private check-in notes remain excluded. Journey exercise and quick-check responses are shared only if the separate Journey responses category is selected above. You can change sharing permissions later from Privacy &amp; Sharing.
           </div>
         </CardContent>
       </Card>
 
       <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
         <Button variant="outline" disabled={saving} onClick={() => respond("decline")}>Decline invitation</Button>
-        <Button disabled={saving || selected.length === 0} onClick={() => respond("accept")} className="gap-2"><CheckCircle2 className="size-4" /> {saving ? "Saving..." : "Accept and share selected"}</Button>
+        <Button
+          disabled={saving || selected.length === 0 || (sharingJourneyResponses && !journeyHistoryMode)}
+          onClick={() => respond("accept")}
+          className="gap-2"
+        >
+          <CheckCircle2 className="size-4" /> {saving ? "Saving..." : "Accept and share selected"}
+        </Button>
       </div>
     </div>
   )

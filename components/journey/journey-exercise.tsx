@@ -12,10 +12,19 @@ import type {
   JourneyExerciseOption,
 } from "@/lib/journey-exercises"
 
+export interface JourneyExerciseResponseInput {
+  kind: JourneyExerciseDefinition["kind"]
+  text: Record<string, string>
+  selectedIds: string[]
+  sortAnswers: Record<string, string>
+  sequenceIds: string[]
+}
+
 interface JourneyExerciseProps {
   exercise: JourneyExerciseDefinition
   coreValues?: string[]
   onReadyChange: (ready: boolean) => void
+  onResponseChange?: (response: JourneyExerciseResponseInput) => void
 }
 
 function ExerciseField({ field, value, onChange }: { field: JourneyExerciseField; value: string; onChange: (value: string) => void }) {
@@ -42,7 +51,7 @@ function CoreValueOptions(coreValues: string[], fallback: JourneyExerciseOption[
   return coreValues.map((value, index) => ({ id: `core-${index}`, label: value }))
 }
 
-export default function JourneyExercise({ exercise, coreValues = [], onReadyChange }: JourneyExerciseProps) {
+export default function JourneyExercise({ exercise, coreValues = [], onReadyChange, onResponseChange }: JourneyExerciseProps) {
   const [text, setText] = useState<Record<string, string>>({})
   const [selected, setSelected] = useState<string[]>([])
   const [sortAnswers, setSortAnswers] = useState<Record<string, string>>({})
@@ -79,7 +88,7 @@ export default function JourneyExercise({ exercise, coreValues = [], onReadyChan
       case "choice":
         return selected.length === 1 && followUpReady
       case "multi":
-        return selected.length >= exercise.minSelections && followUpReady
+        return selected.length >= exercise.minSelections && (!exercise.maxSelections || selected.length <= exercise.maxSelections) && followUpReady
       case "sort":
         return exercise.items.every((item) => Boolean(sortAnswers[item.id]))
       case "scenario":
@@ -93,8 +102,17 @@ export default function JourneyExercise({ exercise, coreValues = [], onReadyChan
     onReadyChange(ready)
   }, [onReadyChange, ready])
 
-  const setField = (id: string, value: string) => setText((current) => ({ ...current, [id]: value }))
+  useEffect(() => {
+    onResponseChange?.({
+      kind: exercise.kind,
+      text,
+      selectedIds: selected,
+      sortAnswers,
+      sequenceIds: sequence,
+    })
+  }, [exercise.kind, onResponseChange, selected, sequence, sortAnswers, text])
 
+  const setField = (id: string, value: string) => setText((current) => ({ ...current, [id]: value }))
   const chooseOne = (id: string) => setSelected([id])
 
   const toggleMany = (id: string, max?: number) => {
