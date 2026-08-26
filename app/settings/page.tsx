@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { ArrowLeft, HeartHandshake, Lock, ShieldCheck, User, UserCheck, Users } from "lucide-react"
 import MobileNav from "@/components/dashboard/mobile-nav"
 import DemographicsFields, { type DemographicsFormValue } from "@/components/auth/demographics-fields"
+import WaypointPreferencesCard from "@/components/settings/waypoint-preferences-card"
 
 const INITIAL_DEMOGRAPHICS: DemographicsFormValue = {
   ethnicities: [],
@@ -25,6 +26,7 @@ export default function SettingsPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [isSavingDemographics, setIsSavingDemographics] = useState(false)
+  const [isClient, setIsClient] = useState(false)
   const [fullName, setFullName] = useState("")
   const [email, setEmail] = useState("")
   const [demographics, setDemographics] = useState<DemographicsFormValue>(INITIAL_DEMOGRAPHICS)
@@ -51,6 +53,7 @@ export default function SettingsPage() {
 
         setFullName(userData.user.full_name || "")
         setEmail(userData.user.email || "")
+        setIsClient(userData.user.role === "client")
 
         if (demographicsRes.ok) {
           const demographicsData = await demographicsRes.json()
@@ -135,7 +138,7 @@ export default function SettingsPage() {
         <div className="mb-8">
           <Button variant="ghost" onClick={() => router.push("/dashboard")} className="mb-4"><ArrowLeft className="w-4 h-4 mr-2" />Back to Dashboard</Button>
           <h1 className="text-3xl font-bold">Settings</h1>
-          <p className="text-muted-foreground mt-2">Manage your account, privacy and support options.</p>
+          <p className="text-muted-foreground mt-2">Manage your account, Waypoint preferences, privacy and support options.</p>
         </div>
 
         <div className="space-y-6">
@@ -143,6 +146,8 @@ export default function SettingsPage() {
             <div className="flex items-center gap-3 mb-6"><div className="p-2 bg-primary/10 rounded-lg"><User className="w-5 h-5 text-primary" /></div><div><h2 className="text-xl font-semibold">Profile Information</h2><p className="text-sm text-muted-foreground">View your account details</p></div></div>
             <div className="space-y-4"><div><Label className="text-sm font-medium">Full Name</Label><p className="text-base mt-1">{fullName || "Not set"}</p></div><div><Label className="text-sm font-medium">Email Address</Label><p className="text-base mt-1">{email}</p></div></div>
           </Card>
+
+          {isClient && <WaypointPreferencesCard />}
 
           <Card className="p-4 sm:p-6">
             <div className="mb-5 flex items-start gap-3">

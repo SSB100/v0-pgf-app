@@ -218,7 +218,7 @@ export default async function DashboardPage() {
               </h1>
             </div>
             <p className="hidden max-w-md text-right text-sm text-muted-foreground lg:block">
-              See your Growth Companion first, then choose the next useful action for today.
+              See your growth progress first, then choose the next useful action for today.
             </p>
           </div>
 

@@ -19,6 +19,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { AVATAR_OPTIONS } from "@/lib/onboarding-data"
+import { NO_COMPANION_ID } from "@/lib/minimum-onboarding-policy.mjs"
 
 const FOCUS_OPTIONS = [
   { id: "gambling", label: "Gambling", description: "Gambling, betting, casinos, pokies or related spending and urges", icon: Dice },
@@ -44,21 +45,29 @@ function initialState(initialData?: Record<string, unknown> | null): MinimumOnbo
   const journeyTypes = Array.isArray(initialData?.journeyTypes)
     ? initialData.journeyTypes.filter((item): item is string => typeof item === "string")
     : []
-  const growthAvatar = typeof initialData?.growthAvatar === "string" ? initialData.growthAvatar : "growth_tree"
+  const growthAvatar = typeof initialData?.growthAvatar === "string" ? initialData.growthAvatar : ""
   return { journeyTypes, growthAvatar }
+}
+
+function initialStepFor(initialStep: number, initialData?: Record<string, unknown> | null) {
+  const requested = Math.min(3, Math.max(1, Number.isInteger(initialStep) ? initialStep : 1))
+  const savedAvatar = typeof initialData?.growthAvatar === "string" ? initialData.growthAvatar : ""
+  if (requested === 3 && !savedAvatar) return 2
+  return requested
 }
 
 export default function MinimumOnboardingFlow({ userName, initialStep = 1, initialData = null }: Props) {
   const router = useRouter()
-  const [step, setStep] = useState(Math.min(3, Math.max(1, Number.isInteger(initialStep) ? initialStep : 1)))
+  const [step, setStep] = useState(() => initialStepFor(initialStep, initialData))
   const [data, setData] = useState<MinimumOnboardingData>(() => initialState(initialData))
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState("")
 
   const selectedAvatar = useMemo(
-    () => AVATAR_OPTIONS.find((avatar) => avatar.id === data.growthAvatar) || AVATAR_OPTIONS[0],
+    () => AVATAR_OPTIONS.find((avatar) => avatar.id === data.growthAvatar) || null,
     [data.growthAvatar],
   )
+  const progressOnly = data.growthAvatar === NO_COMPANION_ID
 
   function toggleFocus(id: string) {
     setData((current) => ({
@@ -170,36 +179,57 @@ export default function MinimumOnboardingFlow({ userName, initialStep = 1, initi
       {step === 2 && (
         <Card className="border-border/60 shadow-sm">
           <CardHeader>
-            <CardTitle className="text-2xl sm:text-3xl">Choose your Growth Companion</CardTitle>
+            <CardTitle className="text-2xl sm:text-3xl">Choose how you want to see progress</CardTitle>
             <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
-              Your companion changes as you complete selected Waypoint activities. Its stages represent engagement with the app, not recovery, health or personal worth.
+              You can use a Growth Companion or keep things simple with Progress only. Both use the same Growth Credits and engagement levels, and you can change this later.
             </p>
           </CardHeader>
           <CardContent className="space-y-5">
-            <div className="grid gap-3 md:grid-cols-2">
-              {AVATAR_OPTIONS.map((avatar) => {
-                const selected = data.growthAvatar === avatar.id
-                return (
-                  <button
-                    key={avatar.id}
-                    type="button"
-                    onClick={() => setData((current) => ({ ...current, growthAvatar: avatar.id }))}
-                    className={`rounded-xl border-2 p-4 text-left transition-colors ${selected ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/40 hover:bg-secondary/30"}`}
-                  >
-                    <div className="flex gap-3">
-                      <div className="relative size-20 shrink-0 overflow-hidden rounded-xl border bg-secondary/30">
-                        <Image src={avatar.previewImage || "/placeholder.svg"} alt="" fill className="object-cover" />
+            <button
+              type="button"
+              onClick={() => setData((current) => ({ ...current, growthAvatar: NO_COMPANION_ID }))}
+              className={`w-full rounded-xl border-2 p-4 text-left transition-colors ${progressOnly ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/40 hover:bg-secondary/30"}`}
+            >
+              <div className="flex items-center gap-3">
+                <div className="flex size-16 shrink-0 items-center justify-center rounded-xl border bg-primary/10"><Sparkles className="size-6 text-primary" /></div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2"><p className="font-semibold text-foreground">Progress only</p>{progressOnly && <Check className="size-4 text-primary" />}</div>
+                  <p className="mt-1 text-xs leading-5 text-muted-foreground">See credits, levels and milestones without using a character or creature.</p>
+                </div>
+              </div>
+            </button>
+
+            <div>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Fantasy Companions</p>
+              <div className="grid gap-3 md:grid-cols-2">
+                {AVATAR_OPTIONS.map((avatar) => {
+                  const selected = data.growthAvatar === avatar.id
+                  return (
+                    <button
+                      key={avatar.id}
+                      type="button"
+                      onClick={() => setData((current) => ({ ...current, growthAvatar: avatar.id }))}
+                      className={`rounded-xl border-2 p-4 text-left transition-colors ${selected ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/40 hover:bg-secondary/30"}`}
+                    >
+                      <div className="flex gap-3">
+                        <div className="relative size-20 shrink-0 overflow-hidden rounded-xl border bg-secondary/30">
+                          <Image src={avatar.previewImage || "/placeholder.svg"} alt="" fill className="object-cover" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2"><p className="font-semibold text-foreground">{avatar.name}</p>{selected && <Check className="size-4 text-primary" />}</div>
+                          <p className="mt-0.5 text-xs font-medium text-primary/80">{avatar.theme}</p>
+                          <p className="mt-1 text-xs leading-5 text-muted-foreground">{avatar.description}</p>
+                        </div>
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2"><p className="font-semibold text-foreground">{avatar.name}</p>{selected && <Check className="size-4 text-primary" />}</div>
-                        <p className="mt-0.5 text-xs font-medium text-primary/80">{avatar.theme}</p>
-                        <p className="mt-1 text-xs leading-5 text-muted-foreground">{avatar.description}</p>
-                      </div>
-                    </div>
-                  </button>
-                )
-              })}
+                    </button>
+                  )
+                })}
+              </div>
             </div>
+
+            <p className="text-xs leading-5 text-muted-foreground">
+              Companion changes represent engagement with Waypoint, not recovery, health or personal worth. Choosing Progress only is an equally supported way to use the app.
+            </p>
 
             <div className="flex items-center justify-between gap-3">
               <Button variant="outline" disabled={busy} onClick={() => setStep(1)}>Back</Button>
@@ -213,14 +243,23 @@ export default function MinimumOnboardingFlow({ userName, initialStep = 1, initi
         <Card className="overflow-hidden border-primary/25 shadow-sm">
           <CardContent className="space-y-6 p-6 sm:p-8">
             <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
-              <div className="relative size-28 shrink-0 overflow-hidden rounded-2xl border border-primary/25 bg-secondary/20">
-                <Image src={selectedAvatar.previewImage || "/placeholder.svg"} alt={selectedAvatar.name} fill className="object-cover" />
-              </div>
+              {progressOnly ? (
+                <div className="flex size-28 shrink-0 items-center justify-center rounded-2xl border border-primary/25 bg-primary/10">
+                  <Sparkles className="size-10 text-primary" />
+                </div>
+              ) : selectedAvatar ? (
+                <div className="relative size-28 shrink-0 overflow-hidden rounded-2xl border border-primary/25 bg-secondary/20">
+                  <Image src={selectedAvatar.previewImage || "/placeholder.svg"} alt={selectedAvatar.name} fill className="object-cover" />
+                </div>
+              ) : null}
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Ready to explore</p>
                 <h2 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">Your Waypoint is ready, {userName}</h2>
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
                   You do not need to complete a long assessment before using the app. Start with what feels useful, then add values, strengths, check-ins and more context later if you want to.
+                </p>
+                <p className="mt-2 text-sm font-medium text-foreground">
+                  Progress display: {progressOnly ? "Progress only" : selectedAvatar?.name || "Not selected"}
                 </p>
               </div>
             </div>
@@ -245,7 +284,7 @@ export default function MinimumOnboardingFlow({ userName, initialStep = 1, initi
             <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
               <Button variant="outline" disabled={busy} onClick={() => setStep(2)}>Back</Button>
               <div className="flex flex-col gap-2 sm:items-end">
-                <Button className="min-w-44" disabled={busy} onClick={completeMinimumSetup}>{busy ? "Opening Waypoint…" : "Start using Waypoint"}</Button>
+                <Button className="min-w-44" disabled={busy || !data.growthAvatar} onClick={completeMinimumSetup}>{busy ? "Opening Waypoint…" : "Start using Waypoint"}</Button>
                 <Link href="/support" className="text-center text-xs text-muted-foreground hover:text-primary sm:text-right">Need support now? View NZ support options</Link>
               </div>
             </div>

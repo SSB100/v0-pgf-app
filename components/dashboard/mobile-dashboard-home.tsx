@@ -148,11 +148,11 @@ export default function MobileDashboardHome({ userName, journeyProgress }: Mobil
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <h2 className="text-lg font-bold text-foreground">Growth Companion</h2>
-              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-primary">Avatar</span>
+              <h2 className="text-lg font-bold text-foreground">Growth &amp; Progress</h2>
+              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-primary">Optional companion</span>
             </div>
             <p className="mt-1 text-sm leading-snug text-muted-foreground">
-              See your avatar, Growth Credits, current level and how it changes as you use Waypoint.
+              See your Growth Credits and current level, plus your companion if you chose to use one.
             </p>
           </div>
           <ChevronRight className="size-5 shrink-0 text-primary transition-transform group-hover:translate-x-0.5" />

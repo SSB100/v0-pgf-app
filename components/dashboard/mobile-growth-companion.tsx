@@ -90,6 +90,7 @@ export default function MobileGrowthCompanion({ avatarType, level, levelCredits,
   const [currentLevel, setCurrentLevel] = useState(level || 0)
   const [credits, setCredits] = useState(levelCredits || 0)
   const [isApplying, setIsApplying] = useState(false)
+  const progressOnly = avatarType === "none"
   const stage = getStage(avatarType, currentLevel)
 
   async function applyCredit() {
@@ -112,23 +113,33 @@ export default function MobileGrowthCompanion({ avatarType, level, levelCredits,
   return (
     <div className="flex flex-1 flex-col gap-3">
       <section className="flex items-center gap-4 rounded-3xl border border-primary/25 bg-gradient-to-br from-primary/15 via-primary/5 to-card p-4 shadow-sm">
-        <div className="relative size-28 shrink-0 overflow-hidden rounded-2xl border border-primary/25 bg-background">
-          <Image src={stage.image} alt={stage.stage} fill priority className="object-contain p-1.5" />
-        </div>
+        {progressOnly ? (
+          <div className="flex size-28 shrink-0 items-center justify-center rounded-2xl border border-primary/25 bg-primary/10">
+            <Sparkles className="size-10 text-primary" />
+          </div>
+        ) : (
+          <div className="relative size-28 shrink-0 overflow-hidden rounded-2xl border border-primary/25 bg-background">
+            <Image src={stage.image} alt={stage.stage} fill priority className="object-contain p-1.5" />
+          </div>
+        )}
         <div className="min-w-0 flex-1">
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">{stage.name}</p>
-          <h1 className="mt-1 text-2xl font-bold text-foreground">{stage.stage}</h1>
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">{progressOnly ? "Growth & Progress" : stage.name}</p>
+          <h1 className="mt-1 text-2xl font-bold text-foreground">{progressOnly ? `Level ${currentLevel}` : stage.stage}</h1>
           <p className="text-sm font-medium text-muted-foreground">Engagement level {currentLevel}</p>
           <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-            {stage.nextLevel === null ? "You are at the current final visual stage." : `Your companion changes appearance again at level ${stage.nextLevel}.`}
+            {progressOnly
+              ? "You chose to track engagement without a character. Your Growth Credits and levels work exactly the same way."
+              : stage.nextLevel === null
+                ? "You are at the current final visual stage."
+                : `Your companion changes appearance again at level ${stage.nextLevel}.`}
           </p>
         </div>
       </section>
 
       <section className="rounded-2xl border border-border/70 bg-card p-4">
-        <h2 className="text-base font-bold text-foreground">How your companion grows</h2>
+        <h2 className="text-base font-bold text-foreground">How your progress grows</h2>
         <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-          Growth Credits turn selected Waypoint activity into avatar levels. They are a game-like record of app engagement, not a recovery score.
+          Growth Credits turn selected Waypoint activity into engagement levels. {progressOnly ? "You can add a visual companion later in Settings if you want one." : "Your companion reflects those same levels."} They are not a recovery score.
         </p>
         <div className="mt-3 grid grid-cols-3 gap-2">
           <div className="rounded-xl bg-secondary/35 p-2.5 text-center">
@@ -158,7 +169,7 @@ export default function MobileGrowthCompanion({ avatarType, level, levelCredits,
         <div className="rounded-2xl border border-border/70 bg-card p-3.5">
           <p className="text-xs text-muted-foreground">Check-in run</p>
           <div className="mt-0.5 flex items-center gap-2"><p className="text-3xl font-bold text-foreground">{streak || 0}</p><CheckCircle2 className="size-4 text-primary" /></div>
-          <p className="mt-1 text-[10px] leading-snug text-muted-foreground">Shown for context. It does not control avatar levels.</p>
+          <p className="mt-1 text-[10px] leading-snug text-muted-foreground">Shown for context. It does not control engagement levels.</p>
         </div>
       </section>
 
