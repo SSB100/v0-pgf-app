@@ -35,12 +35,12 @@ export default function QuickActionsBar() {
         </Button>
 
         <Button
-          onClick={() => router.push("/share-journey")}
+          onClick={() => router.push("/privacy#professional-sharing")}
           variant="outline"
           className="gap-2 border-primary/20 font-medium hover:border-primary/40 hover:bg-primary/5"
         >
           <Share2 className="size-4" />
-          Sharing preview
+          Privacy & sharing
         </Button>
 
         <CommunityButton />
