@@ -3,7 +3,7 @@ import { dbTableExists, sql } from "@/lib/db"
 import { getSession } from "@/lib/session"
 import { sanitizeDemographicsInput } from "@/lib/demographics-policy.mjs"
 import { demographicsRecordToFormValue } from "@/lib/demographics-form-policy.mjs"
-import { recordConsentEvent } from "@/lib/governance"
+import { governanceTableExists, recordConsentEvent } from "@/lib/governance"
 
 const NO_STORE_HEADERS = { "Cache-Control": "no-store" }
 
@@ -91,6 +91,26 @@ export async function PATCH(request: Request) {
     `
 
     try {
+      if (await governanceTableExists("policy_acceptances")) {
+        await sql`
+          INSERT INTO policy_acceptances (user_id, policy_type, policy_version, action, occurred_at, metadata)
+          SELECT
+            ${access.user.id}::uuid,
+            'demographics_collection_notice',
+            ${demographics.collectionNoticeVersion},
+            'acknowledged',
+            CURRENT_TIMESTAMP,
+            ${JSON.stringify({ source: "settings", optional: true })}::jsonb
+          WHERE NOT EXISTS (
+            SELECT 1
+            FROM policy_acceptances
+            WHERE user_id = ${access.user.id}::uuid
+              AND policy_type = 'demographics_collection_notice'
+              AND policy_version = ${demographics.collectionNoticeVersion}
+          )
+        `
+      }
+
       await recordConsentEvent({
         subjectUserId: access.user.id,
         actorUserId: access.user.id,
