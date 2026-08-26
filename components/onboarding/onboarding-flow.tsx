@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Save } from "lucide-react"
@@ -146,6 +146,7 @@ type StepType =
 
 export default function OnboardingFlow({ userId, userName, initialStep = 1, initialData }: OnboardingFlowProps) {
   const router = useRouter()
+  const scrollViewportRef = useRef<HTMLDivElement>(null)
   const [currentStepIndex, setCurrentStepIndex] = useState(0)
   const [data, setData] = useState<OnboardingData>(
     initialData || {
@@ -188,9 +189,11 @@ export default function OnboardingFlow({ userId, userName, initialStep = 1, init
 
   const totalSteps = stepList.length
   const currentStep = stepList[currentStepIndex]
+  const progressPercent = totalSteps > 0 ? Math.round(((currentStepIndex + 1) / totalSteps) * 100) : 0
 
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "smooth" })
+    scrollViewportRef.current?.scrollTo({ top: 0, behavior: "auto" })
+    window.scrollTo({ top: 0, behavior: "auto" })
   }, [currentStepIndex])
 
   useEffect(() => {
@@ -305,20 +308,49 @@ export default function OnboardingFlow({ userId, userName, initialStep = 1, init
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-secondary via-background to-muted">
+    <div className="flex h-[100dvh] flex-col overflow-hidden bg-gradient-to-br from-secondary via-background to-muted lg:block lg:h-auto lg:min-h-screen lg:overflow-visible">
       {currentStep !== "completion" && (
-        <div className="sticky top-[73px] z-40 bg-card/80 backdrop-blur-sm border-b border-border">
-          <div className="max-w-2xl mx-auto px-4 py-2 flex justify-end">
-            <Button variant="ghost" size="sm" onClick={saveProgress} disabled={isSaving} className="text-xs">
-              <Save className="h-3 w-3 mr-1" />
-              {isSaving ? "Saving..." : "Save & Finish Later"}
-            </Button>
+        <>
+          <div className="shrink-0 border-b border-border/70 bg-card/95 backdrop-blur-xl lg:hidden">
+            <div className="mx-auto max-w-2xl px-4 pb-2.5 pt-[max(0.65rem,env(safe-area-inset-top))]">
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-primary">Waypoint setup</p>
+                  <p className="mt-0.5 text-sm font-semibold text-foreground">Step {currentStepIndex + 1} of {totalSteps}</p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={saveProgress}
+                  disabled={isSaving}
+                  className="h-9 shrink-0 px-2.5 text-xs text-muted-foreground"
+                >
+                  <Save className="mr-1.5 size-3.5" />
+                  {isSaving ? "Saving..." : "Save for later"}
+                </Button>
+              </div>
+              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-secondary">
+                <div className="h-full rounded-full bg-primary transition-[width] duration-300" style={{ width: `${progressPercent}%` }} />
+              </div>
+            </div>
           </div>
-        </div>
+
+          <div className="sticky top-[73px] z-40 hidden border-b border-border bg-card/80 backdrop-blur-sm lg:block">
+            <div className="mx-auto flex max-w-2xl justify-end px-4 py-2">
+              <Button variant="ghost" size="sm" onClick={saveProgress} disabled={isSaving} className="text-xs">
+                <Save className="mr-1 size-3" />
+                {isSaving ? "Saving..." : "Save & Finish Later"}
+              </Button>
+            </div>
+          </div>
+        </>
       )}
 
-      <div className="py-6 px-4 pb-[60vh]">
-        <div className="max-w-2xl mx-auto">{renderCurrentStep()}</div>
+      <div
+        ref={scrollViewportRef}
+        className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-3 pb-28 lg:overflow-visible lg:px-4 lg:py-6 lg:pb-20"
+      >
+        <div className="onboarding-step-viewport mx-auto max-w-2xl">{renderCurrentStep()}</div>
       </div>
     </div>
   )

@@ -104,12 +104,12 @@ export default function ValuesRankingStep({ data, updateData, onNext, onBack }: 
 
   if (initialValues.length < 3) {
     return (
-      <Card className="soft-shadow-lg border-border/50 w-full max-w-4xl mx-auto">
+      <Card className="mx-auto w-full max-w-4xl gap-3 border-border/50 py-4 soft-shadow-lg sm:gap-6 sm:py-6">
         <CardHeader className="px-4 sm:px-6">
-          <CardTitle className="text-xl sm:text-2xl text-foreground">The Life Garden</CardTitle>
+          <CardTitle className="text-xl text-foreground sm:text-2xl">The Life Garden</CardTitle>
           <p className="text-sm text-muted-foreground">Choose at least 3 values before refining your garden.</p>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-4 sm:px-6">
           <StepButtonFooter onBack={onBack} onNext={onBack} nextText="Return to values" />
         </CardContent>
       </Card>
@@ -117,33 +117,40 @@ export default function ValuesRankingStep({ data, updateData, onNext, onBack }: 
   }
 
   return (
-    <Card className="soft-shadow-lg border-border/50 w-full max-w-4xl mx-auto">
-      <CardHeader className="px-4 sm:px-6">
-        <CardTitle className="text-xl sm:text-2xl text-foreground">
-          The Life Garden: {currentPool.length <= 3 ? "Your Core Values" : "Narrowing the Garden"}
-        </CardTitle>
-        <p className="text-sm sm:text-base text-muted-foreground text-pretty">
-          {currentPool.length <= 3
-            ? "You have narrowed your garden to three core values."
-            : `This round, keep ${targetCount} of the ${currentPool.length} values still in your garden.`}
-        </p>
+    <Card className="mx-auto w-full max-w-4xl gap-3 border-border/50 py-4 soft-shadow-lg sm:gap-6 sm:py-6">
+      <CardHeader className="gap-1.5 px-4 sm:gap-2 sm:px-6">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <CardTitle className="text-xl text-foreground sm:text-2xl">
+              The Life Garden: {currentPool.length <= 3 ? "Your Core Values" : "Narrowing the Garden"}
+            </CardTitle>
+            <p className="mt-1 text-xs text-muted-foreground text-pretty sm:text-base">
+              {currentPool.length <= 3
+                ? "You have narrowed your garden to three core values."
+                : `Keep ${targetCount} of the ${currentPool.length} values in this round.`}
+            </p>
+          </div>
+          {currentPool.length > 3 && (
+            <span className={`shrink-0 rounded-full px-2 py-1 text-[10px] font-bold ${canContinue ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
+              {keptValues.length}/{targetCount}
+            </span>
+          )}
+        </div>
       </CardHeader>
 
-      <CardContent className="space-y-5 px-4 sm:px-6">
-        <div className="bg-info/10 border border-info/20 rounded-lg p-4 space-y-2">
-          <p className="text-sm text-foreground text-pretty">
-            All {initialValues.length} values you chose still matter. This exercise simply helps you notice which three
-            feel most central when you have to make a choice between things that all matter to you.
+      <CardContent className="space-y-3 px-4 sm:space-y-5 sm:px-6">
+        <div className="space-y-1 rounded-lg border border-info/20 bg-info/10 p-2.5 sm:space-y-2 sm:p-4">
+          <p className="text-xs text-foreground text-pretty sm:text-sm">
+            All {initialValues.length} values still matter. This step simply helps you notice which ones feel most central when you have to choose.
           </p>
           {currentPool.length > 3 && (
-            <p className="text-sm font-medium text-foreground">
-              Tap {valuesToSetAside === 1 ? "1 value" : `${valuesToSetAside} values`} to set aside for this round.
-              You can change your mind before continuing.
+            <p className="text-xs font-semibold text-foreground sm:text-sm">
+              Tap {valuesToSetAside === 1 ? "1 value" : `${valuesToSetAside} values`} to set aside. You can change your mind before continuing.
             </p>
           )}
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 sm:gap-2">
           {currentPool.map((value) => {
             const domain = getValueDomain(value)
             const isKept = keptValues.includes(value)
@@ -153,40 +160,40 @@ export default function ValuesRankingStep({ data, updateData, onNext, onBack }: 
                 key={value}
                 type="button"
                 onClick={() => toggleValue(value)}
-                className={`min-h-20 px-3 py-3 rounded-lg border-2 transition-all flex flex-col items-center justify-center gap-1 text-center ${
+                aria-pressed={isKept}
+                className={`flex min-h-[58px] flex-col items-center justify-center gap-0.5 rounded-lg border-2 px-2 py-2 text-center transition-all sm:min-h-20 sm:gap-1 sm:px-3 sm:py-3 ${
                   isKept
-                    ? "bg-primary/10 border-primary text-foreground"
-                    : "bg-muted/40 border-border text-muted-foreground opacity-70"
+                    ? "border-primary bg-primary/10 text-foreground"
+                    : "border-border bg-muted/40 text-muted-foreground opacity-70"
                 }`}
               >
-                <span className="text-lg" aria-hidden="true">{domain?.icon || "🌱"}</span>
-                <span className="text-sm font-medium">{value}</span>
-                <span className="text-[11px]">{isKept ? "Keep" : "Set aside"}</span>
+                <span className="text-sm sm:text-lg" aria-hidden="true">{domain?.icon || "🌱"}</span>
+                <span className="text-xs font-semibold leading-tight sm:text-sm sm:font-medium">{value}</span>
+                <span className="text-[9px] leading-none sm:text-[11px]">{isKept ? "Keep" : "Set aside"}</span>
               </button>
             )
           })}
         </div>
 
         {currentPool.length > 3 && (
-          <div className="rounded-lg bg-secondary/40 border border-border p-3 text-center">
-            <p className="text-sm font-medium text-foreground">
-              {keptValues.length} of {targetCount} kept
+          <div className={`rounded-lg border px-3 py-2 text-center ${canContinue ? "border-primary/25 bg-primary/5" : "border-border bg-secondary/30"}`}>
+            <p className="text-xs font-semibold text-foreground sm:text-sm">
+              {canContinue ? "This round is ready" : `${remainingToSetAside} more ${remainingToSetAside === 1 ? "value" : "values"} to set aside`}
             </p>
-            <p className="text-xs text-muted-foreground mt-1">
-              {remainingToSetAside > 0
-                ? `Set aside ${remainingToSetAside} more ${remainingToSetAside === 1 ? "value" : "values"} to continue.`
-                : valuesAlreadySetAside === valuesToSetAside
-                  ? "This round is ready. You can continue or swap values before moving on."
-                  : "You can adjust your choices before continuing."}
+            <p className="mt-0.5 text-[10px] leading-snug text-muted-foreground sm:text-xs">
+              {canContinue
+                ? valuesAlreadySetAside === valuesToSetAside
+                  ? "Continue now or swap choices first."
+                  : "You can adjust your choices before continuing."
+                : "Nothing is deleted; this is just the narrowing exercise."}
             </p>
           </div>
         )}
 
         {isFinalRound && canContinue && (
-          <div className="rounded-lg bg-primary/10 border border-primary/20 p-4">
-            <p className="text-sm text-foreground text-pretty">
-              These three will be saved as your <span className="font-semibold">core values</span>. The full set you
-              chose at the start will also be kept as part of your wider values picture.
+          <div className="rounded-lg border border-primary/20 bg-primary/10 px-3 py-2 sm:p-4">
+            <p className="text-xs text-foreground text-pretty sm:text-sm">
+              These three will be saved as your <span className="font-semibold">core values</span>. Your broader starting list is kept too.
             </p>
           </div>
         )}

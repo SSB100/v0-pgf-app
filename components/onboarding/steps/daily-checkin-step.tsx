@@ -143,39 +143,32 @@ export default function DailyCheckInStep({ data, updateData, onNext, onBack }: D
   }
 
   return (
-    <Card className="soft-shadow-lg border-border/50">
-      <CardHeader>
-        <CardTitle className="text-xl sm:text-2xl text-foreground">Your First Daily Check-In</CardTitle>
-        <p className="text-sm text-muted-foreground text-pretty">
-          Before you finish setting up Waypoint, try the check-in you can use day to day.
+    <Card className="gap-3 border-border/50 py-4 soft-shadow-lg sm:gap-6 sm:py-6">
+      <CardHeader className="gap-1.5 px-4 sm:gap-2 sm:px-6">
+        <CardTitle className="text-xl text-foreground sm:text-2xl">Your First Daily Check-In</CardTitle>
+        <p className="text-xs leading-snug text-muted-foreground text-pretty sm:text-sm">
+          Try the same check-in you can use day to day. This entry will become the starting point for your dashboard and weekly view.
         </p>
       </CardHeader>
 
-      <CardContent className="space-y-6">
-        <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-2">
-          <p className="text-sm font-semibold text-foreground">Why check in?</p>
-          <p className="text-sm text-foreground/90 text-pretty">
-            A check-in gives you a consistent record of what you noticed that day. Over time, those entries can make
-            patterns easier to see across mood, urges, behaviours, coping tools and meaningful moments.
-          </p>
-          <p className="text-sm text-foreground/90 text-pretty">
-            This is your first real check-in, not a demo. When you finish onboarding, the answers you enter here will
-            appear on your dashboard and become the starting point for your weekly view.
+      <CardContent className="space-y-4 px-4 sm:space-y-6 sm:px-6">
+        <div className="rounded-lg border border-primary/20 bg-primary/5 px-3 py-2.5 sm:rounded-xl sm:p-4">
+          <p className="text-[11px] leading-snug text-foreground/90 text-pretty sm:text-sm">
+            <span className="font-semibold">Why check in?</span> A consistent record can make patterns across mood, urges, behaviours, coping tools and meaningful moments easier to notice over time.
           </p>
         </div>
 
-        <div className="rounded-lg border border-border bg-muted/30 p-3 text-xs sm:text-sm text-muted-foreground">
-          Your answers are self-reported and are not a diagnosis, risk assessment or clinical judgement. Waypoint is not
-          monitored in real time.
+        <div className="rounded-lg border border-border bg-muted/30 px-3 py-2 text-[10px] leading-snug text-muted-foreground sm:p-3 sm:text-sm">
+          Your answers are self-reported. They are not a diagnosis, risk assessment or clinical judgement, and Waypoint is not monitored in real time.
         </div>
 
         {dateError && (
-          <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
+          <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-xs text-destructive sm:text-sm">
             {dateError}
           </div>
         )}
 
-        <div className="space-y-3">
+        <QuestionBlock>
           <label htmlFor="onboarding-mood-rating" className="block text-sm font-semibold text-foreground">
             How are you feeling today?
           </label>
@@ -187,9 +180,9 @@ export default function DailyCheckInStep({ data, updateData, onNext, onBack }: D
             value={formData.moodRating}
             onChange={(value) => setFormData((previous) => ({ ...previous, moodRating: value }))}
           />
-        </div>
+        </QuestionBlock>
 
-        <div className="space-y-3">
+        <QuestionBlock>
           <label htmlFor="onboarding-overall-rating" className="block text-sm font-semibold text-foreground">
             How would you rate today overall?
           </label>
@@ -201,11 +194,11 @@ export default function DailyCheckInStep({ data, updateData, onNext, onBack }: D
             value={formData.overallRating}
             onChange={(value) => setFormData((previous) => ({ ...previous, overallRating: value }))}
           />
-        </div>
+        </QuestionBlock>
 
-        <div className="space-y-3">
+        <QuestionBlock>
           <label className="block text-sm font-semibold text-foreground">What emotions have you noticed today?</label>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1.5 sm:gap-2">
             {commonEmotions.map((emotion) => (
               <Button
                 key={emotion}
@@ -213,15 +206,15 @@ export default function DailyCheckInStep({ data, updateData, onNext, onBack }: D
                 size="sm"
                 variant={formData.emotionsFelt.includes(emotion) ? "default" : "outline"}
                 onClick={() => toggleEmotion(emotion)}
-                className="text-xs"
+                className="h-8 px-2 text-[11px] sm:h-9 sm:px-3 sm:text-xs"
               >
                 {emotion}
               </Button>
             ))}
           </div>
-        </div>
+        </QuestionBlock>
 
-        <div className="space-y-3">
+        <QuestionBlock>
           <label htmlFor="onboarding-strongest-emotion" className="block text-sm font-semibold text-foreground">
             Which emotion felt strongest?
           </label>
@@ -230,7 +223,7 @@ export default function DailyCheckInStep({ data, updateData, onNext, onBack }: D
               id="onboarding-strongest-emotion"
               value={formData.strongestEmotion}
               onChange={(event) => setFormData((previous) => ({ ...previous, strongestEmotion: event.target.value }))}
-              className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="">Select an emotion...</option>
               {formData.emotionsFelt.map((emotion) => (
@@ -240,11 +233,11 @@ export default function DailyCheckInStep({ data, updateData, onNext, onBack }: D
               ))}
             </select>
           ) : (
-            <p className="text-sm text-muted-foreground italic">Select any emotions above first, if you want to.</p>
+            <p className="text-xs italic text-muted-foreground sm:text-sm">Select any emotions above first, if you want to.</p>
           )}
-        </div>
+        </QuestionBlock>
 
-        <div className="space-y-3">
+        <QuestionBlock>
           <label htmlFor="onboarding-emotion-context" className="block text-sm font-semibold text-foreground">
             What was happening around that time?
           </label>
@@ -252,23 +245,23 @@ export default function DailyCheckInStep({ data, updateData, onNext, onBack }: D
             id="onboarding-emotion-context"
             value={formData.emotionContext}
             onChange={(event) => setFormData((previous) => ({ ...previous, emotionContext: event.target.value }))}
-            rows={3}
-            className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            rows={2}
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary sm:min-h-20"
             placeholder="Add any context you want to remember..."
           />
-        </div>
+        </QuestionBlock>
 
-        <div className="space-y-3">
+        <QuestionBlock>
           <label className="block text-sm font-semibold text-foreground">Did you use any coping skills or tools today?</label>
-          <p className="text-xs text-muted-foreground">
-            These can be tools you already use. If the Waypoint skill names below are new to you, that&apos;s completely fine.
+          <p className="text-[11px] leading-snug text-muted-foreground sm:text-xs">
+            These can be tools you already use. It is fine if the Waypoint skill names are new to you.
           </p>
-          <div className="flex gap-3">
+          <div className="flex gap-2 sm:gap-3">
             <Button
               type="button"
               variant={formData.usedSkills ? "default" : "outline"}
               onClick={() => setFormData((previous) => ({ ...previous, usedSkills: true }))}
-              className="flex-1"
+              className="h-10 flex-1"
             >
               Yes
             </Button>
@@ -276,17 +269,17 @@ export default function DailyCheckInStep({ data, updateData, onNext, onBack }: D
               type="button"
               variant={!formData.usedSkills ? "default" : "outline"}
               onClick={() => setFormData((previous) => ({ ...previous, usedSkills: false, skillsUsed: [] }))}
-              className="flex-1"
+              className="h-10 flex-1"
             >
               No
             </Button>
           </div>
-        </div>
+        </QuestionBlock>
 
         {formData.usedSkills && (
-          <div className="space-y-3">
+          <QuestionBlock>
             <label className="block text-sm font-semibold text-foreground">Which skills did you use?</label>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1.5 sm:gap-2">
               {availableSkills.map((skill) => (
                 <Button
                   key={skill}
@@ -294,18 +287,18 @@ export default function DailyCheckInStep({ data, updateData, onNext, onBack }: D
                   size="sm"
                   variant={formData.skillsUsed.includes(skill) ? "default" : "outline"}
                   onClick={() => toggleSkill(skill)}
-                  className="text-xs"
+                  className="h-8 px-2 text-[11px] sm:h-9 sm:px-3 sm:text-xs"
                 >
                   {skill}
                 </Button>
               ))}
             </div>
-          </div>
+          </QuestionBlock>
         )}
 
         {hasGambling && (
           <>
-            <div className="space-y-3">
+            <QuestionBlock>
               <label htmlFor="onboarding-urge-strength-gambling" className="block text-sm font-semibold text-foreground">
                 How strong was your urge to gamble today?
               </label>
@@ -317,7 +310,7 @@ export default function DailyCheckInStep({ data, updateData, onNext, onBack }: D
                 value={formData.urgeStrength}
                 onChange={(value) => setFormData((previous) => ({ ...previous, urgeStrength: value }))}
               />
-            </div>
+            </QuestionBlock>
             <YesNoQuestion
               label="Have you gambled today?"
               value={formData.gamblingOccurred}
@@ -356,12 +349,11 @@ export default function DailyCheckInStep({ data, updateData, onNext, onBack }: D
             />
 
             {showSafetySupport && (
-              <div className="rounded-lg border border-amber-300/70 bg-amber-50 p-4 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100 space-y-2">
+              <div className="space-y-2 rounded-lg border border-amber-300/70 bg-amber-50 p-3 text-xs text-amber-950 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100 sm:p-4 sm:text-sm">
                 <p>
                   Thank you for recording this. Waypoint does not assess your level of risk or notify someone automatically.
-                  If you are worried about your safety, call or text {supportResources.emotionalSupport.phone} for free
-                  support. If you or someone else is in immediate danger, call {supportResources.emergency.phone} or go to
-                  the nearest hospital emergency department.
+                  If you are worried about your safety, call or text {supportResources.emotionalSupport.phone} for free support.
+                  If you or someone else is in immediate danger, call {supportResources.emergency.phone} or go to the nearest hospital emergency department.
                 </p>
                 <Link href="/support" className="inline-block font-semibold underline underline-offset-2">
                   View support options
@@ -372,7 +364,7 @@ export default function DailyCheckInStep({ data, updateData, onNext, onBack }: D
         )}
 
         {(hasMentalHealth || hasPersonalGrowth) && !hasGambling && !hasAlcohol && !hasSubstances && (
-          <div className="space-y-3">
+          <QuestionBlock>
             <label htmlFor="onboarding-urge-strength-general" className="block text-sm font-semibold text-foreground">
               How strong were any difficult urges or impulses today?
             </label>
@@ -384,10 +376,10 @@ export default function DailyCheckInStep({ data, updateData, onNext, onBack }: D
               value={formData.urgeStrength}
               onChange={(value) => setFormData((previous) => ({ ...previous, urgeStrength: value }))}
             />
-          </div>
+          </QuestionBlock>
         )}
 
-        <div className="space-y-3">
+        <QuestionBlock>
           <label htmlFor="onboarding-challenges" className="block text-sm font-semibold text-foreground">
             Challenges or difficult moments today
           </label>
@@ -395,13 +387,13 @@ export default function DailyCheckInStep({ data, updateData, onNext, onBack }: D
             id="onboarding-challenges"
             value={formData.badThings}
             onChange={(event) => setFormData((previous) => ({ ...previous, badThings: event.target.value }))}
-            rows={3}
-            className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            rows={2}
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary sm:min-h-20"
             placeholder="Anything difficult that you want to remember or reflect on?"
           />
-        </div>
+        </QuestionBlock>
 
-        <div className="space-y-3">
+        <QuestionBlock>
           <label htmlFor="onboarding-positive-moments" className="block text-sm font-semibold text-foreground">
             Positive or meaningful moments today
           </label>
@@ -409,17 +401,14 @@ export default function DailyCheckInStep({ data, updateData, onNext, onBack }: D
             id="onboarding-positive-moments"
             value={formData.goodThings}
             onChange={(event) => setFormData((previous) => ({ ...previous, goodThings: event.target.value }))}
-            rows={3}
-            className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            rows={2}
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary sm:min-h-20"
             placeholder="Anything that felt helpful, meaningful or worth noticing?"
           />
-        </div>
+        </QuestionBlock>
 
-        <div className="rounded-lg border border-border bg-secondary/20 p-4">
-          <p className="text-sm text-foreground/90 text-pretty">
-            Future check-ins use the same basic structure. They help build your weekly view from what you actually report,
-            rather than Waypoint guessing how you are doing.
-          </p>
+        <div className="rounded-lg border border-border bg-secondary/20 px-3 py-2 text-[10px] leading-snug text-foreground/90 sm:p-4 sm:text-sm">
+          Future check-ins use the same basic structure and build your weekly view from what you report rather than Waypoint guessing how you are doing.
         </div>
 
         <StepButtonFooter
@@ -431,6 +420,10 @@ export default function DailyCheckInStep({ data, updateData, onNext, onBack }: D
       </CardContent>
     </Card>
   )
+}
+
+function QuestionBlock({ children }: { children: React.ReactNode }) {
+  return <div className="space-y-2 sm:space-y-3">{children}</div>
 }
 
 function RatingSlider({
@@ -449,8 +442,8 @@ function RatingSlider({
   onChange: (value: number) => void
 }) {
   return (
-    <div className="flex items-center gap-2">
-      <span className="text-xs text-muted-foreground">{minLabel}</span>
+    <div className="flex items-center gap-1.5 sm:gap-2">
+      <span className="hidden text-xs text-muted-foreground xs:inline">{minLabel}</span>
       <input
         type="range"
         id={id}
@@ -458,10 +451,10 @@ function RatingSlider({
         max={10}
         value={value}
         onChange={(event) => onChange(Number.parseInt(event.target.value))}
-        className="flex-1 h-2 bg-secondary rounded-lg appearance-none cursor-pointer accent-primary"
+        className="h-2 flex-1 cursor-pointer appearance-none rounded-lg bg-secondary accent-primary"
       />
-      <span className="text-xs text-muted-foreground">{maxLabel}</span>
-      <div className="min-w-[2rem] text-center">
+      <span className="hidden text-xs text-muted-foreground xs:inline">{maxLabel}</span>
+      <div className="min-w-8 text-center">
         <span className="text-lg font-bold text-primary">{value}</span>
       </div>
     </div>
@@ -470,16 +463,16 @@ function RatingSlider({
 
 function YesNoQuestion({ label, value, onChange }: { label: string; value: boolean; onChange: (value: boolean) => void }) {
   return (
-    <div className="space-y-3">
+    <QuestionBlock>
       <label className="block text-sm font-semibold text-foreground">{label}</label>
-      <div className="flex gap-3">
-        <Button type="button" variant={value ? "default" : "outline"} onClick={() => onChange(true)} className="flex-1">
+      <div className="flex gap-2 sm:gap-3">
+        <Button type="button" variant={value ? "default" : "outline"} onClick={() => onChange(true)} className="h-10 flex-1">
           Yes
         </Button>
-        <Button type="button" variant={!value ? "default" : "outline"} onClick={() => onChange(false)} className="flex-1">
+        <Button type="button" variant={!value ? "default" : "outline"} onClick={() => onChange(false)} className="h-10 flex-1">
           No
         </Button>
       </div>
-    </div>
+    </QuestionBlock>
   )
 }

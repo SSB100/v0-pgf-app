@@ -71,100 +71,104 @@ export default function ValuesSelectionStep({ data, updateData, onNext, onBack }
 
   return (
     <>
-      <Card className="soft-shadow-lg border-border/50">
-        <CardHeader>
-          <CardTitle className="text-xl sm:text-2xl text-foreground">The Life Garden: Choose Your Values</CardTitle>
-          <p className="text-xs sm:text-sm text-muted-foreground text-pretty">
-            Start broad. You will narrow these down gradually in the next part of the exercise.
-          </p>
+      <Card className="gap-3 border-border/50 py-4 soft-shadow-lg sm:gap-6 sm:py-6">
+        <CardHeader className="gap-1.5 px-4 sm:gap-2 sm:px-6">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <CardTitle className="text-xl text-foreground sm:text-2xl">The Life Garden: Choose Your Values</CardTitle>
+              <p className="mt-1 text-xs text-muted-foreground text-pretty sm:text-sm">
+                Start broad. You will narrow these down gradually in the next part of the exercise.
+              </p>
+            </div>
+            <span className={`shrink-0 rounded-full px-2 py-1 text-[10px] font-bold ${canContinue ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
+              {selectedValues.length} selected
+            </span>
+          </div>
         </CardHeader>
 
-        <CardContent className="space-y-4">
-          <div className="bg-info/10 border border-info/20 rounded-lg p-3 sm:p-4">
-            <p className="text-xs sm:text-sm text-foreground text-pretty">
-              Choose anything that makes you think, "Yes, that matters to me." There is no need to rank them yet. The
-              next rounds will help you compare the values you chose and gradually narrow them to three core values.
+        <CardContent className="space-y-3 px-4 sm:space-y-4 sm:px-6">
+          <div className="rounded-lg border border-info/20 bg-info/10 p-2.5 sm:p-4">
+            <p className="text-xs text-foreground text-pretty sm:text-sm">
+              Choose anything that makes you think, “Yes, that matters to me.” You do not need to rank anything yet.
             </p>
           </div>
 
-          {VALUE_DOMAINS.map((domain) => (
-            <div key={domain.domain} className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-              {domain.values.map((value) => (
-                <button
-                  key={value}
-                  type="button"
-                  onClick={() => toggleValue(value)}
-                  className={`px-3 py-2 text-xs rounded-lg border transition-all font-medium flex flex-col items-center gap-1 ${
-                    selectedValues.includes(value)
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-card text-foreground border-border hover:border-primary/50"
-                  }`}
-                >
-                  <span className="text-sm" aria-hidden="true">{domain.icon}</span>
-                  <span>{value}</span>
-                </button>
-              ))}
-            </div>
-          ))}
-
-          <div className="sticky bottom-0 bg-card/95 backdrop-blur-sm border-t border-border pt-3 -mx-6 px-4 sm:px-6 -mb-6 pb-6">
-            <div
-              className={`text-xs sm:text-sm text-center mb-3 font-medium ${canContinue ? "text-primary" : "text-muted-foreground"}`}
-            >
-              {selectedValues.length} selected
-            </div>
-            <StepButtonFooter onBack={onBack} onNext={handleNext} disabled={!canContinue} />
+          <div className="space-y-2.5 sm:space-y-4">
+            {VALUE_DOMAINS.map((domain) => (
+              <div key={domain.domain}>
+                <p className="mb-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground sm:hidden">
+                  {domain.icon} {domain.domain}
+                </p>
+                <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 sm:gap-2 lg:grid-cols-4">
+                  {domain.values.map((value) => {
+                    const isSelected = selectedValues.includes(value)
+                    return (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() => toggleValue(value)}
+                        aria-pressed={isSelected}
+                        className={`min-h-9 rounded-lg border px-2 py-1.5 text-xs font-medium transition-all sm:min-h-0 sm:px-3 sm:py-2 ${
+                          isSelected
+                            ? "border-primary bg-primary text-primary-foreground shadow-sm"
+                            : "border-border bg-card text-foreground hover:border-primary/50"
+                        }`}
+                      >
+                        <span className="sm:hidden">{value}</span>
+                        <span className="hidden flex-col items-center gap-1 sm:flex">
+                          <span className="text-sm" aria-hidden="true">{domain.icon}</span>
+                          <span>{value}</span>
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            ))}
           </div>
+
+          <div className="rounded-lg border border-border/70 bg-muted/25 px-3 py-2 text-center text-[11px] leading-snug text-muted-foreground sm:text-sm">
+            You will keep narrowing this list until three core values remain. Nothing you set aside is treated as unimportant.
+          </div>
+
+          <StepButtonFooter onBack={onBack} onNext={handleNext} disabled={!canContinue} />
         </CardContent>
       </Card>
 
       <Dialog open={showSelectionDialog} onOpenChange={setShowSelectionDialog}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-h-[85dvh] max-w-lg overflow-y-auto p-4 sm:p-6">
           <DialogHeader>
-            <DialogTitle className="text-xl">
+            <DialogTitle className="text-lg sm:text-xl">
               {belowMinimum ? "Choose at least 3 values" : "Want a broader starting garden?"}
             </DialogTitle>
-            <DialogDescription className="text-base pt-2">
+            <DialogDescription className="pt-1 text-sm sm:pt-2 sm:text-base">
               {belowMinimum
                 ? `You have selected ${selectedValues.length}. The Life Garden finishes with three core values, so choose at least three before continuing.`
                 : `You have selected ${selectedValues.length} values. You can continue now, or choose a few more if they also feel meaningful to you.`}
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-4">
-            <div className="text-sm text-foreground/90 space-y-3">
-              <p className="text-pretty">
-                Values are qualities or directions that matter to you, such as honesty, connection, curiosity, health or
-                creativity. They are not goals you have to complete or standards you have to meet perfectly.
-              </p>
-              {!belowMinimum && (
-                <p className="text-pretty">
-                  Starting with around {RECOMMENDED_VALUES} or more can make the narrowing exercise more useful because
-                  you get to compare several things that genuinely matter to you.
-                </p>
-              )}
-            </div>
+          <div className="space-y-3 py-2 sm:space-y-4 sm:py-4">
+            <p className="text-sm text-foreground/90 text-pretty">
+              Values are qualities or directions that matter to you, such as honesty, connection, curiosity, health or creativity. They are not goals you have to complete perfectly.
+            </p>
 
-            <div className="bg-primary/10 border border-primary/20 rounded-lg p-4">
-              <p className="text-sm font-medium text-foreground mb-2">If you want to look again, consider:</p>
-              <ul className="text-sm text-foreground/90 space-y-1">
-                <li>• How you want to show up in your relationships and whānau</li>
-                <li>• The qualities you want to bring to difficult moments</li>
-                <li>• What supports your wellbeing and sense of balance</li>
-                <li>• What gives your life meaning, curiosity or direction</li>
-              </ul>
-            </div>
+            {!belowMinimum && (
+              <div className="rounded-lg border border-primary/20 bg-primary/10 p-3 sm:p-4">
+                <p className="text-sm font-medium text-foreground">A broader starting list can make the narrowing exercise more useful, but you do not need to force extra choices.</p>
+              </div>
+            )}
           </div>
 
           <DialogFooter className="gap-2 sm:gap-2">
             <Button type="button" variant="outline" onClick={handleSelectMore} className="flex-1 bg-transparent">
-              Select More Values
+              Select more
             </Button>
             {!belowMinimum && (
               <Button
                 type="button"
                 onClick={handleContinueAnyway}
-                className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground"
+                className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
               >
                 Continue with {selectedValues.length}
               </Button>
