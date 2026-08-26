@@ -2,66 +2,61 @@
 
 ## Status
 
-**In progress.** This document records Waypoint's operational-resilience position, the first completed recovery rehearsal, supplier-assurance findings, and the remaining gates before Phase 4I can be considered complete.
+**Technical close-out ready for merge. External pilot gates remain open.**
 
-It is not a claim that Waypoint has completed disaster-recovery certification, independent security assurance, legal review, health-sector certification, or external pilot approval.
+Phase 4I has established and tested the recovery controls that can be safely exercised in the current MVP environment, strengthened the release checks that support recovery from trusted source, and recorded the supplier/recovery facts that must drive the next infrastructure decisions.
 
-## Why this phase exists
+This status does **not** mean Waypoint is approved for an external health-service or research pilot. Contractual supplier assurance, a genuine historical point-in-time recovery rehearsal, production-secret recovery, formal RPO/RTO approval, independent assurance, Māori data-governance approval, and the incident/continuity tabletop remain explicit pilot gates.
 
-Waypoint now depends on external infrastructure for application hosting and sensitive-data storage. A secure application is not pilot-ready if it cannot recover from accidental data loss, deployment failure, supplier outage, credential loss, or a material provider incident.
+## Phase purpose
 
-Phase 4I therefore separates four questions:
+Waypoint depends on external infrastructure for application hosting and sensitive-data storage. Security controls alone are not sufficient if the product cannot recover from accidental data loss, deployment failure, supplier outage, credential loss, or a material provider incident.
 
-1. Can Waypoint recover data after an operator or application error?
-2. Can the application be restored or redeployed after a failed release or hosting incident?
-3. Are critical suppliers contractually and operationally suitable for the sensitivity of Waypoint data?
-4. Are recovery procedures tested rather than merely described?
+Phase 4I therefore tests and records four questions:
+
+1. Can Waypoint recover database state after an operator or application error?
+2. Can the application be rebuilt from a trusted source without relying on one developer workstation?
+3. Are critical supplier limitations visible and governed rather than assumed away?
+4. Are recovery controls demonstrated with evidence rather than described only on paper?
 
 ## Current critical services
 
-| Service | Current role | Current reviewed state | Phase 4I position |
+| Service | Current role | Verified Phase 4I state | Remaining pilot decision |
 | --- | --- | --- | --- |
-| Neon PostgreSQL | Primary database | Production project `PGFapp`, AWS `us-east-1`, United States | Branch recovery tested; broader backup/PITR and supplier assurance still incomplete |
-| Vercel | Next.js application hosting and deployment | `v0-pgf-app`, Hobby plan, current production deployment healthy at review | Redeploy path exists through GitHub; contractual/location and rollback controls require further review |
-| GitHub | Source control and deployment source | Public repository; production user data must not be stored here | Source is recoverable from Git history, but `main` protection/ruleset decision remains open |
+| Neon PostgreSQL | Primary application database | Production in AWS `us-east-1`; `free_v3`; 6-hour history window; isolated branch reset rehearsal passed | Historical PITR/snapshot rehearsal, longer-history/backup decision, contractual/subprocessor/support review, residency approval |
+| Vercel | Next.js hosting and server execution | Hobby plan; trusted Git commit rebuilt successfully as isolated `READY` preview; homepage returned HTTP 200; observed functions in `iad1` | Approved production plan, supplier/DPA/location/support review, secret recovery and fallback decision |
+| GitHub | Source control and deployment source | Source recovery path demonstrated through Vercel; review workflow strengthened for Waypoint branches and PRs | `main` branch protection/ruleset must be enabled through repository settings and owner recovery/MFA arrangements confirmed |
 
 ## Recovery objectives
 
-Waypoint must formally approve Recovery Point Objective (RPO) and Recovery Time Objective (RTO) values before an external pilot.
+Waypoint must approve formal Recovery Point Objective (RPO) and Recovery Time Objective (RTO) values for the intended pilot before making service-level recovery claims.
 
-Until those values are approved:
+Until then:
 
-- do not advertise a guaranteed recovery time;
 - do not advertise zero data loss;
-- do not treat provider marketing claims as Waypoint service-level commitments;
-- prioritise recovery of authentication, consent, sharing, safety and user wellbeing data over non-essential presentation state;
-- retain enough independent evidence to determine whether restored data is complete and internally consistent.
-
-The final RPO/RTO decision should consider the proposed pilot population, clinical/support operating model, incident response responsibilities, provider plan limitations, cost and Māori data-governance requirements.
+- do not advertise a guaranteed recovery time;
+- do not treat supplier marketing claims as Waypoint SLAs;
+- prioritise recovery of authentication, consent, sharing, safety and wellbeing data over presentation state;
+- verify restored state using both schema and representative data checks;
+- treat the current six-hour continuous Neon history window as a real limitation, not a target RPO.
 
 ---
 
-# Recovery rehearsal 01 - Neon branch reset
-
-## Rehearsal date
-
-26 August 2026 NZST / 25-26 August 2026 UTC platform timestamps.
+# Recovery rehearsal 01 - Neon isolated branch reset
 
 ## Environment
 
-- Neon project: `PGFapp`
+- Project: `PGFapp`
 - Project ID: `wild-wildflower-37967772`
 - Production branch: `main`
 - Production branch ID: `br-super-wildflower-a4bnoizt`
-- Isolated rehearsal branch: `phase-4i-recovery-rehearsal-2026-08-26`
+- Rehearsal branch: `phase-4i-recovery-rehearsal-2026-08-26`
 - Rehearsal branch ID: `br-withered-dew-a4c46fnm`
 - Database: `neondb`
 
-The production branch was not intentionally modified during this rehearsal.
+Production was not intentionally modified during the rehearsal.
 
 ## Baseline
-
-Before introducing the rehearsal change, the isolated branch contained the following key record counts:
 
 | Object | Baseline rows |
 | --- | ---: |
@@ -75,267 +70,207 @@ Before introducing the rehearsal change, the isolated branch contained the follo
 | user_demographics | 0 |
 | security_incidents | 0 |
 
-## Fault introduced
+## Fault and recovery
 
-A clearly synthetic table named `phase4i_recovery_rehearsal_marker` was created only on the isolated rehearsal branch and populated with one test-only marker record.
+A synthetic table named `phase4i_recovery_rehearsal_marker` containing one test-only record was created only on the isolated branch. Neon schema comparison confirmed this deliberate divergence from production.
 
-No production personal information was created, edited or deleted for the purpose of the rehearsal.
-
-## Pre-recovery verification
-
-The rehearsal branch was verified to have genuinely diverged from its parent:
-
-- the synthetic marker record existed;
-- Neon schema comparison reported the synthetic table and its primary-key constraint as the only schema difference from production.
-
-## Recovery action
-
-The rehearsal branch was reset from its production parent using Neon's branch reset capability.
-
-Neon reported the reset as successful. Platform metadata records `last_reset_at` as `2026-08-26T00:10:07Z`.
-
-## Post-recovery verification
+The rehearsal branch was then reset from its production parent. Neon reported success and recorded `last_reset_at` as `2026-08-26T00:10:07Z`.
 
 After reset:
 
-- the synthetic marker table no longer existed;
-- every key baseline record count matched its original value;
-- Neon schema comparison between the rehearsal branch and its production parent returned an empty diff;
+- the synthetic table no longer existed;
+- every baseline count matched its original value;
+- the schema diff against production was empty;
 - the rehearsal branch returned to `ready` state.
 
 ## Result
 
-**PASS - isolated branch reset/recovery rehearsal.**
+**PASS - isolated branch reset/recovery.**
 
-This provides evidence that an isolated child branch can be deliberately changed and then returned to its production-parent state while preserving the expected baseline database structure and selected data counts.
+This proves branch isolation, deliberate divergence, successful reset to the parent state, schema parity restoration and selected data-count restoration. It does **not** prove historical PITR, complete row-by-row restoration, off-provider recovery, or a guaranteed RPO/RTO.
 
-## What this rehearsal proves
-
-It provides evidence for:
-
-- operational ability to create/use an isolated recovery environment;
-- verification that a branch can diverge without changing its parent;
-- successful branch reset from the production parent;
-- restoration of schema parity;
-- restoration of selected baseline data counts;
-- a repeatable verification pattern for future recovery exercises.
-
-## What this rehearsal does not prove
-
-It does **not** establish:
-
-- point-in-time recovery of production after destructive production writes;
-- the configured history-retention window for the current Neon plan/project;
-- recovery from a complete Neon service or account loss;
-- existence of an independent off-provider backup;
-- restoration of all rows solely because selected row counts match;
-- recovery of application environment variables or secrets;
-- Vercel application disaster recovery;
-- recovery if both GitHub and Vercel are unavailable;
-- supplier contractual compliance or Māori data-sovereignty acceptance;
-- a guaranteed RPO or RTO.
+Detailed historical-recovery readiness is recorded in `docs/phase-4i-neon-point-in-time-recovery-readiness.md`.
 
 ---
 
-# Database recovery strategy
+# Waypoint-specific Neon recovery position
 
-## Layer 1 - branch isolation and reset
+Connected Neon metadata verified during Phase 4I:
 
-**Status: tested.**
+- subscription: `free_v3`;
+- PostgreSQL: version 17;
+- region: AWS `us-east-1`;
+- configured history retention: `21600` seconds = **6 hours**;
+- production branch protection: not enabled at review;
+- manual snapshots are documented as available on Free, with one manual snapshot limit;
+- scheduled backup snapshots require an appropriate paid plan.
 
-Use isolated branches for rehearsals, destructive test scenarios and investigation without intentionally modifying production.
+Current Neon documentation confirms timestamp/LSN recovery within the configured history window and multi-step snapshot restoration into an isolated branch.
 
-## Layer 2 - point-in-time restore
+A genuine historical PITR/snapshot rehearsal was **not** executed because the connected Neon actions available in this development session do not expose timestamp restore or snapshot create/restore. Production was not altered merely to simulate evidence.
 
-**Status: provider capability identified; Waypoint-specific rehearsal pending.**
+Therefore:
 
-Neon documents branch restore / point-in-time recovery within the project's configured history-retention window. Neon has also introduced snapshot and scheduled-snapshot capabilities, with availability and retention depending on plan/configuration.
-
-Before external pilot:
-
-- [ ] record Waypoint's actual configured instant-restore/history window;
-- [ ] confirm the capability available under Waypoint's actual Neon plan;
-- [ ] perform an isolated point-in-time recovery rehearsal using a known timestamp;
-- [ ] verify schema and representative data integrity after restore;
-- [ ] record observed recovery duration without presenting one rehearsal as a guaranteed RTO.
-
-## Layer 3 - independent logical export / provider-loss recovery
-
-**Status: not established.**
-
-A provider-native restore feature does not cover every provider-loss or account-loss scenario. Before pilot, decide whether Waypoint requires encrypted logical exports or another independent recovery copy outside the primary Neon failure domain.
-
-- [ ] determine whether an independent backup is required by governance/procurement partners;
-- [ ] define encryption, storage location, access and retention for that backup;
-- [ ] ensure backup copies do not create an uncontrolled secondary store of health, wellbeing, ethnicity or iwi data;
-- [ ] test restoration into a clean environment if this layer is adopted.
+- [x] current Neon plan recorded;
+- [x] current history window recorded;
+- [x] provider PITR/snapshot capability reviewed;
+- [x] isolated branch reset rehearsal completed;
+- [ ] historical point-in-time preview/recovery rehearsal completed;
+- [ ] manual snapshot restored into an isolated branch and verified;
+- [ ] longer-history/scheduled-backup position approved for pilot;
+- [ ] independent provider-loss backup position approved.
 
 ---
 
-# Application recovery strategy
+# Recovery rehearsal 02 - application rebuild from trusted Git source
 
-## Git source recovery
+A fresh Vercel preview deployment was produced from the Phase 4I branch without changing production traffic.
 
-The production application is deployed from GitHub. A clean deployment from an approved `main` commit is the primary application rebuild path.
+Verified evidence:
 
-Outstanding controls:
+- source commit: `4a2c2f164a130e4cf7cd63d8da76a5c7bfea5c8a`;
+- Vercel deployment: `dpl_HJJ82oVByNTDumDm9a5fi3ou6txn`;
+- environment: preview;
+- deployment state: `READY`;
+- observed server-function region: `iad1`;
+- homepage fetch returned HTTP `200` and rendered Waypoint successfully.
 
-- [ ] decide and implement appropriate protection/rules for `main` before external pilot;
-- [ ] document who may approve production code changes;
-- [ ] verify repository/account recovery and MFA arrangements for operational owners;
-- [ ] ensure no single developer workstation is required to rebuild production.
+## Result
 
-## Vercel deployment recovery
+**PASS - clean non-production application rebuild from trusted Git source.**
 
-At the Phase 4I review point:
+This demonstrates that Waypoint can be reconstructed from repository history through the connected Vercel project without requiring a single developer workstation. It does not prove recovery if both GitHub and Vercel are unavailable or recovery of lost production secret values.
 
-- project: `v0-pgf-app`;
-- current account/team plan: **Hobby**;
-- latest reviewed production deployment is `READY`;
-- no grouped runtime errors were returned in the reviewed seven-day window;
-- the deployment is linked to the GitHub repository.
-
-The safe recovery assumption for the current configuration is **redeployment from trusted Git source**, not reliance on a contractual rollback SLA.
-
-Vercel documentation describes rollback-to-a-specific-older-deployment functionality for Pro/Enterprise plans. The current Hobby plan therefore requires an explicit decision before Waypoint treats platform rollback as a formal recovery control.
-
-Before external pilot:
-
-- [ ] rehearse a clean non-production deployment from a known trusted commit;
-- [ ] document production promotion/redeployment steps;
-- [ ] document required environment-variable names without storing secret values in GitHub;
-- [ ] define how encrypted secret values are recovered if the Vercel account/configuration is lost;
-- [ ] decide whether the hosting plan must be upgraded for contractual, security, recovery or support requirements;
-- [ ] define a fallback if Vercel is materially unavailable.
+Detailed evidence is recorded in `docs/phase-4i-application-recovery-rehearsal.md`.
 
 ---
 
-# Supplier assurance register
+# Release and source-recovery controls
 
-## Neon PostgreSQL
+The GitHub review workflow was strengthened during Phase 4I.
 
-### Confirmed from Waypoint environment
+For Waypoint branches and pull requests to `main`, the workflow now runs:
 
-- Primary database contains sensitive identity, wellbeing, consent, sharing, audit and demographic information.
-- Current production location is AWS `us-east-1`, United States.
-- Production is not New Zealand-resident.
-- Isolated branch reset has been successfully rehearsed.
+- lockfile-based dependency installation;
+- linting;
+- policy and authorisation tests;
+- TypeScript type checking;
+- production build verification using CI-only placeholder configuration;
+- high-severity dependency audit.
 
-### Provider capabilities identified from current Neon materials
+This makes Git history a stronger recovery source because recovered code is subjected to repeatable checks before merge.
 
-Neon documents point-in-time restore using retained database history and current Backup & Restore / snapshot capabilities. The available restore window and automated snapshot options depend on current project settings and plan.
+`main` branch protection is still not enabled and the available connected GitHub actions in this development session do not expose a branch-protection write operation. This is therefore an explicit repository-setting gate, not falsely marked complete.
 
-Provider references reviewed:
+---
 
-- https://neon.com/docs/changelog/2024-02-23
-- https://neon.com/docs/changelog/2025-10-17
-- https://neon.com/docs/changelog/2025-10-31
-- https://neon.com/msa
-- https://neon.com/subprocessors
+# Supplier assurance position
 
-### Outstanding assurance
+## Neon
 
-- [ ] identify the exact current Neon commercial plan and applicable contract/DPA;
-- [ ] record actual instant-restore/history retention configured for `PGFapp`;
-- [ ] verify backup/snapshot storage locations and applicable jurisdictions;
-- [ ] verify provider staff/support-access jurisdictions and controls;
-- [ ] review the current Neon subprocessor list for Waypoint-relevant services;
-- [ ] record incident-notification obligations and support escalation route;
-- [ ] confirm deletion/termination behaviour for retained histories, snapshots and backups;
-- [ ] determine whether current US hosting is acceptable for the proposed pilot;
-- [ ] determine whether an independent off-provider recovery copy is required.
+### Verified operational facts
+
+- Holds the primary sensitive-data database.
+- Production region is AWS `us-east-1`, United States.
+- Current subscription is `free_v3`.
+- Current continuous history retention is six hours.
+- Isolated branch reset recovery has been tested successfully.
+- Provider documentation supports PITR and snapshots, subject to plan/configuration.
+
+### Still required before external pilot
+
+- contractual/DPA review for the actual account arrangement;
+- relevant subprocessor review;
+- backup/snapshot storage and support-access jurisdiction verification;
+- incident-notification/support escalation verification;
+- deletion/termination behaviour verification;
+- pilot decision on US hosting and Māori data-governance requirements;
+- recovery architecture decision covering longer history, scheduled snapshots and/or independent backup.
 
 ## Vercel
 
-### Confirmed from Waypoint environment
+### Verified operational facts
 
-- Vercel hosts the Next.js application and server execution.
-- Current project is on the **Hobby** plan.
-- Current production deployment is healthy at review and linked to GitHub.
-- Application processing/logging must continue to be treated as potentially offshore/multi-region until the applicable configuration and contract establish otherwise.
+- Hosts the Next.js application/server execution.
+- Current team plan is Hobby.
+- Git-connected preview rebuild from a trusted commit has passed.
+- The tested preview ran server functions in `iad1`.
 
-### Provider contractual finding
+### Still required before external pilot
 
-Vercel's current published Data Processing Addendum states that it applies to customers on **Pro and Enterprise** plans. Waypoint's current Hobby-plan environment therefore must not be described as having completed that DPA-based supplier assurance.
-
-Provider references reviewed:
-
-- https://vercel.com/legal/dpa
-- https://vercel.com/security
-- https://vercel.com/docs/deployments/rollback-production-deployment
-
-### Outstanding assurance
-
-- [ ] determine whether Waypoint must upgrade to Pro/Enterprise or obtain equivalent processor terms before pilot;
-- [ ] identify the execution regions applicable to Waypoint server functions;
-- [ ] verify logging, support-access and backup locations relevant to the selected plan/configuration;
-- [ ] review Vercel subprocessors relevant to Waypoint processing;
-- [ ] verify incident-notification and deletion obligations under the actual plan/contract;
-- [ ] define deployment rollback/redeployment capability under the approved production plan;
-- [ ] confirm whether provider support and audit evidence are adequate for the proposed health/research context.
+- approve the hosting plan appropriate to processor terms, support and rollback requirements;
+- verify applicable data-processing terms for the approved plan;
+- verify execution/log/support-access locations and relevant subprocessors;
+- verify incident-notification and deletion obligations;
+- define authorised recovery/rotation of production secret values;
+- decide whether a fallback hosting runbook/provider is required.
 
 ## GitHub
 
-GitHub is treated primarily as a source-code and development-history supplier, not an authorised store for production user data.
+GitHub remains a source-code and development-history service, not an authorised store for production personal information.
 
-- [ ] maintain secret hygiene and repository scanning;
-- [ ] prohibit production user information in issues, PRs and source files;
-- [ ] decide branch/ruleset protection for `main`;
-- [ ] confirm repository-owner recovery/MFA arrangements;
-- [ ] define a source-code backup/export approach if governance requires independence from GitHub.
+Before external pilot:
+
+- enable appropriate `main` branch protection/ruleset through repository settings;
+- require the review workflow as an appropriate merge check;
+- maintain MFA/repository-owner recovery arrangements;
+- preserve secret hygiene and prohibit production user data in issues/PRs/source files;
+- decide whether an independent source export/backup is required.
 
 ---
 
 # Incident and continuity exercise
 
-Phase 4G already requires a tabletop security/privacy incident exercise. Phase 4I should combine operational continuity with that exercise rather than run an unrelated paper exercise.
+Phase 4G already requires a security/privacy tabletop. Phase 4I should use one combined exercise rather than duplicate governance work.
 
-The scenario should include at least:
+The exercise should include:
 
-1. a suspected compromise or destructive data change;
-2. containment and session/access revocation;
-3. decision whether to recover from current state, point-in-time state or backup;
-4. verification of consent/sharing/audit integrity after recovery;
-5. supplier escalation to Neon and/or Vercel;
+1. suspected compromise or destructive data change;
+2. containment/session/access revocation;
+3. recovery-source decision: current state, historical state or backup;
+4. consent/sharing/audit integrity checks after recovery;
+5. supplier escalation;
 6. Privacy Act serious-harm assessment;
-7. Māori data-governance escalation if Māori data is affected;
-8. user/professional communications decision;
-9. recovery completion and post-incident review.
+7. Māori data-governance escalation where Māori data is affected;
+8. user/professional communication decision;
+9. post-incident review and remediation ownership.
 
-- [ ] complete tabletop exercise before external pilot.
+This remains a pre-pilot operating exercise rather than a code-release blocker.
 
 ---
 
-# Phase 4I completion gates
+# Phase 4I technical close-out
 
-Phase 4I should not be marked complete until the following are either completed or explicitly accepted as residual risk by the appropriate governance authority:
+Completed in this release:
 
 - [x] Isolated Neon branch recovery/reset rehearsal completed and verified.
-- [ ] Waypoint's actual Neon restore/history settings recorded.
-- [ ] Point-in-time recovery rehearsal completed in an isolated environment.
-- [ ] Independent-backup/provider-loss strategy decided and, if required, tested.
-- [ ] Application clean redeployment rehearsal completed.
-- [ ] Environment/secrets recovery procedure documented.
-- [ ] Neon supplier/DPA/subprocessor/support-access review completed.
-- [ ] Vercel supplier/DPA/subprocessor/location review completed.
-- [ ] Hosting-plan decision made for external pilot.
-- [ ] GitHub `main` protection/change-control decision implemented.
-- [ ] Combined incident and continuity tabletop exercise completed.
+- [x] Actual Neon plan and six-hour history window recorded.
+- [x] Current provider PITR/snapshot capabilities and plan limitations recorded.
+- [x] Clean application rebuild from trusted Git source completed in an isolated Vercel preview.
+- [x] Rebuilt homepage served successfully.
+- [x] Shared CI/review workflow expanded to lint, tests, typecheck, build and high-severity dependency audit.
+- [x] Operational recovery limitations are documented without overclaiming supplier or pilot readiness.
+
+Remaining **external/manual pilot gates**, to be tracked after this technical merge:
+
+- [ ] Historical PITR and/or snapshot restore rehearsal through a Neon interface that exposes the capability.
+- [ ] Longer-history/scheduled-backup and independent-backup decision.
+- [ ] Production-secret recovery/rotation procedure.
+- [ ] Neon contractual/subprocessor/support-access review.
+- [ ] Vercel plan/contract/subprocessor/location review.
+- [ ] GitHub `main` protection/ruleset enabled and required checks configured.
+- [ ] Combined incident/continuity tabletop exercise.
 - [ ] Named operational owners assigned for recovery and supplier escalation.
-- [ ] RPO and RTO formally approved for the intended pilot.
-- [ ] Independent security assurance scope decided and scheduled/completed as appropriate to pilot risk.
+- [ ] Formal RPO/RTO approved for the intended pilot.
+- [ ] Independent security assurance scope completed or explicitly accepted/scheduled by the appropriate pilot governance authority.
+- [ ] Māori data-governance and residency decision approved for the intended pilot.
 
-## Recommended next sequence
+## Release decision
 
-1. Verify current Neon plan and actual history/restore settings.
-2. Run an isolated point-in-time recovery rehearsal.
-3. Rehearse a clean application deployment from a trusted Git commit.
-4. Decide Vercel plan/contract position and complete Neon/Vercel supplier review.
-5. Define environment-secret recovery and any independent database backup layer.
-6. Implement GitHub production-branch protection/change control.
-7. Run the combined incident/continuity tabletop.
-8. Record residual risks, RPO/RTO and Phase 4I approval decision.
+Phase 4I is suitable to merge as an **MVP hardening / technical resilience release** because the controls implemented in source and the recovery rehearsals performed are evidenced and non-production-safe.
+
+The unchecked items above are not silently waived. They remain gates to an external pilot and must not be interpreted as completed by merging this branch.
 
 ## Change control
 
-This document must be updated when there is a material change to the database provider, hosting provider, production region, backup/restore configuration, supplier terms, subprocessor set, deployment recovery model, or approved pilot operating model.
+Update this record whenever there is a material change to the database provider, hosting provider, production region, recovery configuration, approved hosting plan, supplier terms, subprocessor set, deployment recovery model, secret-recovery process, or intended pilot operating model.
