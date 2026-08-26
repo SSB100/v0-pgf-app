@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { sql } from "@/lib/db"
-import { getSession } from "@/lib/session"
+import { deleteSession, getSession } from "@/lib/session"
 
 const MAX_ONBOARDING_DRAFT_BYTES = 100_000
 
@@ -28,6 +28,11 @@ export async function POST(request: NextRequest) {
         onboarding_last_saved = CURRENT_TIMESTAMP
       WHERE user_id = ${user.id}
     `
+
+    // "Save & Finish Later" is an explicit exit from setup. End the current
+    // session so the subsequent sign-in page does not immediately bounce the
+    // person through /dashboard and back into onboarding.
+    await deleteSession()
 
     return NextResponse.json({ success: true, message: "Progress saved" })
   } catch (error) {
