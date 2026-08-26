@@ -37,20 +37,16 @@ test("preference sanitizer requires a real focus and an explicit valid presentat
   assert.equal(sanitizeMinimumOnboardingInput({ journeyTypes: ["gambling"], growthAvatar: "" }).ok, false)
 })
 
-test("legacy minimum completion remains bounded if called but is not the active onboarding route", async () => {
+test("retired minimum completion cannot bypass the required baseline", async () => {
   const source = await readSource("app/api/onboarding/minimum-complete/route.ts")
   const page = await readSource("app/onboarding/page.tsx")
 
-  assert.match(source, /user\.role !== "client"/)
-  assert.match(source, /onboarding_completed = true/)
-  assert.match(source, /journey_types =/)
-  assert.match(source, /growth_avatar =/)
-  assert.match(source, /growthCreditsAwarded: 0/)
+  assert.match(source, /status: 410/)
+  assert.match(source, /FULL_BASELINE_ONBOARDING_REQUIRED/)
+  assert.match(source, /full Waypoint baseline onboarding/)
+  assert.doesNotMatch(source, /UPDATE user_profiles/)
+  assert.doesNotMatch(source, /onboarding_completed = true/)
   assert.doesNotMatch(page, /MinimumOnboardingFlow/)
-
-  for (const forbidden of ["daily_checkins", "user_values", "problem_areas", "strengths_completed", "level_credits", "check_in_streak", "total_points_earned"]) {
-    assert.equal(source.includes(forbidden), false, `minimum completion must not write ${forbidden}`)
-  }
 })
 
 test("active onboarding restores the comprehensive baseline flow", async () => {
