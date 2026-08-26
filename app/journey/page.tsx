@@ -24,6 +24,7 @@ import {
   JOURNEY_MODULES,
   type JourneyCategory,
 } from "@/lib/journey-curriculum"
+import { GAMBLING_PROTECTION_ITEMS } from "@/lib/gambling-protection-guide"
 
 const CATEGORY_META: Record<JourneyCategory, {
   description: string
@@ -83,17 +84,33 @@ const CATEGORY_META: Record<JourneyCategory, {
   },
 }
 
+function toStringList(value: unknown): string[] {
+  if (Array.isArray(value)) return value.filter((item): item is string => typeof item === "string")
+  if (typeof value !== "string") return []
+
+  try {
+    const parsed = JSON.parse(value)
+    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string") : []
+  } catch {
+    return []
+  }
+}
+
 export default async function JourneyPage() {
   const user = await getSession()
   if (!user) redirect("/auth/signin")
 
   const profileResult = await sql`
-    SELECT onboarding_completed
+    SELECT onboarding_completed, journey_types
     FROM user_profiles
     WHERE user_id = ${user.id}
   `
+  const profile = profileResult[0]
 
-  if (!profileResult[0]?.onboarding_completed) redirect("/onboarding")
+  if (!profile?.onboarding_completed) redirect("/onboarding")
+
+  const journeyTypes = toStringList(profile.journey_types)
+  const hasGambling = journeyTypes.includes("gambling")
 
   const completedResult = await sql`
     SELECT module_slug
@@ -111,6 +128,16 @@ export default async function JourneyPage() {
     LIMIT 3
   `
   const coreValues = valuesResult.map((v) => v.value_name)
+
+  let activeSafeguardCount = 0
+  if (hasGambling) {
+    const safeguardCountResult = await sql`
+      SELECT COUNT(*)::int AS active_count
+      FROM user_safeguard_checklist
+      WHERE user_id = ${user.id} AND is_active = TRUE
+    `
+    activeSafeguardCount = Number(safeguardCountResult[0]?.active_count || 0)
+  }
 
   const totalModules = JOURNEY_MODULES.length
   const completedCount = Array.from(completedModules).filter((slug) => knownSlugs.has(slug)).length
@@ -143,6 +170,36 @@ export default async function JourneyPage() {
             </div>
           </div>
         </div>
+
+        {hasGambling && (
+          <div className="rounded-2xl border-2 border-orange-500/30 bg-orange-500/5 p-4 sm:p-5">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+              <div className="flex min-w-0 flex-1 items-start gap-3">
+                <div className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-orange-500/30 bg-orange-500/15">
+                  <Shield className="size-5 text-orange-500" />
+                </div>
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-orange-600 dark:text-orange-400">Optional first protection step</p>
+                    <Badge variant="outline" className="border-orange-500/30 text-[10px] text-orange-700 dark:text-orange-300">
+                      {activeSafeguardCount}/{GAMBLING_PROTECTION_ITEMS.length} marked active
+                    </Badge>
+                  </div>
+                  <h2 className="mt-1 text-lg font-bold text-foreground sm:text-xl">Put practical gambling barriers in place</h2>
+                  <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                    Before or alongside the learning modules, review blocking, self-exclusion, account and payment controls you can choose to set up in the real world.
+                  </p>
+                  <p className="mt-2 text-xs text-muted-foreground">This guide is optional and never blocks access to the 27 Journey modules.</p>
+                </div>
+              </div>
+              <Link href="/journey/protection-setup" className="shrink-0">
+                <Button variant="outline" className="w-full border-orange-500/35 text-orange-700 hover:bg-orange-500/10 dark:text-orange-300 sm:w-auto">
+                  Review protection guide <ChevronRight className="ml-1.5 size-4" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+        )}
 
         {nextModule ? (
           <div className="rounded-2xl border-2 border-primary/30 bg-primary/5 p-5 sm:p-6">
