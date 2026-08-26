@@ -142,7 +142,9 @@ export default function SuggestedSkillsCard({ awareness, problems, weeklyCheckin
             <div className="min-w-0">
               <CardTitle className="text-base font-bold text-foreground">Modules that may be useful next</CardTitle>
               <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
-                {hasPersonalisedSuggestions ? "Based on information you recorded; not a clinical recommendation." : "General starting points; not clinical recommendations."}
+                {hasPersonalisedSuggestions
+                  ? "These suggestions are shaped by information you recorded. They are not clinical recommendations."
+                  : "These are general starting points rather than personalised suggestions. They are not clinical recommendations."}
               </p>
             </div>
           </div>
