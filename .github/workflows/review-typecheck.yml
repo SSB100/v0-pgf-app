@@ -3,7 +3,8 @@ name: Waypoint review checks
 on:
   push:
     branches:
-      - waypoint-content-safety-accuracy
+      - main
+      - 'waypoint/**'
   pull_request:
     branches:
       - main
@@ -11,9 +12,14 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: review-checks-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   review-checks:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -31,6 +37,12 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Policy and authorization tests
+        run: pnpm test
 
       - name: TypeScript check
         run: pnpm exec tsc --noEmit
