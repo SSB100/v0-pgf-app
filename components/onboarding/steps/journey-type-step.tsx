@@ -37,30 +37,37 @@ export default function JourneyTypeStep({ data, updateData, onNext, onBack }: Jo
   const canContinue = selectedTypes.length > 0
 
   return (
-    <Card className="soft-shadow-lg border-border/50">
-      <CardHeader>
-        <CardTitle className="text-2xl text-foreground">What Would You Like to Focus On?</CardTitle>
-        <p className="text-muted-foreground text-pretty">
-          Select the areas that feel relevant to you. You can choose more than one. These choices personalise parts of Waypoint; they do not diagnose a condition or define what your goals should be.
+    <Card className="gap-4 border-border/50 py-4 soft-shadow-lg sm:gap-6 sm:py-6">
+      <CardHeader className="gap-1.5 px-4 sm:gap-2 sm:px-6">
+        <CardTitle className="text-xl text-foreground sm:text-2xl">What would you like to focus on?</CardTitle>
+        <p className="text-xs leading-relaxed text-muted-foreground text-pretty sm:text-sm">
+          Choose one or more areas that feel relevant. These choices personalise Waypoint; they do not diagnose you or decide what your goals should be.
         </p>
       </CardHeader>
 
-      <CardContent className="space-y-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+      <CardContent className="space-y-3 px-4 sm:space-y-4 sm:px-6">
+        <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 sm:gap-2">
           {JOURNEY_TYPES.map((type) => {
             const Icon = type.icon
             const isSelected = selectedTypes.includes(type.id)
             return (
-              <button key={type.id} type="button" onClick={() => toggleType(type.id)} className={`px-3 py-2.5 rounded-xl border-2 text-left transition-all ${isSelected ? "border-primary bg-primary/10 shadow-md" : "border-border bg-card hover:border-primary/50 hover:bg-secondary/50"}`}>
+              <button
+                key={type.id}
+                type="button"
+                onClick={() => toggleType(type.id)}
+                className={`rounded-xl border-2 px-3 py-2 text-left transition-all sm:py-2.5 ${
+                  isSelected ? "border-primary bg-primary/10 shadow-sm" : "border-border bg-card hover:border-primary/50 hover:bg-secondary/50"
+                }`}
+              >
                 <div className="flex items-center gap-2.5">
-                  <div className={`flex-shrink-0 w-8 h-8 rounded-full ${type.bgColor} flex items-center justify-center`}><Icon className={`w-4 h-4 ${type.color}`} /></div>
-                  <div className="flex-1 min-w-0">
-                    <p className={`font-semibold text-sm ${isSelected ? "text-primary" : "text-foreground"}`}>{type.label}</p>
-                    <p className="text-xs text-muted-foreground leading-snug">{type.description}</p>
+                  <div className={`flex size-8 flex-shrink-0 items-center justify-center rounded-full ${type.bgColor}`}><Icon className={`size-4 ${type.color}`} /></div>
+                  <div className="min-w-0 flex-1">
+                    <p className={`text-sm font-semibold ${isSelected ? "text-primary" : "text-foreground"}`}>{type.label}</p>
+                    <p className="line-clamp-2 text-[11px] leading-snug text-muted-foreground sm:text-xs">{type.description}</p>
                   </div>
                   {isSelected && (
-                    <div className="flex-shrink-0 w-4 h-4 rounded-full bg-primary flex items-center justify-center">
-                      <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                    <div className="flex size-4 flex-shrink-0 items-center justify-center rounded-full bg-primary">
+                      <svg className="size-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
                     </div>
                   )}
                 </div>
@@ -69,21 +76,13 @@ export default function JourneyTypeStep({ data, updateData, onNext, onBack }: Jo
           })}
         </div>
 
-        <div className="bg-info/10 border border-info/20 rounded-lg p-3">
-          <p className="text-sm text-foreground text-pretty">
-            Your selections are stored with your Waypoint account and used to tailor relevant questions and content. Privacy and data-handling information should be read alongside Waypoint's Terms and future Privacy Policy.
+        <div className="rounded-lg border border-info/20 bg-info/10 p-2.5 sm:p-3">
+          <p className="text-[11px] leading-relaxed text-foreground text-pretty sm:text-sm">
+            Your selections are saved to your Waypoint account and used to tailor relevant questions and content. Privacy and data-handling information remains available in Waypoint&apos;s privacy information.
           </p>
         </div>
 
-        {selectedTypes.length > 0 && (
-          <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3">
-            <p className="text-sm text-green-700 text-pretty">
-              Waypoint will use these selections to decide which onboarding questions and journey information to show you.
-            </p>
-          </div>
-        )}
-
-        <div className="flex gap-3 pt-2"><StepButtonFooter onBack={onBack} onNext={handleNext} disabled={!canContinue} /></div>
+        <StepButtonFooter onBack={onBack} onNext={handleNext} disabled={!canContinue} />
       </CardContent>
     </Card>
   )
