@@ -50,17 +50,6 @@ export default function MobileDashboardHome({ userName, journeyProgress }: Mobil
     fetcher,
   )
 
-  useEffect(() => {
-    if (pathname !== "/dashboard" || !isMobileViewport) return
-
-    const previousOverflow = document.body.style.overflow
-    document.body.style.overflow = "hidden"
-
-    return () => {
-      document.body.style.overflow = previousOverflow
-    }
-  }, [pathname, isMobileViewport])
-
   if (pathname !== "/dashboard") return null
 
   const checkInDone = checkInData?.completed === true
@@ -72,8 +61,8 @@ export default function MobileDashboardHome({ userName, journeyProgress }: Mobil
   const journeyPercent = journeyTotal > 0 ? Math.round((journeyCompleted / journeyTotal) * 100) : 0
 
   return (
-    <div className="fixed inset-x-0 bottom-[76px] top-16 z-30 overflow-y-auto overscroll-contain bg-background lg:hidden">
-      <main className="mx-auto flex min-h-full max-w-lg flex-col gap-2.5 px-3.5 py-3 sm:px-5 sm:py-4">
+    <div className="fixed inset-x-0 bottom-[76px] top-16 z-30 max-w-full overflow-x-hidden overflow-y-auto overscroll-contain bg-background lg:hidden">
+      <main className="mx-auto flex min-h-full w-full max-w-lg flex-col gap-2.5 px-3.5 py-3 sm:px-5 sm:py-4">
         <div className="flex items-end justify-between gap-3 px-1">
           <div className="min-w-0">
             <p className="truncate text-xs font-medium text-muted-foreground">Welcome back, {userName}</p>
@@ -86,7 +75,7 @@ export default function MobileDashboardHome({ userName, journeyProgress }: Mobil
 
         <Link
           href="/dashboard/growth"
-          className="group flex min-h-[96px] items-center gap-3.5 rounded-[1.4rem] border border-primary/25 bg-gradient-to-br from-primary/15 via-primary/7 to-card p-3.5 shadow-sm transition-transform active:scale-[0.99]"
+          className="group flex min-h-[96px] min-w-0 items-center gap-3.5 rounded-[1.4rem] border border-primary/25 bg-gradient-to-br from-primary/15 via-primary/7 to-card p-3.5 shadow-sm transition-transform active:scale-[0.99]"
         >
           {progressOnly ? (
             <div className="flex size-[68px] shrink-0 items-center justify-center rounded-2xl border border-primary/25 bg-primary/10">
@@ -112,10 +101,10 @@ export default function MobileDashboardHome({ userName, journeyProgress }: Mobil
           <ChevronRight className="size-5 shrink-0 text-primary transition-transform group-hover:translate-x-0.5" />
         </Link>
 
-        <div className="grid grid-cols-2 gap-2.5">
+        <div className="grid min-w-0 grid-cols-2 gap-2.5">
           <Link
             href="/dashboard/today"
-            className={`group flex min-h-[124px] flex-col justify-between rounded-2xl border p-3.5 shadow-sm transition-transform active:scale-[0.99] ${
+            className={`group flex min-h-[124px] min-w-0 flex-col justify-between rounded-2xl border p-3.5 shadow-sm transition-transform active:scale-[0.99] ${
               checkInDone ? "border-emerald-500/25 bg-emerald-500/5" : "border-border/70 bg-card"
             }`}
           >
@@ -125,7 +114,7 @@ export default function MobileDashboardHome({ userName, journeyProgress }: Mobil
               </div>
               <ChevronRight className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
             </div>
-            <div>
+            <div className="min-w-0">
               <p className="text-sm font-bold text-foreground">Today</p>
               <p className={`mt-0.5 text-[10px] font-semibold ${checkInDone ? "text-emerald-700 dark:text-emerald-300" : "text-primary"}`}>
                 {checkInDone ? "Check-in recorded" : "Check in or choose a next step"}
@@ -135,7 +124,7 @@ export default function MobileDashboardHome({ userName, journeyProgress }: Mobil
 
           <Link
             href="/dashboard/learning"
-            className="group flex min-h-[124px] flex-col justify-between rounded-2xl border border-border/70 bg-card p-3.5 shadow-sm transition-transform active:scale-[0.99]"
+            className="group flex min-h-[124px] min-w-0 flex-col justify-between rounded-2xl border border-border/70 bg-card p-3.5 shadow-sm transition-transform active:scale-[0.99]"
           >
             <div className="flex items-start justify-between gap-2">
               <div className="flex size-9 items-center justify-center rounded-xl bg-primary/10">
@@ -143,21 +132,21 @@ export default function MobileDashboardHome({ userName, journeyProgress }: Mobil
               </div>
               <ChevronRight className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
             </div>
-            <div>
+            <div className="min-w-0">
               <div className="flex items-center justify-between gap-2">
                 <p className="text-sm font-bold text-foreground">Journey</p>
-                {journeyTotal > 0 && <span className="text-[10px] font-semibold text-primary">{journeyCompleted}/{journeyTotal}</span>}
+                {journeyTotal > 0 && <span className="shrink-0 text-[10px] font-semibold text-primary">{journeyCompleted}/{journeyTotal}</span>}
               </div>
               <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-secondary">
                 <div className="h-full rounded-full bg-primary" style={{ width: `${journeyPercent}%` }} />
               </div>
-              <p className="mt-1 text-[10px] leading-snug text-muted-foreground">Continue where you left off or browse.</p>
+              <p className="mt-1 truncate text-[10px] leading-snug text-muted-foreground">Continue where you left off or browse.</p>
             </div>
           </Link>
         </div>
 
-        <div className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm">
-          <Link href="/dashboard/check-ins" className="group flex min-h-[58px] items-center gap-3 px-3.5 py-2.5 transition-colors hover:bg-secondary/40">
+        <div className="min-w-0 overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm">
+          <Link href="/dashboard/check-ins" className="group flex min-h-[58px] min-w-0 items-center gap-3 px-3.5 py-2.5 transition-colors hover:bg-secondary/40">
             <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10">
               <CheckCircle2 className="size-4 text-primary" />
             </div>
@@ -168,7 +157,7 @@ export default function MobileDashboardHome({ userName, journeyProgress }: Mobil
             <ChevronRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
           </Link>
 
-          <Link href="/dashboard/direction" className="group flex min-h-[58px] items-center gap-3 border-t border-border/60 px-3.5 py-2.5 transition-colors hover:bg-secondary/40">
+          <Link href="/dashboard/direction" className="group flex min-h-[58px] min-w-0 items-center gap-3 border-t border-border/60 px-3.5 py-2.5 transition-colors hover:bg-secondary/40">
             <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10">
               <Compass className="size-4 text-primary" />
             </div>
