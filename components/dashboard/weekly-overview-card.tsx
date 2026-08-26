@@ -139,8 +139,8 @@ export default function WeeklyOverviewCard({ checkins, journeyTypes = [], accoun
       <CardContent className="space-y-3 pb-3">
         {!hasAnyHistory && (
           <div className="rounded-lg border-2 border-primary/20 bg-primary/10 p-3">
-            <p className="mb-1 text-sm font-medium text-primary">Complete your first check-in to get started</p>
-            <p className="text-xs text-muted-foreground">Your self-reported mood, overall rating and urges will appear here when you record them.</p>
+            <p className="mb-1 text-sm font-medium text-primary">No check-ins in this 7-day view yet</p>
+            <p className="text-xs text-muted-foreground">When you record a check-in, your self-reported mood, overall rating and urges will appear here. Missing a day is not a failure.</p>
           </div>
         )}
 

@@ -35,3 +35,35 @@ test("dashboard sharing shortcut opens the real privacy and sharing centre", asy
   assert.match(source, /Privacy & sharing/)
   assert.doesNotMatch(source, /Sharing preview/)
 })
+
+test("minimal dashboard check-in state is truthful and does not link to a missing progress route", async () => {
+  const source = await readSource("app/dashboard/page.tsx")
+
+  assert.match(source, /has_check_in_history/)
+  assert.match(source, /Your first check-in, when you're ready/)
+  assert.match(source, /href="#weekly-overview"/)
+  assert.match(source, /id="weekly-overview"/)
+  assert.doesNotMatch(source, /href="\/progress"/)
+})
+
+test("weekly overview does not assume an empty seven-day window means a first-ever check-in", async () => {
+  const source = await readSource("components/dashboard/weekly-overview-card.tsx")
+
+  assert.match(source, /No check-ins in this 7-day view yet/)
+  assert.doesNotMatch(source, /Complete your first check-in to get started/)
+})
+
+test("minimal dashboard values and skill suggestions remain optional and truthful", async () => {
+  const values = await readSource("components/dashboard/core-values-card.tsx")
+  const skills = await readSource("components/dashboard/suggested-skills-card.tsx")
+
+  assert.match(values, /Waypoint works without them/)
+  assert.match(values, /Explore the values module/)
+  assert.doesNotMatch(values, /narrowed down in Life Garden/)
+  assert.doesNotMatch(values, /\/onboarding/)
+
+  assert.match(skills, /hasPersonalisedSuggestions/)
+  assert.match(skills, /general starting points rather than personalised suggestions/)
+  assert.match(skills, /suggestions are shaped by information you recorded/)
+  assert.doesNotMatch(skills, /Three Waypoint suggestions based on information you recorded/)
+})

@@ -105,7 +105,9 @@ export default function SuggestedSkillsCard({ awareness, problems, weeklyCheckin
     })
   }
 
-  if (suggestions.length === 0) {
+  const hasPersonalisedSuggestions = suggestions.length > 0
+
+  if (!hasPersonalisedSuggestions) {
     suggestions.push(
       {
         skill: "Creating Space: STOP & TIP",
@@ -143,7 +145,9 @@ export default function SuggestedSkillsCard({ awareness, problems, weeklyCheckin
             Modules that may be useful next
           </CardTitle>
           <p className="text-sm text-muted-foreground">
-            Three Waypoint suggestions based on information you recorded. They are not clinical recommendations, diagnoses or a substitute for individual professional advice.
+            {hasPersonalisedSuggestions
+              ? "These suggestions are shaped by information you recorded. They are not clinical recommendations, diagnoses or a substitute for individual professional advice."
+              : "These are general starting points rather than personalised suggestions. They are not clinical recommendations, diagnoses or a substitute for individual professional advice."}
           </p>
         </CardHeader>
       </div>
