@@ -2,9 +2,9 @@
 
 ## Status
 
-**Capability verified; destructive production restore not performed.**
+**Capability and Waypoint configuration verified; historical PITR rehearsal remains an external/manual pilot gate.**
 
-This record captures the Waypoint-specific Neon recovery configuration verified on 26 August 2026, the provider-supported point-in-time recovery workflow, and the remaining isolated rehearsal needed before Waypoint can claim that point-in-time recovery has been tested.
+This record captures the Waypoint-specific Neon recovery configuration verified on 26 August 2026, the provider-supported point-in-time recovery workflow, and the remaining rehearsal needed before Waypoint can claim that historical point-in-time recovery has been tested.
 
 It supplements `docs/phase-4i-operational-resilience-and-supplier-assurance.md`.
 
@@ -34,10 +34,10 @@ Current Neon documentation states that:
 3. The restore workflow can preview historical data before committing a restore.
 4. When a root branch is restored to its own history, Neon requires preservation of the current state under a backup branch.
 5. Manual snapshots are available on the Free plan, with one manual snapshot permitted at a time under the currently documented Free-plan limit.
-6. Automated backup schedules require a paid plan.
+6. Automated backup schedules require an appropriate paid plan.
 7. Snapshot restore can be performed as a multi-step restore into a new branch so restored data can be inspected before any production cutover.
 
-Primary provider reference reviewed:
+Primary provider references reviewed:
 
 - Neon Backup & Restore documentation: `https://neon.com/docs/guides/backup-restore`
 - Neon recovery workflows: `https://neon.com/branching/recovery-workflows`
@@ -62,9 +62,9 @@ A genuine root-branch PITR operation would alter the production branch, even tho
 
 Therefore no production restore was attempted from this session.
 
-## Required PITR rehearsal
+## Required historical recovery rehearsal
 
-Before Phase 4I is complete, perform the following using a Neon interface that exposes timestamp restore preview or snapshot restore.
+Before external pilot approval, perform the following using a Neon interface that exposes timestamp restore preview or snapshot restore.
 
 ### Preferred rehearsal: historical preview / isolated recovery
 
@@ -113,7 +113,7 @@ Neon's current documentation states that manual snapshots are available to Free 
 
 For an external pilot, decide whether the production plan should support scheduled backups and a longer recovery history before relying on Neon as the sole recovery layer.
 
-## Phase 4I evidence status after this review
+## Evidence status
 
 - [x] Neon subscription type recorded: `free_v3`.
 - [x] Waypoint-specific history window recorded: 6 hours.
@@ -127,8 +127,10 @@ For an external pilot, decide whether the production plan should support schedul
 - [ ] Longer-history/scheduled-backup plan decision made for pilot.
 - [ ] Independent provider-loss backup decision made.
 
+The unchecked items do not block merging the Phase 4I technical hardening release. They block any claim that historical recovery is tested or that the current recovery architecture is approved for an external pilot.
+
 ## Pilot decision raised
 
 The current Free-plan database recovery configuration should be treated as suitable for MVP hardening, not automatically accepted for an external wellbeing/health-service or research pilot.
 
-Before pilot approval, the governance and technical owners should decide whether six hours of continuous history plus manual snapshot capability provides adequate recovery protection for the intended service, or whether the Neon plan/recovery architecture must be upgraded.
+Before pilot approval, governance and technical owners should decide whether six hours of continuous history plus manual snapshot capability provides adequate recovery protection for the intended service, or whether the Neon plan/recovery architecture must be upgraded.
