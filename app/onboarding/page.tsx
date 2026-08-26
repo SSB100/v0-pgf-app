@@ -3,7 +3,7 @@ import Link from "next/link"
 import { Home } from "lucide-react"
 import { getSession } from "@/lib/session"
 import { sql } from "@/lib/db"
-import MinimumOnboardingFlow from "@/components/onboarding/minimum-onboarding-flow"
+import OnboardingFlow, { type OnboardingData } from "@/components/onboarding/onboarding-flow"
 import UserMenu from "@/components/layout/user-menu"
 import { Button } from "@/components/ui/button"
 
@@ -13,7 +13,7 @@ export default async function OnboardingPage() {
   if (user.role !== "client") redirect("/professional")
 
   let savedStep = 1
-  let savedData: Record<string, unknown> | null = null
+  let savedData: OnboardingData | undefined
   let onboardingCompleted = false
 
   try {
@@ -27,13 +27,13 @@ export default async function OnboardingPage() {
     if (result[0]) {
       onboardingCompleted = result[0].onboarding_completed === true
       const requestedStep = Number(result[0].onboarding_current_step)
-      savedStep = Number.isInteger(requestedStep) && requestedStep >= 1 && requestedStep <= 3 ? requestedStep : 1
+      savedStep = Number.isInteger(requestedStep) && requestedStep >= 1 && requestedStep <= 50 ? requestedStep : 1
       savedData = result[0].onboarding_data && typeof result[0].onboarding_data === "object"
-        ? result[0].onboarding_data as Record<string, unknown>
-        : null
+        ? result[0].onboarding_data as OnboardingData
+        : undefined
     }
   } catch (error) {
-    console.error("[waypoint] Unable to load minimum onboarding state", error)
+    console.error("[waypoint] Unable to load onboarding baseline state", error)
     redirect("/auth/signin")
   }
 
@@ -48,15 +48,16 @@ export default async function OnboardingPage() {
               <Button variant="ghost" size="icon" aria-label="Back to home"><Home className="size-4" /></Button>
             </Link>
             <div className="min-w-0">
-              <h1 className="text-xl font-bold text-foreground">Set up Waypoint</h1>
-              <p className="truncate text-sm text-muted-foreground">Three short steps, then personalise more when it is useful.</p>
+              <h1 className="text-xl font-bold text-foreground">Set up your Waypoint baseline</h1>
+              <p className="truncate text-sm text-muted-foreground">A guided setup covering your focus areas, values, strengths and first check-in.</p>
             </div>
           </div>
           <UserMenu userName={user.full_name || "there"} userEmail={user.email} />
         </div>
       </header>
 
-      <MinimumOnboardingFlow
+      <OnboardingFlow
+        userId={user.id}
         userName={user.full_name || "there"}
         initialStep={savedStep}
         initialData={savedData}
