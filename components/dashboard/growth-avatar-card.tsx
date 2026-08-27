@@ -122,19 +122,20 @@ export default function GrowthAvatarCard({ avatarType, level, levelCredits, stre
 
   return (
     <Card className="overflow-hidden border-border/50 shadow-sm">
-      <div className="relative h-24 overflow-hidden">
-        <Image src="/images/growth-journey.jpg" alt="" fill className="object-cover object-center" />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/40 to-card" />
-        <div className="absolute bottom-0 left-0 right-0 flex items-end justify-between px-4 pb-3">
+      <div className="relative overflow-hidden border-b border-border/40 bg-gradient-to-br from-primary/15 via-card to-secondary/40 px-5 pb-5 pt-4">
+        <div className="pointer-events-none absolute -right-16 -top-16 size-44 rounded-full bg-primary/10 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-20 -left-16 size-44 rounded-full bg-primary/10 blur-3xl" />
+
+        <div className="relative flex items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-primary/90">Growth &amp; Progress</p>
-            <h3 className="text-base font-bold leading-tight text-white">{progressOnly ? "Progress only" : `Your ${config.name}`}</h3>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Growth &amp; Progress</p>
+            <h3 className="mt-0.5 text-lg font-bold leading-tight text-foreground">{progressOnly ? "Progress only" : `Your ${config.name}`}</h3>
           </div>
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <button className="flex h-7 w-7 items-center justify-center rounded-full bg-black/40" aria-label="About Growth and Progress">
-                  <Info className="h-3.5 w-3.5 text-white/70" />
+                <button className="flex size-8 shrink-0 items-center justify-center rounded-full border border-border/50 bg-background/75 shadow-sm backdrop-blur" aria-label="About Growth and Progress">
+                  <Info className="size-3.5 text-muted-foreground" />
                 </button>
               </TooltipTrigger>
               <TooltipContent className="max-w-xs">
@@ -143,29 +144,38 @@ export default function GrowthAvatarCard({ avatarType, level, levelCredits, stre
             </Tooltip>
           </TooltipProvider>
         </div>
-      </div>
 
-      <CardContent className="space-y-4 pt-4">
-        <div className="flex items-center gap-4">
+        <div className="relative mt-4 flex flex-col items-center text-center">
           {progressOnly ? (
-            <div className="flex h-24 w-24 flex-shrink-0 items-center justify-center rounded-xl border-2 border-primary/30 bg-primary/10">
-              <Sparkles className="size-9 text-primary" />
+            <div className="flex size-36 items-center justify-center rounded-[2rem] border border-primary/25 bg-background/80 shadow-lg ring-4 ring-background/50">
+              <Sparkles className="size-12 text-primary" />
             </div>
           ) : (
-            <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-xl border-2 border-primary/30 bg-secondary/30">
-              <Image id="growth-avatar-image" src={avatar.image || "/placeholder.svg"} alt={avatar.stage} fill className="object-contain p-1 transition-all duration-700 ease-in-out" priority />
+            <div className="relative size-40 overflow-hidden rounded-[2rem] border border-primary/25 bg-background shadow-lg ring-4 ring-background/60">
+              <Image
+                id="growth-avatar-image"
+                src={avatar.image || "/placeholder.svg"}
+                alt={avatar.stage}
+                fill
+                sizes="160px"
+                className="rounded-[2rem] object-contain transition-all duration-700 ease-in-out"
+                priority
+              />
             </div>
           )}
-          <div className="min-w-0 flex-1">
-            <div className={`text-xl font-bold ${progressOnly ? "text-primary" : avatar.color}`}>{progressOnly ? `Level ${currentLevel}` : avatar.stage}</div>
-            <div className="text-sm font-medium text-muted-foreground">Engagement level {currentLevel}</div>
-            <div className="mt-0.5 text-pretty text-xs leading-snug text-muted-foreground">
+
+          <div className="mt-3">
+            <div className={`text-2xl font-bold ${progressOnly ? "text-primary" : avatar.color}`}>{progressOnly ? `Level ${currentLevel}` : avatar.stage}</div>
+            <div className="mt-0.5 text-sm font-medium text-muted-foreground">Engagement level {currentLevel}</div>
+            <div className="mx-auto mt-1 max-w-sm text-pretty text-xs leading-relaxed text-muted-foreground">
               {progressOnly ? "Your engagement progress without a character or creature." : avatar.description}
             </div>
           </div>
         </div>
+      </div>
 
-        <div className="flex items-center justify-between gap-3 rounded-xl border border-border/50 bg-secondary/30 px-4 py-3">
+      <CardContent className="space-y-4 pt-4">
+        <div className="flex items-center justify-between gap-3 rounded-2xl border border-border/50 bg-secondary/30 px-4 py-3">
           <div>
             <div className="mb-0.5 text-xs font-medium text-muted-foreground">Current check-in run</div>
             <p className="text-pretty text-xs leading-snug text-muted-foreground">
@@ -180,7 +190,7 @@ export default function GrowthAvatarCard({ avatarType, level, levelCredits, stre
         </div>
 
         {credits > 0 && (
-          <div className="rounded-xl border border-primary/25 bg-gradient-to-br from-primary/15 to-primary/5 p-4">
+          <div className="rounded-2xl border border-primary/25 bg-gradient-to-br from-primary/15 to-primary/5 p-4">
             <div className="mb-3 flex items-center justify-between">
               <div>
                 <div className="text-sm font-semibold text-foreground">Growth Credits</div>
