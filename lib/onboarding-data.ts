@@ -45,7 +45,7 @@ export const AVATAR_OPTIONS = [
     description: "A waka shaped, prepared and guided into a journey, representing movement, navigation and purposeful progress",
     theme: "Movement & Navigation",
     stages: ["Shaped", "Bound", "Ready", "Prepared", "Launched", "Carrying", "Steady", "Guided", "Travelling", "Wayfound"],
-    previewImage: "/images/avatar-waka-01.png",
+    previewImage: "/images/avatar-waka-01.webp",
   },
 ]
 
