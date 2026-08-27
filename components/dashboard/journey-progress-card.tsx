@@ -12,6 +12,7 @@ interface JourneyProgressCardProps {
   mentalHealthProblem: any
   personalGrowthProblem: any
   profile: any
+  compact?: boolean
 }
 
 const JOURNEY_CONFIG: Record<string, { label: string; icon: any; color: string; bgColor: string; borderColor: string }> = {
@@ -37,6 +38,7 @@ export default function JourneyProgressCard({
   mentalHealthProblem,
   personalGrowthProblem,
   profile,
+  compact = false,
 }: JourneyProgressCardProps) {
   const getJourneyData = (type: string) => {
     switch (type) {
@@ -61,19 +63,21 @@ export default function JourneyProgressCard({
   const otherTypes = journeyTypes.filter((type) => ["mental_health", "personal_growth", "gaming"].includes(type))
 
   return (
-    <Card className="soft-shadow border-border/50">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-lg sm:text-xl text-foreground flex items-center gap-2"><Map className="w-5 h-5 text-primary" /> Your Focus Areas</CardTitle>
+    <Card className={`soft-shadow border-border/50 ${compact ? "h-full" : ""}`}>
+      <CardHeader className={compact ? "pb-3" : "pb-3"}>
+        <CardTitle className="flex items-center gap-2 text-lg text-foreground sm:text-xl">
+          <Map className="h-5 w-5 text-primary" /> Your Focus Areas
+        </CardTitle>
         <p className="text-sm text-muted-foreground">
           This card summarises the areas and dates you recorded in Waypoint. It is not a clinical progress score and does not assume that abstinence is every person's goal.
         </p>
       </CardHeader>
 
-      <CardContent className="space-y-4">
+      <CardContent className={compact ? "space-y-3" : "space-y-4"}>
         {datedTypes.length > 0 && (
           <div className="space-y-3">
-            <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Dates you recorded</div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Dates you recorded</div>
+            <div className={compact ? "grid grid-cols-1 gap-2.5" : "grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3"}>
               {datedTypes.map((type) => {
                 const config = JOURNEY_CONFIG[type]
                 const data = getJourneyData(type)
@@ -82,23 +86,59 @@ export default function JourneyProgressCard({
                 const Icon = config.icon
 
                 return (
-                  <div key={type} className={`${config.bgColor} ${config.borderColor} border rounded-xl p-4 space-y-2`}>
-                    <div className="flex items-center gap-2">
-                      <div className={`w-8 h-8 rounded-full ${config.bgColor} flex items-center justify-center border ${config.borderColor}`}><Icon className={`w-4 h-4 ${config.color}`} /></div>
-                      <span className={`font-semibold ${config.color}`}>{config.label}</span>
-                    </div>
-
-                    {dateKey && daysSince !== null ? (
+                  <div key={type} className={`${config.bgColor} ${config.borderColor} rounded-xl border ${compact ? "p-3" : "space-y-2 p-4"}`}>
+                    {compact ? (
                       <>
-                        <div className="flex items-baseline gap-1"><span className={`text-3xl font-bold ${config.color}`}>{daysSince}</span><span className="text-sm text-muted-foreground">days</span></div>
-                        <p className="text-xs text-muted-foreground">Since the last date you recorded for this behaviour.</p>
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground pt-1 border-t border-border/20">
-                          <Calendar className="w-3 h-3" />
-                          <span>{data.dateLabel}: {formatDateKeyEnNz(dateKey)}</span>
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex min-w-0 items-center gap-2">
+                            <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border ${config.bgColor} ${config.borderColor}`}>
+                              <Icon className={`h-4 w-4 ${config.color}`} />
+                            </div>
+                            <span className={`truncate font-semibold ${config.color}`}>{config.label}</span>
+                          </div>
+                          {dateKey && daysSince !== null ? (
+                            <div className="flex shrink-0 items-baseline gap-1">
+                              <span className={`text-2xl font-bold ${config.color}`}>{daysSince}</span>
+                              <span className="text-xs text-muted-foreground">days</span>
+                            </div>
+                          ) : null}
+                        </div>
+                        <div className="mt-2 border-t border-border/20 pt-2 text-xs text-muted-foreground">
+                          {dateKey && daysSince !== null ? (
+                            <span className="flex items-center gap-1.5">
+                              <Calendar className="h-3 w-3 shrink-0" />
+                              {data.dateLabel}: {formatDateKeyEnNz(dateKey)}
+                            </span>
+                          ) : (
+                            "No last-occurrence date has been recorded for this area."
+                          )}
                         </div>
                       </>
                     ) : (
-                      <p className="text-xs text-muted-foreground">No last-occurrence date has been recorded for this area.</p>
+                      <>
+                        <div className="flex items-center gap-2">
+                          <div className={`flex h-8 w-8 items-center justify-center rounded-full border ${config.bgColor} ${config.borderColor}`}>
+                            <Icon className={`h-4 w-4 ${config.color}`} />
+                          </div>
+                          <span className={`font-semibold ${config.color}`}>{config.label}</span>
+                        </div>
+
+                        {dateKey && daysSince !== null ? (
+                          <>
+                            <div className="flex items-baseline gap-1">
+                              <span className={`text-3xl font-bold ${config.color}`}>{daysSince}</span>
+                              <span className="text-sm text-muted-foreground">days</span>
+                            </div>
+                            <p className="text-xs text-muted-foreground">Since the last date you recorded for this behaviour.</p>
+                            <div className="flex items-center gap-1 border-t border-border/20 pt-1 text-xs text-muted-foreground">
+                              <Calendar className="h-3 w-3" />
+                              <span>{data.dateLabel}: {formatDateKeyEnNz(dateKey)}</span>
+                            </div>
+                          </>
+                        ) : (
+                          <p className="text-xs text-muted-foreground">No last-occurrence date has been recorded for this area.</p>
+                        )}
+                      </>
                     )}
                   </div>
                 )
@@ -109,8 +149,8 @@ export default function JourneyProgressCard({
 
         {otherTypes.length > 0 && (
           <div className="space-y-3">
-            <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Other focus areas</div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Other focus areas</div>
+            <div className={compact ? "grid grid-cols-1 gap-2.5" : "grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3"}>
               {otherTypes.map((type) => {
                 const config = JOURNEY_CONFIG[type]
                 const data = getJourneyData(type)
@@ -122,22 +162,28 @@ export default function JourneyProgressCard({
                 }
 
                 return (
-                  <div key={type} className={`${config.bgColor} ${config.borderColor} border rounded-xl p-4 space-y-2`}>
+                  <div key={type} className={`${config.bgColor} ${config.borderColor} rounded-xl border ${compact ? "p-3" : "space-y-2 p-4"}`}>
                     <div className="flex items-center gap-2">
-                      <div className={`w-8 h-8 rounded-full ${config.bgColor} flex items-center justify-center border ${config.borderColor}`}><Icon className={`w-4 h-4 ${config.color}`} /></div>
+                      <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border ${config.bgColor} ${config.borderColor}`}>
+                        <Icon className={`h-4 w-4 ${config.color}`} />
+                      </div>
                       <span className={`font-semibold ${config.color}`}>{config.label}</span>
                     </div>
 
                     {focusAreas.length > 0 ? (
-                      <div className="space-y-1">
-                        <div className="text-xs text-muted-foreground">Areas you selected:</div>
+                      <div className={compact ? "mt-2 flex flex-wrap gap-1" : "space-y-1"}>
+                        {!compact && <div className="text-xs text-muted-foreground">Areas you selected:</div>}
                         <div className="flex flex-wrap gap-1">
-                          {focusAreas.slice(0, 3).map((area, index) => <span key={`${area}-${index}`} className={`px-2 py-0.5 rounded-full text-xs ${config.bgColor} ${config.color} border ${config.borderColor}`}>{area}</span>)}
+                          {focusAreas.slice(0, 3).map((area, index) => (
+                            <span key={`${area}-${index}`} className={`rounded-full border px-2 py-0.5 text-xs ${config.bgColor} ${config.color} ${config.borderColor}`}>
+                              {area}
+                            </span>
+                          ))}
                           {focusAreas.length > 3 && <span className="text-xs text-muted-foreground">+{focusAreas.length - 3} more</span>}
                         </div>
                       </div>
                     ) : (
-                      <p className="text-xs text-muted-foreground">Selected as a Waypoint focus area.</p>
+                      <p className={`${compact ? "mt-2" : ""} text-xs text-muted-foreground`}>Selected as a Waypoint focus area.</p>
                     )}
                   </div>
                 )
@@ -146,8 +192,8 @@ export default function JourneyProgressCard({
           </div>
         )}
 
-        <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 mt-4">
-          <p className="text-sm text-muted-foreground">
+        <div className={`rounded-lg border border-primary/20 bg-primary/5 ${compact ? "p-2.5" : "mt-4 p-3"}`}>
+          <p className={compact ? "text-xs leading-relaxed text-muted-foreground" : "text-sm text-muted-foreground"}>
             Dates, focus areas and app activity can help you reflect on patterns, but they do not by themselves show whether your health or recovery is improving.
           </p>
         </div>
