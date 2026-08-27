@@ -8,7 +8,6 @@ import Link from "next/link"
 import { ArrowRight, CheckCircle2, ClipboardCheck, Map } from "lucide-react"
 import DashboardHeader from "@/components/dashboard/dashboard-header"
 import CoreValuesCard from "@/components/dashboard/core-values-card"
-import SuggestedSkillsCard from "@/components/dashboard/suggested-skills-card"
 import QuickActionsBar from "@/components/dashboard/quick-actions-bar"
 import MobileNav from "@/components/dashboard/mobile-nav"
 import WeeklyOverviewCard from "@/components/dashboard/weekly-overview-card"
@@ -85,14 +84,6 @@ export default async function DashboardPage() {
     ? Math.round((completedModulesCount / totalModulesCount) * 100)
     : 0
 
-  const awarenessResult = await sql`
-    SELECT emotion, all_emotions, strongest_emotion, situation_context, created_at
-    FROM awareness_checkins
-    WHERE user_id = ${user.id}
-    ORDER BY created_at DESC
-    LIMIT 1
-  `
-
   const valuesResult = await sql`
     SELECT value_name, rank, category
     FROM user_values
@@ -161,7 +152,6 @@ export default async function DashboardPage() {
   `
 
   const profile = profileResult[0]
-  const latestAwareness = awarenessResult[0] || null
   const values = valuesResult || []
   const allProblems = problemsResult || []
   const weeklyCheckins = (weeklyCheckinsResult || []).map((checkin: any) => ({
@@ -375,30 +365,29 @@ export default async function DashboardPage() {
 
         <section className="grid gap-5 lg:grid-cols-12 lg:gap-6" aria-label="Your Waypoint overview">
           <div className="space-y-5 lg:col-span-8 lg:min-w-0 lg:space-y-6 xl:contents">
-            <div id="weekly-overview" className="scroll-mt-24 xl:col-span-8 xl:min-w-0">
+            <div id="weekly-overview" className={`scroll-mt-24 xl:min-w-0 ${journeyTypes.length > 0 ? "xl:col-span-8" : "xl:col-span-12"}`}>
               <WeeklyOverviewCard checkins={weeklyCheckins} journeyTypes={journeyTypes} accountCreatedAt={user.created_at} />
             </div>
-            <div className="xl:col-span-4 xl:min-w-0">
-              <SuggestedSkillsCard awareness={latestAwareness} problems={primaryProblem} values={values} weeklyCheckins={weeklyCheckins} />
-            </div>
+            {journeyTypes.length > 0 && (
+              <div className="xl:col-span-4 xl:min-w-0 xl:[&>*]:h-full">
+                <JourneyProgressCard
+                  journeyTypes={journeyTypes}
+                  gamblingProblem={gamblingProblem}
+                  alcoholProblem={alcoholProblem}
+                  substancesProblem={substancesProblem}
+                  mentalHealthProblem={mentalHealthProblem}
+                  personalGrowthProblem={personalGrowthProblem}
+                  profile={profile}
+                  compact
+                />
+              </div>
+            )}
           </div>
 
           <aside className="space-y-5 lg:col-span-4 lg:min-w-0 lg:space-y-6 xl:hidden" aria-label="Values">
             <CoreValuesCard values={values} />
           </aside>
         </section>
-
-        {journeyTypes.length > 0 && (
-          <JourneyProgressCard
-            journeyTypes={journeyTypes}
-            gamblingProblem={gamblingProblem}
-            alcoholProblem={alcoholProblem}
-            substancesProblem={substancesProblem}
-            mentalHealthProblem={mentalHealthProblem}
-            personalGrowthProblem={personalGrowthProblem}
-            profile={profile}
-          />
-        )}
 
         <SafeguardsCard />
       </main>
