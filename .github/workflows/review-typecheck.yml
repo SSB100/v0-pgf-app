@@ -32,6 +32,17 @@ jobs:
             --exclude-dir=api || true
           echo '--- END AUDIT ---'
 
+      - name: Upload source snapshot for terminology edit
+        uses: actions/upload-artifact@v4
+        with:
+          name: daily-reflection-source
+          path: |
+            app
+            components
+            lib
+            .github/workflows/review-typecheck.yml
+          retention-days: 1
+
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
         with:
