@@ -127,21 +127,35 @@ export default function MobileGrowthCompanion({ avatarType, level, levelCredits,
 
   return (
     <div className="flex flex-1 flex-col gap-3">
-      <section className="flex items-center gap-4 rounded-3xl border border-primary/25 bg-gradient-to-br from-primary/15 via-primary/5 to-card p-4 shadow-sm">
-        {progressOnly ? (
-          <div className="flex size-28 shrink-0 items-center justify-center rounded-2xl border border-primary/25 bg-primary/10">
-            <Sparkles className="size-10 text-primary" />
+      <section className="relative overflow-hidden rounded-3xl border border-primary/25 bg-gradient-to-br from-primary/15 via-card to-secondary/35 px-4 pb-5 pt-4 text-center shadow-sm">
+        <div className="pointer-events-none absolute -right-20 -top-20 size-48 rounded-full bg-primary/10 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-24 -left-16 size-48 rounded-full bg-primary/10 blur-3xl" />
+
+        <div className="relative mx-auto max-w-sm">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">{progressOnly ? "Growth & Progress" : stage.name}</p>
+
+          <div className="mt-4 flex justify-center">
+            {progressOnly ? (
+              <div className="flex size-48 items-center justify-center rounded-[2rem] border border-primary/25 bg-background/85 shadow-lg ring-4 ring-background/60">
+                <Sparkles className="size-14 text-primary" />
+              </div>
+            ) : (
+              <div className="relative size-52 overflow-hidden rounded-[2rem] border border-primary/25 bg-background shadow-lg ring-4 ring-background/60">
+                <Image
+                  src={stage.image}
+                  alt={stage.stage}
+                  fill
+                  priority
+                  sizes="208px"
+                  className="rounded-[2rem] object-contain"
+                />
+              </div>
+            )}
           </div>
-        ) : (
-          <div className="relative size-28 shrink-0 overflow-hidden rounded-2xl border border-primary/25 bg-background">
-            <Image src={stage.image} alt={stage.stage} fill priority className="object-contain p-1.5" />
-          </div>
-        )}
-        <div className="min-w-0 flex-1">
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">{progressOnly ? "Growth & Progress" : stage.name}</p>
-          <h1 className="mt-1 text-2xl font-bold text-foreground">{progressOnly ? `Level ${currentLevel}` : stage.stage}</h1>
-          <p className="text-sm font-medium text-muted-foreground">Engagement level {currentLevel}</p>
-          <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+
+          <h1 className="mt-4 text-2xl font-bold text-foreground">{progressOnly ? `Level ${currentLevel}` : stage.stage}</h1>
+          <p className="mt-0.5 text-sm font-medium text-muted-foreground">Engagement level {currentLevel}</p>
+          <p className="mx-auto mt-2 max-w-xs text-xs leading-relaxed text-muted-foreground">
             {progressOnly
               ? "You chose to track engagement without a character. Your Growth Credits and levels work exactly the same way."
               : stage.nextLevel === null
@@ -176,14 +190,14 @@ export default function MobileGrowthCompanion({ avatarType, level, levelCredits,
       </section>
 
       <section className="grid grid-cols-2 gap-3">
-        <div className="rounded-2xl border border-primary/20 bg-primary/5 p-3.5">
+        <div className="rounded-2xl border border-primary/20 bg-primary/5 p-3.5 text-center">
           <p className="text-xs text-muted-foreground">Credits waiting</p>
           <p className="mt-0.5 text-3xl font-bold text-primary">{credits}</p>
           <p className="mt-1 text-[10px] leading-snug text-muted-foreground">They stay here until you choose to use them.</p>
         </div>
-        <div className="rounded-2xl border border-border/70 bg-card p-3.5">
+        <div className="rounded-2xl border border-border/70 bg-card p-3.5 text-center">
           <p className="text-xs text-muted-foreground">Check-in run</p>
-          <div className="mt-0.5 flex items-center gap-2"><p className="text-3xl font-bold text-foreground">{streak || 0}</p><CheckCircle2 className="size-4 text-primary" /></div>
+          <div className="mt-0.5 flex items-center justify-center gap-2"><p className="text-3xl font-bold text-foreground">{streak || 0}</p><CheckCircle2 className="size-4 text-primary" /></div>
           <p className="mt-1 text-[10px] leading-snug text-muted-foreground">Shown for context. It does not control engagement levels.</p>
         </div>
       </section>
