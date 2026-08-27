@@ -8,10 +8,65 @@ interface CoreValuesCardProps {
     rank: number
     category: string
   }>
+  layout?: "vertical" | "horizontal"
 }
 
-export default function CoreValuesCard({ values }: CoreValuesCardProps) {
+export default function CoreValuesCard({ values, layout = "vertical" }: CoreValuesCardProps) {
   const hasValues = values.length > 0
+
+  if (layout === "horizontal") {
+    return (
+      <Card className="h-full overflow-hidden border-border/50 shadow-sm">
+        <CardContent className="grid h-full gap-4 p-4 xl:grid-cols-[minmax(190px,0.85fr)_minmax(0,2fr)_auto] xl:items-center xl:gap-5 xl:p-5">
+          <div className="flex min-w-0 items-start gap-3">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-primary/25 bg-primary/10">
+              <Compass className="size-4.5 text-primary" />
+            </div>
+            <div className="min-w-0">
+              <CardTitle className="text-lg font-bold text-foreground">Your Core Values</CardTitle>
+              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                {hasValues
+                  ? "Keep the directions that matter to you in view. These values sit side by side, not in ranked order."
+                  : "Core values are optional. You can explore what matters to you whenever it feels useful."}
+              </p>
+            </div>
+          </div>
+
+          {hasValues ? (
+            <div className="grid min-w-0 grid-cols-3 gap-2.5">
+              {values.map((value) => (
+                <div
+                  key={value.value_name}
+                  className="flex min-w-0 items-center gap-2.5 rounded-xl border border-border/60 bg-secondary/20 px-3 py-3"
+                >
+                  <div className="flex size-8 shrink-0 items-center justify-center rounded-full border border-primary/20 bg-primary/10">
+                    <Heart className="size-3.5 text-primary" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold leading-tight text-foreground">{value.value_name}</p>
+                    {value.category && (
+                      <p className="mt-0.5 truncate text-[11px] capitalize text-muted-foreground">{value.category}</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-xl border border-dashed border-border px-4 py-3 text-xs leading-relaxed text-muted-foreground">
+              The values module gives you a guided way to think about the directions and relationships that matter to you.
+            </div>
+          )}
+
+          <Link
+            href="/journey/learn/discovering-values"
+            className="inline-flex min-h-10 shrink-0 items-center justify-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-3 text-sm font-semibold text-primary transition-colors hover:bg-primary/10"
+          >
+            {hasValues ? "Revisit" : "Explore"} <ArrowRight className="size-4" />
+          </Link>
+        </CardContent>
+      </Card>
+    )
+  }
 
   return (
     <Card className="overflow-hidden border-border/50">
