@@ -69,7 +69,7 @@ export default function AvatarSelectionStep({ data, updateData, onNext, onBack }
 
         <div className="space-y-2">
           <div className="flex items-end justify-between gap-3">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground sm:text-xs">Fantasy Companions</p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground sm:text-xs">Growth Companions</p>
             <p className="text-[10px] text-muted-foreground sm:hidden">Swipe to browse</p>
           </div>
 
