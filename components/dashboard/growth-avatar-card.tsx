@@ -121,8 +121,8 @@ export default function GrowthAvatarCard({ avatarType, level, levelCredits, stre
   }
 
   return (
-    <Card className="overflow-hidden border-border/50 shadow-sm">
-      <div className="relative overflow-hidden border-b border-border/40 bg-gradient-to-br from-primary/15 via-card to-secondary/40 px-3 pb-3 pt-3">
+    <Card className="overflow-hidden border-border/50 pt-0 shadow-sm">
+      <div className="relative overflow-hidden border-b border-border/40 bg-gradient-to-br from-primary/15 via-card to-secondary/40 px-3 pb-3 pt-9">
         <div className="pointer-events-none absolute -right-16 -top-16 size-44 rounded-full bg-primary/10 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-20 -left-16 size-44 rounded-full bg-primary/10 blur-3xl" />
 
