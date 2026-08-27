@@ -49,7 +49,7 @@ export default async function OnboardingPage() {
             </Link>
             <div className="min-w-0">
               <h1 className="text-xl font-bold text-foreground">Set up your Waypoint baseline</h1>
-              <p className="truncate text-sm text-muted-foreground">A guided setup covering your focus areas, values, strengths and first check-in.</p>
+              <p className="truncate text-sm text-muted-foreground">A guided setup covering your focus areas, values, strengths and first Daily Reflection.</p>
             </div>
           </div>
           <UserMenu userName={user.full_name || "there"} userEmail={user.email} />

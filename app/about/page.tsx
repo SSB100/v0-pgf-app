@@ -58,7 +58,7 @@ export default function AboutPage() {
                   <h3 className="text-xl font-semibold text-primary">A Personalised Journey</h3>
                 </div>
                 <p className="text-primary/70">
-                  Daily check-ins, values, goals and selected journey areas help tailor what you see. Progress visuals reflect your activity in Waypoint, not a clinical score of how recovered or well you are.
+                  Daily Reflections, values, goals and selected journey areas help tailor what you see. Progress visuals reflect your activity in Waypoint, not a clinical score of how recovered or well you are.
                 </p>
               </div>
 
@@ -92,7 +92,7 @@ export default function AboutPage() {
             <h2 className="text-3xl font-bold text-primary text-center">Our Approach</h2>
             <div className="space-y-6 text-primary/70">
               <p className="text-lg">
-                Change rarely follows a straight line. Waypoint is designed to make room for progress, difficult days, pauses and fresh starts without treating a setback or missed check-in as failure.
+                Change rarely follows a straight line. Waypoint is designed to make room for progress, difficult days, pauses and fresh starts without treating a setback or missed Daily Reflection as failure.
               </p>
               <p className="text-lg">
                 The platform combines self-reflection, skills practice, values-based work, progress tracking and optional peer connection. The aim is to help people notice patterns and make more deliberate choices, not to tell them what recovery should look like.

@@ -349,7 +349,7 @@ export const JOURNEY_MODULES: JourneyModuleDefinition[] = [
   {
     slug: "building-awareness",
     title: "Building Daily Awareness",
-    description: "Notice thoughts, emotions, body sensations, urges and actions without turning the check-in into a judgement.",
+    description: "Notice thoughts, emotions, body sensations, urges and actions without turning the Daily Reflection into a judgement.",
     category: "Mindfulness & Awareness",
     kind: "learning",
     approaches: ["DBT-informed", "Mindfulness"],
@@ -358,7 +358,7 @@ export const JOURNEY_MODULES: JourneyModuleDefinition[] = [
     sections: [
       {
         title: "Awareness is information",
-        body: "A daily check-in can capture what is happening right now: mood, urge strength, sleep, stress, behaviour and the situations around them. The point is not to produce a perfect score or prove progress every day.",
+        body: "A Daily Reflection can capture what is happening right now: mood, urge strength, sleep, stress, behaviour and the situations around them. The point is not to produce a perfect score or prove progress every day.",
       },
       {
         title: "Separate observation from interpretation",
@@ -366,11 +366,11 @@ export const JOURNEY_MODULES: JourneyModuleDefinition[] = [
       },
       {
         title: "Notice change over time",
-        body: "One check-in is a snapshot. Several check-ins can show recurring situations, protective routines or times when extra support tends to be useful. Patterns are descriptive, not diagnoses.",
+        body: "One Daily Reflection is a snapshot. Several Daily Reflections can show recurring situations, protective routines or times when extra support tends to be useful. Patterns are descriptive, not diagnoses.",
       },
     ],
     check: {
-      prompt: "Which statement is the best example of a descriptive check-in?",
+      prompt: "Which statement is the best example of a descriptive Daily Reflection?",
       options: [
         { label: "I am doing recovery badly today.", feedback: "That is an evaluation rather than a description." },
         { label: "My urge is strong, I slept poorly and I have been avoiding messages since this morning.", correct: true, feedback: "Yes. It records several observable parts of the current situation." },
@@ -383,7 +383,7 @@ export const JOURNEY_MODULES: JourneyModuleDefinition[] = [
       { id: "internal", label: "What emotion, body sensation, thought or urge is most noticeable right now?", placeholder: "I notice..." },
       { id: "context", label: "What is happening around you that may be relevant?", placeholder: "Sleep, stress, people, access, environment, time of day..." },
     ],
-    keyLearning: "Daily awareness creates descriptive information about what is happening and can reveal patterns without turning each check-in into a judgement about progress.",
+    keyLearning: "Daily awareness creates descriptive information about what is happening and can reveal patterns without turning each Daily Reflection into a judgement about progress.",
   },
   {
     slug: "recognizing-triggers",

@@ -43,7 +43,7 @@ export default function CurrentStateCard({ awareness, problems, todayCheckIn }: 
           <svg className="w-5 h-5 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          <span>Your Recent Check-In</span>
+          <span>Your Recent Daily Reflection</span>
         </CardTitle>
       </CardHeader>
 
@@ -110,8 +110,8 @@ export default function CurrentStateCard({ awareness, problems, todayCheckIn }: 
           </div>
         ) : (
           <div className="text-center py-6">
-            <p className="text-muted-foreground">No check-in recorded yet</p>
-            <p className="text-sm text-muted-foreground mt-1">Check-ins are optional and can help you look back at patterns over time.</p>
+            <p className="text-muted-foreground">No Daily Reflection recorded yet</p>
+            <p className="text-sm text-muted-foreground mt-1">Daily Reflections are optional and can help you look back at patterns over time.</p>
           </div>
         )}
 

@@ -119,13 +119,13 @@ const OVERRIDES: Record<string, ModuleOverride> = {
   },
 
   "building-awareness": {
-    title: "A Two-Minute Check-In With Yourself",
+    title: "A Two-Minute Daily Reflection",
     description: "Take a quick snapshot of where you are today without turning it into a score for how well you are doing.",
-    whyItMatters: "When you are struggling, one bad hour can feel like proof that everything is going backwards. A check-in helps you gather information instead of handing out a verdict.",
+    whyItMatters: "When you are struggling, one bad hour can feel like proof that everything is going backwards. A Daily Reflection helps you gather information instead of handing out a verdict.",
     sections: [
       {
         title: "Think weather report, not school report",
-        body: "A weather report might say ‘rain, strong wind, low visibility’. It does not say the weather has failed. A check-in can work the same way: ‘slept badly, stressed about money, strong urge, avoiding messages’. You are describing the conditions you are working with today, not grading your character or your recovery."
+        body: "A weather report might say ‘rain, strong wind, low visibility’. It does not say the weather has failed. A Daily Reflection can work the same way: ‘slept badly, stressed about money, strong urge, avoiding messages’. You are describing the conditions you are working with today, not grading your character or your recovery."
       },
       {
         title: "Notice the difference between the camera and the narrator",
@@ -133,11 +133,11 @@ const OVERRIDES: Record<string, ModuleOverride> = {
       },
       {
         title: "Patterns only become visible when you have a few snapshots",
-        body: "One difficult check-in does not tell you very much. Over time you may notice that urges are stronger after poor sleep, that Sundays are lonely, that conflict makes you isolate, or that being around certain people makes healthier choices easier. Those patterns can help with planning. They are clues, not diagnoses."
+        body: "One difficult Daily Reflection does not tell you very much. Over time you may notice that urges are stronger after poor sleep, that Sundays are lonely, that conflict makes you isolate, or that being around certain people makes healthier choices easier. Those patterns can help with planning. They are clues, not diagnoses."
       }
     ],
     check: {
-      prompt: "Which one sounds most like a useful check-in rather than a judgement?",
+      prompt: "Which one sounds most like a useful Daily Reflection rather than a judgement?",
       options: [
         { label: "I am messing everything up again.", feedback: "That is a verdict about yourself, but it does not tell you much about what is actually happening today." },
         { label: "My urge is strong, I slept poorly and I have avoided messages since this morning.", correct: true, feedback: "This gives you real information about the current conditions without deciding what they mean about you as a person." },
@@ -150,7 +150,7 @@ const OVERRIDES: Record<string, ModuleOverride> = {
       internal: { label: "What is most noticeable inside you right now?", placeholder: "A feeling, thought, body sensation or urge..." },
       context: { label: "What is going on around you that might be affecting that?", placeholder: "Sleep, money, people, conflict, access, work, time of day..." }
     },
-    keyLearning: "A check-in is a description of today's conditions, not a score. Repeated snapshots can show patterns that make future choices easier to plan for."
+    keyLearning: "A Daily Reflection is a description of today's conditions, not a score. Repeated snapshots can show patterns that make future choices easier to plan for."
   },
 
   "recognizing-triggers": {

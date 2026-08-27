@@ -97,11 +97,11 @@ export default function CheckInForm({ userId, journeyTypes }: CheckInFormProps) 
       })
 
       const responseData = await response.json()
-      if (!response.ok) throw new Error(responseData.error || "Failed to save check-in")
+      if (!response.ok) throw new Error(responseData.error || "Failed to save Daily Reflection")
       router.push("/dashboard")
     } catch (error) {
       console.error("[v0] Check-in submission error:", error)
-      const errorMsg = error instanceof Error ? error.message : "Failed to save your check-in. Please try again."
+      const errorMsg = error instanceof Error ? error.message : "Failed to save your Daily Reflection. Please try again."
       alert(errorMsg)
     } finally {
       setSubmitting(false)
@@ -111,7 +111,7 @@ export default function CheckInForm({ userId, journeyTypes }: CheckInFormProps) 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="rounded-lg border border-border bg-muted/30 p-3 text-sm text-muted-foreground">
-        This check-in records what you report today. It is not a diagnosis, risk assessment or clinical judgement, and your answers are not monitored in real time.
+        This Daily Reflection records what you report today. It is not a diagnosis, risk assessment or clinical judgement, and your answers are not monitored in real time.
       </div>
 
       <div className="space-y-3">
@@ -180,7 +180,7 @@ export default function CheckInForm({ userId, journeyTypes }: CheckInFormProps) 
       {hasGambling && (
         <>
           <div className="space-y-3">
-            <label htmlFor="urge-strength-gambling" className="block text-sm font-semibold text-foreground">How strong was your urge to gamble since your last check-in? <span className="text-destructive">*</span></label>
+            <label htmlFor="urge-strength-gambling" className="block text-sm font-semibold text-foreground">How strong was your urge to gamble since your last Daily Reflection? <span className="text-destructive">*</span></label>
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground">None</span>
               <input type="range" id="urge-strength-gambling" name="urgeStrength" min="0" max="10" value={formData.urgeStrength} onChange={(e) => setFormData((prev) => ({ ...prev, urgeStrength: Number.parseInt(e.target.value) }))} className="flex-1 h-2 bg-secondary rounded-lg appearance-none cursor-pointer accent-primary" />
@@ -188,17 +188,17 @@ export default function CheckInForm({ userId, journeyTypes }: CheckInFormProps) 
               <div className="min-w-[2rem] text-center"><span className="text-lg font-bold text-primary">{formData.urgeStrength}</span></div>
             </div>
           </div>
-          <YesNoQuestion label="Have you gambled since your last check-in?" value={formData.gamblingOccurred} onChange={(value) => setFormData((prev) => ({ ...prev, gamblingOccurred: value }))} />
+          <YesNoQuestion label="Have you gambled since your last Daily Reflection?" value={formData.gamblingOccurred} onChange={(value) => setFormData((prev) => ({ ...prev, gamblingOccurred: value }))} />
         </>
       )}
 
-      {hasAlcohol && <YesNoQuestion label="Have you drunk alcohol since your last check-in?" value={formData.alcoholOccurred} onChange={(value) => setFormData((prev) => ({ ...prev, alcoholOccurred: value }))} />}
-      {hasSubstances && <YesNoQuestion label="Have you used substances since your last check-in?" value={formData.substanceOccurred} onChange={(value) => setFormData((prev) => ({ ...prev, substanceOccurred: value }))} />}
+      {hasAlcohol && <YesNoQuestion label="Have you drunk alcohol since your last Daily Reflection?" value={formData.alcoholOccurred} onChange={(value) => setFormData((prev) => ({ ...prev, alcoholOccurred: value }))} />}
+      {hasSubstances && <YesNoQuestion label="Have you used substances since your last Daily Reflection?" value={formData.substanceOccurred} onChange={(value) => setFormData((prev) => ({ ...prev, substanceOccurred: value }))} />}
 
       {hasMentalHealth && (
         <>
-          <YesNoQuestion label="Have you had thoughts of self-harm since your last check-in?" value={formData.selfHarmThoughts} onChange={(value) => setFormData((prev) => ({ ...prev, selfHarmThoughts: value }))} />
-          <YesNoQuestion label="Have you harmed yourself since your last check-in?" value={formData.selfHarmActions} onChange={(value) => setFormData((prev) => ({ ...prev, selfHarmActions: value }))} />
+          <YesNoQuestion label="Have you had thoughts of self-harm since your last Daily Reflection?" value={formData.selfHarmThoughts} onChange={(value) => setFormData((prev) => ({ ...prev, selfHarmThoughts: value }))} />
+          <YesNoQuestion label="Have you harmed yourself since your last Daily Reflection?" value={formData.selfHarmActions} onChange={(value) => setFormData((prev) => ({ ...prev, selfHarmActions: value }))} />
 
           {showSafetySupport && (
             <div className="rounded-lg border border-amber-300/70 bg-amber-50 p-4 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100 space-y-2">
@@ -235,7 +235,7 @@ export default function CheckInForm({ userId, journeyTypes }: CheckInFormProps) 
 
       <div className="flex gap-3 pt-4">
         <Button type="button" variant="outline" onClick={() => router.push("/dashboard")} className="flex-1">Cancel</Button>
-        <Button type="submit" disabled={submitting} className="flex-1 bg-primary hover:bg-primary/90 text-white">{submitting ? "Saving..." : "Save Check-In"}</Button>
+        <Button type="submit" disabled={submitting} className="flex-1 bg-primary hover:bg-primary/90 text-white">{submitting ? "Saving..." : "Save Daily Reflection"}</Button>
       </div>
     </form>
   )

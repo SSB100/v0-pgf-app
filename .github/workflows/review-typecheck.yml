@@ -1,39 +1,57 @@
-name: Apply Daily Reflection copy
+name: Waypoint review checks
 
 on:
   push:
     branches:
-      - copy/daily-reflections-language
+      - main
+      - 'waypoint/**'
+  pull_request:
+    branches:
+      - main
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
-  group: daily-reflection-copy-${{ github.ref }}
+  group: review-checks-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  apply-copy:
+  review-checks:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 15
     steps:
-      - name: Checkout source branch
+      - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
         with:
-          ref: copy/daily-reflections-language
-          fetch-depth: 1
+          version: 10
 
-      - name: Apply terminology and dashboard copy changes
-        run: python scripts/apply-daily-reflections-copy.py
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
 
-      - name: Restore normal review workflow and commit
-        run: |
-          git fetch origin main --depth=1
-          git show origin/main:.github/workflows/review-typecheck.yml > .github/workflows/review-typecheck.yml
-          rm scripts/apply-daily-reflections-copy.py
-          git config user.name "SSB"
-          git config user.email "solanasportsbetting@gmail.com"
-          git add app components lib .github/workflows/review-typecheck.yml scripts/apply-daily-reflections-copy.py
-          git diff --cached --stat
-          git commit -m "Adopt Daily Reflections terminology"
-          git push origin HEAD:copy/daily-reflections-language
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Policy and authorization tests
+        run: pnpm test
+
+      - name: TypeScript check
+        run: pnpm exec tsc --noEmit
+
+      - name: Production build check
+        run: pnpm build
+        env:
+          NEON_DATABASE_URL: postgresql://waypoint_ci:waypoint_ci@localhost:5432/waypoint_ci
+          JWT_SECRET: waypoint-ci-only-jwt-secret-not-for-production-2026
+
+      - name: Dependency security audit
+        run: pnpm audit --audit-level=high

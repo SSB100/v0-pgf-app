@@ -145,16 +145,16 @@ export default function DailyCheckInStep({ data, updateData, onNext, onBack }: D
   return (
     <Card className="gap-3 border-border/50 py-4 soft-shadow-lg sm:gap-6 sm:py-6">
       <CardHeader className="gap-1.5 px-4 sm:gap-2 sm:px-6">
-        <CardTitle className="text-xl text-foreground sm:text-2xl">Your First Daily Check-In</CardTitle>
+        <CardTitle className="text-xl text-foreground sm:text-2xl">Your First Daily Reflection</CardTitle>
         <p className="text-xs leading-snug text-muted-foreground text-pretty sm:text-sm">
-          Try the same check-in you can use day to day. This entry will become the starting point for your dashboard and weekly view.
+          Try the same Daily Reflection you can use day to day. This entry will become the starting point for your dashboard and weekly view.
         </p>
       </CardHeader>
 
       <CardContent className="space-y-4 px-4 sm:space-y-6 sm:px-6">
         <div className="rounded-lg border border-primary/20 bg-primary/5 px-3 py-2.5 sm:rounded-xl sm:p-4">
           <p className="text-[11px] leading-snug text-foreground/90 text-pretty sm:text-sm">
-            <span className="font-semibold">Why check in?</span> A consistent record can make patterns across mood, urges, behaviours, coping tools and meaningful moments easier to notice over time.
+            <span className="font-semibold">Why use Daily Reflections?</span> A consistent record can make patterns across mood, urges, behaviours, coping tools and meaningful moments easier to notice over time.
           </p>
         </div>
 
@@ -408,13 +408,13 @@ export default function DailyCheckInStep({ data, updateData, onNext, onBack }: D
         </QuestionBlock>
 
         <div className="rounded-lg border border-border bg-secondary/20 px-3 py-2 text-[10px] leading-snug text-foreground/90 sm:p-4 sm:text-sm">
-          Future check-ins use the same basic structure and build your weekly view from what you report rather than Waypoint guessing how you are doing.
+          Future Daily Reflections use the same basic structure and build your weekly view from what you report rather than Waypoint guessing how you are doing.
         </div>
 
         <StepButtonFooter
           onBack={onBack}
           onNext={handleNext}
-          nextText={formData.dateKey ? "Save First Check-In & Continue" : "Preparing Check-In..."}
+          nextText={formData.dateKey ? "Save First Daily Reflection & Continue" : "Preparing Daily Reflection..."}
           disabled={!formData.dateKey}
         />
       </CardContent>

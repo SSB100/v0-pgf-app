@@ -66,7 +66,7 @@ export default function WelcomeStep({ userName, onNext }: WelcomeStepProps) {
               ["1", "Focus", "Choose areas"],
               ["2", "Patterns", "Add context"],
               ["3", "Values", "Name strengths"],
-              ["4", "Check-in", "Set a baseline"],
+              ["4", "Daily Reflection", "Set a baseline"],
             ].map(([number, title, description]) => (
               <div key={number} className="rounded-lg border border-border/50 bg-background/60 p-2.5">
                 <div className="mb-1 flex size-5 items-center justify-center rounded-full bg-primary/15 text-[10px] font-bold text-primary">{number}</div>

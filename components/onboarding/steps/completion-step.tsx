@@ -100,7 +100,7 @@ export default function CompletionStep({ data, onComplete, onBack }: CompletionS
         <div className="bg-card/80 rounded-xl p-4 border border-border">
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">What happens next</p>
           <p className="text-sm text-foreground/90 leading-relaxed">
-            Your answers will personalise parts of the dashboard, check-ins and journey content. They describe what you reported today; they are not a diagnosis or a score of how well you are doing.
+            Your answers will personalise parts of the dashboard, Daily Reflections and journey content. They describe what you reported today; they are not a diagnosis or a score of how well you are doing.
           </p>
         </div>
 
@@ -117,7 +117,7 @@ export default function CompletionStep({ data, onComplete, onBack }: CompletionS
         <div className="bg-primary/10 border-2 border-primary/40 rounded-2xl p-6 text-center space-y-3 shadow-lg">
           <h3 className="text-xl font-bold text-foreground">Continue When You're Ready</h3>
           <p className="text-sm text-foreground/90 text-pretty leading-relaxed max-w-md mx-auto">
-            Your dashboard includes optional check-ins, self-guided modules, practical safeguards, your Growth Companion and community features. You do not need to use everything at once.
+            Your dashboard includes optional Daily Reflections, self-guided modules, practical safeguards, your Growth Companion and community features. You do not need to use everything at once.
           </p>
         </div>
 

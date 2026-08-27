@@ -173,7 +173,7 @@ export default function MobileGrowthCompanion({ avatarType, level, levelCredits,
         <div className="mt-3 grid grid-cols-3 gap-2">
           <div className="rounded-xl bg-secondary/35 p-2.5 text-center">
             <ClipboardCheck className="mx-auto size-4 text-primary" />
-            <p className="mt-1 text-[11px] font-semibold text-foreground">Check in</p>
+            <p className="mt-1 text-[11px] font-semibold text-foreground">Daily Reflection</p>
             <p className="text-[10px] leading-snug text-muted-foreground">+1 credit</p>
           </div>
           <div className="rounded-xl bg-secondary/35 p-2.5 text-center">
@@ -196,7 +196,7 @@ export default function MobileGrowthCompanion({ avatarType, level, levelCredits,
           <p className="mt-1 text-[10px] leading-snug text-muted-foreground">They stay here until you choose to use them.</p>
         </div>
         <div className="rounded-2xl border border-border/70 bg-card p-3.5 text-center">
-          <p className="text-xs text-muted-foreground">Check-in run</p>
+          <p className="text-xs text-muted-foreground">Daily Reflection run</p>
           <div className="mt-0.5 flex items-center justify-center gap-2"><p className="text-3xl font-bold text-foreground">{streak || 0}</p><CheckCircle2 className="size-4 text-primary" /></div>
           <p className="mt-1 text-[10px] leading-snug text-muted-foreground">Shown for context. It does not control engagement levels.</p>
         </div>

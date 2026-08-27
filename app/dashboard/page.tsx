@@ -207,7 +207,7 @@ export default async function DashboardPage() {
                 Your Waypoint at a glance
               </h1>
             </div>
-            <p className="hidden max-w-md text-right text-sm text-muted-foreground lg:block">
+            <p className="invisible hidden max-w-md text-right text-sm text-muted-foreground lg:block" aria-hidden="true">
               See your growth progress first, then choose the next useful action for today.
             </p>
           </div>
@@ -296,24 +296,24 @@ export default async function DashboardPage() {
                   <div className={`flex size-11 shrink-0 items-center justify-center rounded-xl border ${todayCheckIn ? "border-emerald-500/25 bg-emerald-500/10" : "border-primary/25 bg-primary/10"}`}>
                     {todayCheckIn ? <CheckCircle2 className="size-5 text-emerald-600" /> : <ClipboardCheck className="size-5 text-primary" />}
                   </div>
-                  <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${todayCheckIn ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300" : "bg-secondary text-muted-foreground"}`}>
+                  <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${todayCheckIn ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300" : "invisible bg-secondary text-muted-foreground"}`} aria-hidden={!todayCheckIn}>
                     {todayCheckIn ? "Recorded today" : "Optional"}
                   </span>
                 </div>
 
                 <h2 className="mt-5 text-xl font-bold tracking-tight text-foreground">
                   {todayCheckIn
-                    ? "Today's check-in"
+                    ? "Today's Daily Reflection"
                     : hasCheckInHistory
                       ? "How are things today?"
-                      : "Your first check-in, when you're ready"}
+                      : "Your first Daily Reflection, when you're ready"}
                 </h2>
                 <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
                   {todayCheckIn
                     ? "Your entry is saved. The Weekly Overview below is where your recent self-reported patterns are reflected back over time."
                     : hasCheckInHistory
-                      ? "A short check-in can capture your mood, urges and anything that stood out. Skip it if today is not the day for it."
-                      : "A check-in gives you a self-reported starting point that Waypoint can reflect back over time. It is optional, and you can explore the Journey first if you prefer."}
+                      ? "A short Daily Reflection can capture your mood, urges and anything that stood out. Skip it if today is not the day for it."
+                      : "A Daily Reflection gives you a self-reported starting point that Waypoint can reflect back over time. It is optional, and you can explore the Journey first if you prefer."}
                 </p>
 
                 {todayCheckIn ? (
@@ -341,7 +341,7 @@ export default async function DashboardPage() {
                   </>
                 ) : (
                   <Link href="/check-in" className="mt-5 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90">
-                    {hasCheckInHistory ? "Start check-in" : "Record first check-in"} <ArrowRight className="size-4" />
+                    {hasCheckInHistory ? "Start Daily Reflection" : "Record first Daily Reflection"} <ArrowRight className="size-4" />
                   </Link>
                 )}
               </div>

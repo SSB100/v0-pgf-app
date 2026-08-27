@@ -176,7 +176,7 @@ export default function GrowthAvatarCard({ avatarType, level, levelCredits, stre
             </div>
           </div>
           <div className="min-w-[92px] flex-shrink-0 text-right">
-            <div className="mb-1 text-xs font-medium text-muted-foreground">Current check-in run</div>
+            <div className="mb-1 text-xs font-medium text-muted-foreground">Current Daily Reflection run</div>
             <div className="flex items-baseline justify-end gap-1">
               <div className="text-2xl font-bold text-primary">{streak}</div>
               <div className="text-xs text-muted-foreground">days</div>

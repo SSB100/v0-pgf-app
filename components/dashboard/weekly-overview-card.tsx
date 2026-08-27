@@ -107,7 +107,7 @@ export default function WeeklyOverviewCard({ checkins, journeyTypes = [], accoun
         beforeAccount
           ? "Before you joined"
           : !checkin
-            ? "No check-in recorded"
+            ? "No Daily Reflection recorded"
             : delta !== null && delta >= 2
               ? "Your self-reported rating increased from the previous recorded day"
               : delta !== null && delta <= -2
@@ -139,8 +139,8 @@ export default function WeeklyOverviewCard({ checkins, journeyTypes = [], accoun
       <CardContent className="space-y-3 pb-3">
         {!hasAnyHistory && (
           <div className="rounded-lg border-2 border-primary/20 bg-primary/10 p-3">
-            <p className="mb-1 text-sm font-medium text-primary">No check-ins in this 7-day view yet</p>
-            <p className="text-xs text-muted-foreground">When you record a check-in, your self-reported mood, overall rating and urges will appear here. Missing a day is not a failure.</p>
+            <p className="mb-1 text-sm font-medium text-primary">No Daily Reflections in this 7-day view yet</p>
+            <p className="text-xs text-muted-foreground">When you record a Daily Reflection, your self-reported mood, overall rating and urges will appear here. Missing a day is not a failure.</p>
           </div>
         )}
 
@@ -148,14 +148,14 @@ export default function WeeklyOverviewCard({ checkins, journeyTypes = [], accoun
           <div className="flex items-start gap-2 rounded-lg border border-border bg-muted/40 p-2.5 text-xs">
             <AlertCircle className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
             <p className="text-muted-foreground">
-              <span className="font-medium text-foreground">{missingDays} day{missingDays === 1 ? "" : "s"} without a check-in.</span>{" "}
-              Those days are left empty rather than treated as good or bad days. Missing a check-in is not a failure.
+              <span className="font-medium text-foreground">{missingDays} day{missingDays === 1 ? "" : "s"} without a Daily Reflection.</span>{" "}
+              Those days are left empty rather than treated as good or bad days. Missing a Daily Reflection is not a failure.
             </p>
           </div>
         )}
 
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
-          <span className="font-semibold text-foreground">Self-reported check-ins</span>
+          <span className="font-semibold text-foreground">Self-reported Daily Reflections</span>
           <span className="flex items-center gap-1"><i className="size-2 rounded-sm bg-[var(--chart-1)]" />Mood</span>
           <span className="flex items-center gap-1"><i className="size-2 rounded-sm bg-[var(--chart-2)]" />Overall</span>
           <span className="flex items-center gap-1"><i className="size-2 rounded-sm bg-[var(--chart-3)]" />Urges</span>
@@ -173,7 +173,7 @@ export default function WeeklyOverviewCard({ checkins, journeyTypes = [], accoun
           </BarChart>
         </ChartContainer>
 
-        <div className="grid grid-cols-7 gap-1" aria-label="Daily check-in status">
+        <div className="grid grid-cols-7 gap-1" aria-label="Daily Reflection status">
           {chartData.map((day) => (
             <div key={day.dateLabel} className="flex min-w-0 flex-col items-center gap-1 text-center" title={day.feedback}>
               <div className={`flex size-5 items-center justify-center rounded-full text-[10px] font-bold ${day.beforeAccount ? "bg-muted/40 text-muted-foreground/50" : !day.hasData ? "bg-muted text-muted-foreground" : "bg-primary/15 text-primary"}`}>

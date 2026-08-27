@@ -37,7 +37,7 @@ export default function DashboardHeader({ userName, userEmail, journeyProgress }
             <p className="truncate text-sm font-semibold text-foreground">
               Welcome back, <span className="text-primary">{userName}</span>
             </p>
-            <p className="text-xs text-muted-foreground">Your space to check in, learn, reflect and keep track of what matters to you.</p>
+            <p className="text-xs text-muted-foreground">Your space for Daily Reflections, learning and keeping track of what matters to you.</p>
           </div>
 
           <div className="flex shrink-0 items-center gap-2">
