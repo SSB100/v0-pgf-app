@@ -1,0 +1,355 @@
+name: Apply dashboard reflection rebalance
+
+on:
+  push:
+    branches:
+      - ui/daily-reflection-card-rebalance
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
+      - name: Apply audited dashboard changes
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace_once(text: str, old: str, new: str, label: str) -> str:
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f"{label}: expected exactly one match, found {count}")
+              return text.replace(old, new, 1)
+
+          dashboard_path = Path("app/dashboard/page.tsx")
+          dashboard = dashboard_path.read_text()
+
+          dashboard = replace_once(
+              dashboard,
+              'import { ArrowRight, CheckCircle2, ClipboardCheck, Map } from "lucide-react"',
+              'import { ArrowRight, CheckCircle2, ClipboardCheck, Map, Quote } from "lucide-react"',
+              "quote icon import",
+          )
+
+          old_helper = '''function toDateKey(value: unknown): string | null {
+            if (value instanceof Date) return value.toISOString().slice(0, 10)
+            if (typeof value === "string" && /^\\d{4}-\\d{2}-\\d{2}/.test(value)) return value.slice(0, 10)
+            return null
+          }
+          '''
+          new_helper = '''function toDateKey(value: unknown): string | null {
+            if (value instanceof Date) return value.toISOString().slice(0, 10)
+            if (typeof value === "string" && /^\\d{4}-\\d{2}-\\d{2}/.test(value)) return value.slice(0, 10)
+            return null
+          }
+
+          const POSITIVE_EMOTIONS = new Set(["Happy", "Excited", "Calm", "Hopeful", "Proud", "Content", "Grateful"])
+
+          function normalizeEmotionList(value: unknown): string[] {
+            if (Array.isArray(value)) return value.filter((item): item is string => typeof item === "string")
+            if (typeof value !== "string") return []
+
+            const trimmed = value.trim()
+            if (!trimmed) return []
+
+            try {
+              const parsed = JSON.parse(trimmed)
+              if (Array.isArray(parsed)) return parsed.filter((item): item is string => typeof item === "string")
+            } catch {
+              // PostgreSQL text arrays can arrive as {Happy,Calm}; handle that form below.
+            }
+
+            if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
+              return trimmed
+                .slice(1, -1)
+                .split(",")
+                .map((item) => item.trim().replace(/^\"|\"$/g, ""))
+                .filter(Boolean)
+            }
+
+            return [trimmed]
+          }
+
+          function getDailyReflectionMessage(score: number | null): string {
+            if (score === null) return "Notice what stood out today and what you may want to remember tomorrow."
+            if (score <= 3) return "Today may have carried a lot. Keep the next step simple and notice anything that helped, even briefly."
+            if (score <= 6) return "A mixed day can still be useful to notice. Keep what helped in view and leave room for what felt difficult."
+            if (score <= 8) return "There were things worth holding onto today. Notice what helped so you can recognise it again."
+            return "Take a moment to remember what made today feel strong. Those details can be useful when another day feels different."
+          }
+          '''
+          dashboard = replace_once(dashboard, old_helper, new_helper, "dashboard reflection helpers")
+
+          old_derived = '''  const todayCheckIn = todayCheckInResult[0] || null
+            const hasCheckInHistory = profile.has_check_in_history === true
+          '''
+          new_derived = '''  const todayCheckIn = todayCheckInResult[0] || null
+            const hasCheckInHistory = profile.has_check_in_history === true
+            const todayEmotions = normalizeEmotionList(todayCheckIn?.emotions_felt)
+            const positiveEmotions = todayEmotions.filter((emotion) => POSITIVE_EMOTIONS.has(emotion))
+            const visiblePositiveEmotions = positiveEmotions.slice(0, 4)
+            const reflectionScoreValue = todayCheckIn?.overall_rating ?? todayCheckIn?.mood_rating ?? null
+            const reflectionScore = reflectionScoreValue === null ? null : Number(reflectionScoreValue)
+            const dailyReflectionMessage = getDailyReflectionMessage(
+              reflectionScore !== null && Number.isFinite(reflectionScore) ? reflectionScore : null,
+            )
+          '''
+          dashboard = replace_once(dashboard, old_derived, new_derived, "daily reflection derived data")
+
+          dashboard = replace_once(
+              dashboard,
+              'xl:grid-cols-[minmax(0,1.5fr)_minmax(280px,0.85fr)] xl:grid-rows-[minmax(270px,auto)_1fr]',
+              'xl:grid-cols-[minmax(320px,0.9fr)_minmax(0,1.45fr)] xl:grid-rows-[400px_minmax(0,1fr)]',
+              "desktop card proportions",
+          )
+
+          dashboard = replace_once(
+              dashboard,
+              'className="relative min-h-[270px] overflow-hidden rounded-2xl border border-primary/25 bg-card shadow-sm"',
+              'className="relative min-h-[270px] overflow-hidden rounded-2xl border border-primary/25 bg-card shadow-sm xl:h-full xl:min-h-0"',
+              "next journey fixed desktop height",
+          )
+          dashboard = replace_once(
+              dashboard,
+              'className="relative flex h-full flex-col justify-between gap-6 p-5 sm:p-6 lg:p-7"',
+              'className="relative flex h-full flex-col justify-between gap-5 p-5 sm:p-6 xl:p-5"',
+              "next journey compact padding",
+          )
+          dashboard = replace_once(
+              dashboard,
+              'className="mb-5 flex flex-wrap items-center gap-2"',
+              'className="mb-4 flex flex-wrap items-center gap-2"',
+              "next journey metadata spacing",
+          )
+          dashboard = replace_once(
+              dashboard,
+              'className="max-w-2xl text-2xl font-bold leading-tight tracking-tight text-foreground sm:text-3xl"',
+              'className="max-w-2xl text-2xl font-bold leading-tight tracking-tight text-foreground sm:text-3xl xl:text-2xl"',
+              "next journey responsive title",
+          )
+          dashboard = replace_once(
+              dashboard,
+              'className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base"',
+              'className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base xl:text-sm"',
+              "next journey responsive description",
+          )
+          dashboard = replace_once(
+              dashboard,
+              'className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"',
+              'className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between xl:flex-col xl:items-stretch"',
+              "next journey responsive footer",
+          )
+          dashboard = replace_once(
+              dashboard,
+              'className="min-w-0 flex-1 sm:max-w-md"',
+              'className="min-w-0 flex-1 sm:max-w-md xl:max-w-none"',
+              "next journey progress width",
+          )
+          dashboard = replace_once(
+              dashboard,
+              'className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"',
+              'className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 xl:w-full"',
+              "next journey button width",
+          )
+          dashboard = replace_once(
+              dashboard,
+              'className="flex min-h-[270px] flex-col justify-between rounded-2xl border border-primary/25 bg-primary/5 p-5 shadow-sm sm:p-6 lg:p-7"',
+              'className="flex min-h-[270px] flex-col justify-between rounded-2xl border border-primary/25 bg-primary/5 p-5 shadow-sm sm:p-6 xl:h-full xl:min-h-0 xl:p-5"',
+              "completed journey fixed desktop height",
+          )
+
+          old_reflection = '''              <div className={`rounded-2xl border p-5 shadow-sm sm:p-6 ${todayCheckIn ? "border-emerald-500/25 bg-emerald-500/5" : "border-border/70 bg-card"}`}>
+                          <div className="flex items-start justify-between gap-3">
+                            <div className={`flex size-11 shrink-0 items-center justify-center rounded-xl border ${todayCheckIn ? "border-emerald-500/25 bg-emerald-500/10" : "border-primary/25 bg-primary/10"}`}>
+                              {todayCheckIn ? <CheckCircle2 className="size-5 text-emerald-600" /> : <ClipboardCheck className="size-5 text-primary" />}
+                            </div>
+                            <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${todayCheckIn ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300" : "invisible bg-secondary text-muted-foreground"}`} aria-hidden={!todayCheckIn}>
+                              {todayCheckIn ? "Recorded today" : "Optional"}
+                            </span>
+                          </div>
+          
+                          <h2 className="mt-5 text-xl font-bold tracking-tight text-foreground">
+                            {todayCheckIn
+                              ? "Today's Daily Reflection"
+                              : hasCheckInHistory
+                                ? "How are things today?"
+                                : "Your first Daily Reflection, when you're ready"}
+                          </h2>
+                          <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+                            {todayCheckIn
+                              ? "Your entry is saved. The Weekly Overview below is where your recent self-reported patterns are reflected back over time."
+                              : hasCheckInHistory
+                                ? "A short Daily Reflection can capture your mood, urges and anything that stood out. Skip it if today is not the day for it."
+                                : "A Daily Reflection gives you a self-reported starting point that Waypoint can reflect back over time. It is optional, and you can explore the Journey first if you prefer."}
+                          </p>
+          
+                          {todayCheckIn ? (
+                            <>
+                              <div className="mt-5 grid grid-cols-2 gap-2">
+                                <div className="rounded-xl border border-border/60 bg-background/70 p-3">
+                                  <p className="text-[11px] font-medium text-muted-foreground">Mood</p>
+                                  <p className="mt-0.5 text-xl font-bold text-foreground">{todayCheckIn.mood_rating}/10</p>
+                                </div>
+                                <div className="rounded-xl border border-border/60 bg-background/70 p-3">
+                                  <p className="text-[11px] font-medium text-muted-foreground">Overall</p>
+                                  <p className="mt-0.5 text-xl font-bold text-foreground">
+                                    {todayCheckIn.overall_rating ?? "—"}{todayCheckIn.overall_rating != null ? "/10" : ""}
+                                  </p>
+                                </div>
+                              </div>
+                              {todayCheckIn.strongest_emotion && (
+                                <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
+                                  Strongest emotion recorded: <span className="font-medium text-foreground">{todayCheckIn.strongest_emotion}</span>
+                                </p>
+                              )}
+                              <Link href="#weekly-overview" className="mt-5 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-border bg-background px-4 py-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-secondary/50">
+                                View weekly overview <ArrowRight className="size-4" />
+                              </Link>
+                            </>
+                          ) : (
+                            <Link href="/check-in" className="mt-5 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90">
+                              {hasCheckInHistory ? "Start Daily Reflection" : "Record first Daily Reflection"} <ArrowRight className="size-4" />
+                            </Link>
+                          )}
+                        </div>'''
+          new_reflection = '''              <div className={`flex min-h-[360px] flex-col rounded-2xl border p-5 shadow-sm sm:p-6 xl:h-full xl:min-h-0 xl:p-5 ${todayCheckIn ? "border-emerald-500/25 bg-emerald-500/5" : "border-border/70 bg-card"}`}>
+                          <div className="flex items-start justify-between gap-3">
+                            <div className={`flex size-11 shrink-0 items-center justify-center rounded-xl border ${todayCheckIn ? "border-emerald-500/25 bg-emerald-500/10" : "border-primary/25 bg-primary/10"}`}>
+                              {todayCheckIn ? <CheckCircle2 className="size-5 text-emerald-600" /> : <ClipboardCheck className="size-5 text-primary" />}
+                            </div>
+                            <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${todayCheckIn ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300" : "invisible bg-secondary text-muted-foreground"}`} aria-hidden={!todayCheckIn}>
+                              {todayCheckIn ? "Recorded today" : "Optional"}
+                            </span>
+                          </div>
+          
+                          <h2 className="mt-4 text-xl font-bold tracking-tight text-foreground">
+                            {todayCheckIn
+                              ? "Today's Daily Reflection"
+                              : hasCheckInHistory
+                                ? "How are things today?"
+                                : "Your first Daily Reflection, when you're ready"}
+                          </h2>
+                          <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+                            {todayCheckIn
+                              ? "Your entry is saved. Here is a snapshot of what you recorded today."
+                              : hasCheckInHistory
+                                ? "A short Daily Reflection can capture your mood, urges and anything that stood out. Skip it if today is not the day for it."
+                                : "A Daily Reflection gives you a self-reported starting point that Waypoint can reflect back over time. It is optional, and you can explore the Journey first if you prefer."}
+                          </p>
+          
+                          {todayCheckIn && (
+                            <div className="mt-4 space-y-3">
+                              <div className="grid grid-cols-2 gap-2 sm:grid-cols-[0.72fr_0.72fr_1.56fr]">
+                                <div className="rounded-xl border border-border/60 bg-background/70 p-3">
+                                  <p className="text-[11px] font-medium text-muted-foreground">Mood</p>
+                                  <p className="mt-0.5 text-xl font-bold text-foreground">{todayCheckIn.mood_rating}/10</p>
+                                </div>
+                                <div className="rounded-xl border border-border/60 bg-background/70 p-3">
+                                  <p className="text-[11px] font-medium text-muted-foreground">Overall</p>
+                                  <p className="mt-0.5 text-xl font-bold text-foreground">
+                                    {todayCheckIn.overall_rating ?? "—"}{todayCheckIn.overall_rating != null ? "/10" : ""}
+                                  </p>
+                                </div>
+                                <div className="col-span-2 rounded-xl border border-border/60 bg-background/70 p-3 sm:col-span-1">
+                                  <p className="text-[11px] font-medium text-muted-foreground">Positive emotions</p>
+                                  {visiblePositiveEmotions.length > 0 ? (
+                                    <div className="mt-1.5 flex flex-wrap gap-1.5">
+                                      {visiblePositiveEmotions.map((emotion) => (
+                                        <span key={emotion} className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:text-emerald-300">
+                                          {emotion}
+                                        </span>
+                                      ))}
+                                      {positiveEmotions.length > visiblePositiveEmotions.length && (
+                                        <span className="rounded-full border border-border/60 bg-secondary/60 px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
+                                          +{positiveEmotions.length - visiblePositiveEmotions.length}
+                                        </span>
+                                      )}
+                                    </div>
+                                  ) : (
+                                    <p className="mt-1.5 text-xs font-medium text-foreground">None selected today</p>
+                                  )}
+                                  {todayCheckIn.strongest_emotion && (
+                                    <p className="mt-1.5 truncate text-[10px] text-muted-foreground">
+                                      Strongest: <span className="font-medium text-foreground">{todayCheckIn.strongest_emotion}</span>
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+
+                              <div className="flex items-start gap-3 rounded-xl border border-primary/15 bg-primary/[0.04] px-3.5 py-3">
+                                <Quote className="mt-0.5 size-4 shrink-0 text-primary/70" />
+                                <div className="min-w-0">
+                                  <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">Reflection for today</p>
+                                  <p className="mt-1 text-xs leading-relaxed text-foreground/80">{dailyReflectionMessage}</p>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="mt-auto pt-4">
+                            {todayCheckIn ? (
+                              <Link href="#weekly-overview" className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-border bg-background px-4 py-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-secondary/50">
+                                View weekly overview <ArrowRight className="size-4" />
+                              </Link>
+                            ) : (
+                              <Link href="/check-in" className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90">
+                                {hasCheckInHistory ? "Start Daily Reflection" : "Record first Daily Reflection"} <ArrowRight className="size-4" />
+                              </Link>
+                            )}
+                          </div>
+                        </div>'''
+          dashboard = replace_once(dashboard, old_reflection, new_reflection, "daily reflection card")
+          dashboard_path.write_text(dashboard)
+
+          growth_path = Path("components/dashboard/growth-avatar-card.tsx")
+          growth = growth_path.read_text()
+          growth = replace_once(
+              growth,
+              '<Card className="overflow-hidden border-border/50 shadow-sm">',
+              '<Card className="overflow-hidden border-border/50 pt-0 shadow-sm">',
+              "growth card top padding",
+          )
+          growth = replace_once(
+              growth,
+              'bg-gradient-to-br from-primary/15 via-card to-secondary/40 px-3 pb-3 pt-3',
+              'bg-gradient-to-br from-primary/15 via-card to-secondary/40 px-3 pb-3 pt-9',
+              "growth gradient top fill",
+          )
+          growth_path.write_text(growth)
+
+          test_path = Path("tests/client-first-use-policy.test.mjs")
+          tests = test_path.read_text()
+          tests += '''\n\ntest("desktop Daily Reflection keeps a stable wider first-row layout", async () => {
+            const source = await readSource("app/dashboard/page.tsx")
+
+            assert.match(source, /xl:grid-cols-\\[minmax\\(320px,0\\.9fr\\)_minmax\\(0,1\\.45fr\\)\\]/)
+            assert.match(source, /xl:grid-rows-\\[400px_minmax\\(0,1fr\\)\\]/)
+            assert.match(source, /xl:h-full xl:min-h-0/)
+            assert.match(source, /Positive emotions/)
+            assert.match(source, /Reflection for today/)
+            assert.match(source, /getDailyReflectionMessage/)
+          })
+
+          test("Growth and Progress extends its blue header background through the top inset", async () => {
+            const source = await readSource("components/dashboard/growth-avatar-card.tsx")
+
+            assert.match(source, /border-border\\/50 pt-0 shadow-sm/)
+            assert.match(source, /to-secondary\\/40 px-3 pb-3 pt-9/)
+          })
+          '''
+          test_path.write_text(tests)
+          PY
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/dashboard/page.tsx components/dashboard/growth-avatar-card.tsx tests/client-first-use-policy.test.mjs
+          git rm .github/workflows/temp-dashboard-reflection-rebalance.yml
+          git commit -m "Rebalance dashboard Daily Reflection card"
+          git push origin HEAD
