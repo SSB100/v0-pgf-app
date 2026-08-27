@@ -24,6 +24,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Audit check-in terminology
+        run: |
+          echo '--- USER-FACING TERMINOLOGY AUDIT ---'
+          grep -RniE 'check[- ]?ins?|checkins?' app components lib \
+            --include='*.ts' --include='*.tsx' --include='*.mjs' \
+            --exclude-dir=api || true
+          echo '--- END AUDIT ---'
+
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
         with:
