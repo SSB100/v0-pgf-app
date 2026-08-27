@@ -113,3 +113,21 @@ test("Growth and Progress extends its blue header background through the top ins
   assert.match(source, /border-border\/50 pt-0 shadow-sm/)
   assert.match(source, /to-secondary\/40 px-3 pb-3 pt-9/)
 })
+
+
+test("Daily Reflection compacts its XL completed state without increasing the fixed row", async () => {
+  const source = await readSource("app/dashboard/page.tsx")
+
+  assert.match(source, /xl:grid-rows-\[400px_minmax\(0,1fr\)\]/)
+  assert.match(source, /xl:overflow-hidden xl:p-4/)
+  assert.match(source, /xl:mt-3 xl:space-y-2/)
+  assert.match(source, /xl:text-\[11px\] xl:leading-snug/)
+  assert.match(source, /xl:min-h-10/)
+})
+
+test("Growth and Progress stretches to the bottom of the Core Values row on desktop", async () => {
+  const source = await readSource("app/dashboard/page.tsx")
+
+  assert.match(source, /lg:col-span-4 lg:min-w-0 xl:h-full xl:\[&>\*\]:h-full/)
+  assert.match(source, /hidden xl:col-span-2 xl:block xl:min-w-0 xl:\[&>\*\]:h-full/)
+})

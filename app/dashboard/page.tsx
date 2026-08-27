@@ -258,7 +258,7 @@ export default async function DashboardPage() {
           <QuickActionsBar />
 
           <div className="grid gap-4 lg:grid-cols-12 lg:items-start xl:items-stretch">
-            <div className="lg:col-span-4 lg:min-w-0">
+            <div className="lg:col-span-4 lg:min-w-0 xl:h-full xl:[&>*]:h-full">
               <GrowthAvatarCard
                 avatarType={profile.growth_avatar || "growth_tree"}
                 level={profile.tree_growth_level}
@@ -334,9 +334,9 @@ export default async function DashboardPage() {
                 </div>
               )}
 
-              <div className={`flex min-h-[360px] flex-col rounded-2xl border p-5 shadow-sm sm:p-6 xl:h-full xl:min-h-0 xl:p-5 ${todayCheckIn ? "border-emerald-500/25 bg-emerald-500/5" : "border-border/70 bg-card"}`}>
+              <div className={`flex min-h-[360px] flex-col rounded-2xl border p-5 shadow-sm sm:p-6 xl:h-full xl:min-h-0 xl:overflow-hidden xl:p-4 ${todayCheckIn ? "border-emerald-500/25 bg-emerald-500/5" : "border-border/70 bg-card"}`}>
       <div className="flex items-start justify-between gap-3">
-        <div className={`flex size-11 shrink-0 items-center justify-center rounded-xl border ${todayCheckIn ? "border-emerald-500/25 bg-emerald-500/10" : "border-primary/25 bg-primary/10"}`}>
+        <div className={`flex size-11 shrink-0 items-center justify-center rounded-xl border xl:size-9 ${todayCheckIn ? "border-emerald-500/25 bg-emerald-500/10" : "border-primary/25 bg-primary/10"}`}>
           {todayCheckIn ? <CheckCircle2 className="size-5 text-emerald-600" /> : <ClipboardCheck className="size-5 text-primary" />}
         </div>
         <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${todayCheckIn ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300" : "invisible bg-secondary text-muted-foreground"}`} aria-hidden={!todayCheckIn}>
@@ -344,14 +344,14 @@ export default async function DashboardPage() {
         </span>
       </div>
 
-      <h2 className="mt-4 text-xl font-bold tracking-tight text-foreground">
+      <h2 className="mt-4 text-xl font-bold tracking-tight text-foreground xl:mt-3 xl:text-lg">
         {todayCheckIn
           ? "Today's Daily Reflection"
           : hasCheckInHistory
             ? "How are things today?"
             : "Your first Daily Reflection, when you're ready"}
       </h2>
-      <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+      <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground xl:mt-1 xl:text-xs xl:leading-snug">
         {todayCheckIn
           ? "Your entry is saved. Here is a snapshot of what you recorded today."
           : hasCheckInHistory
@@ -360,22 +360,22 @@ export default async function DashboardPage() {
       </p>
 
       {todayCheckIn && (
-        <div className="mt-4 space-y-3">
+        <div className="mt-4 space-y-3 xl:mt-3 xl:space-y-2">
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-[0.72fr_0.72fr_1.56fr]">
-            <div className="rounded-xl border border-border/60 bg-background/70 p-3">
+            <div className="rounded-xl border border-border/60 bg-background/70 p-3 xl:px-3 xl:py-2">
               <p className="text-[11px] font-medium text-muted-foreground">Mood</p>
-              <p className="mt-0.5 text-xl font-bold text-foreground">{todayCheckIn.mood_rating}/10</p>
+              <p className="mt-0.5 text-xl font-bold text-foreground xl:text-lg">{todayCheckIn.mood_rating}/10</p>
             </div>
-            <div className="rounded-xl border border-border/60 bg-background/70 p-3">
+            <div className="rounded-xl border border-border/60 bg-background/70 p-3 xl:px-3 xl:py-2">
               <p className="text-[11px] font-medium text-muted-foreground">Overall</p>
-              <p className="mt-0.5 text-xl font-bold text-foreground">
+              <p className="mt-0.5 text-xl font-bold text-foreground xl:text-lg">
                 {todayCheckIn.overall_rating ?? "—"}{todayCheckIn.overall_rating != null ? "/10" : ""}
               </p>
             </div>
-            <div className="col-span-2 rounded-xl border border-border/60 bg-background/70 p-3 sm:col-span-1">
+            <div className="col-span-2 rounded-xl border border-border/60 bg-background/70 p-3 sm:col-span-1 xl:px-3 xl:py-2">
               <p className="text-[11px] font-medium text-muted-foreground">Positive emotions</p>
               {visiblePositiveEmotions.length > 0 ? (
-                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                <div className="mt-1.5 flex flex-wrap gap-1.5 xl:mt-1 xl:gap-1">
                   {visiblePositiveEmotions.map((emotion) => (
                     <span key={emotion} className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:text-emerald-300">
                       {emotion}
@@ -391,30 +391,30 @@ export default async function DashboardPage() {
                 <p className="mt-1.5 text-xs font-medium text-foreground">None selected today</p>
               )}
               {todayCheckIn.strongest_emotion && (
-                <p className="mt-1.5 truncate text-[10px] text-muted-foreground">
+                <p className="mt-1.5 truncate text-[10px] text-muted-foreground xl:mt-1">
                   Strongest: <span className="font-medium text-foreground">{todayCheckIn.strongest_emotion}</span>
                 </p>
               )}
             </div>
           </div>
 
-          <div className="flex items-start gap-3 rounded-xl border border-primary/15 bg-primary/[0.04] px-3.5 py-3">
+          <div className="flex items-start gap-3 rounded-xl border border-primary/15 bg-primary/[0.04] px-3.5 py-3 xl:gap-2.5 xl:px-3 xl:py-2">
             <Quote className="mt-0.5 size-4 shrink-0 text-primary/70" />
             <div className="min-w-0">
               <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">Reflection for today</p>
-              <p className="mt-1 text-xs leading-relaxed text-foreground/80">{dailyReflectionMessage}</p>
+              <p className="mt-1 text-xs leading-relaxed text-foreground/80 xl:mt-0.5 xl:text-[11px] xl:leading-snug">{dailyReflectionMessage}</p>
             </div>
           </div>
         </div>
       )}
 
-      <div className="mt-auto pt-4">
+      <div className="mt-auto pt-4 xl:pt-3">
         {todayCheckIn ? (
-          <Link href="#weekly-overview" className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-border bg-background px-4 py-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-secondary/50">
+          <Link href="#weekly-overview" className="inline-flex min-h-11 w-full xl:min-h-10 items-center justify-center gap-2 rounded-xl border border-border bg-background px-4 py-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-secondary/50">
             View weekly overview <ArrowRight className="size-4" />
           </Link>
         ) : (
-          <Link href="/check-in" className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90">
+          <Link href="/check-in" className="inline-flex min-h-11 w-full xl:min-h-10 items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90">
             {hasCheckInHistory ? "Start Daily Reflection" : "Record first Daily Reflection"} <ArrowRight className="size-4" />
           </Link>
         )}
