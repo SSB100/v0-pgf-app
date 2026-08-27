@@ -95,3 +95,21 @@ test("public getting-started copy describes the comprehensive baseline onboardin
 
   assert.match(footer, /© 2026 Waypoint/)
 })
+
+
+test("desktop Daily Reflection keeps a stable wider first-row layout", async () => {
+  const source = await readSource("app/dashboard/page.tsx")
+
+  assert.match(source, /xl:grid-cols-\[minmax\(320px,0\.9fr\)_minmax\(0,1\.45fr\)\]/)
+  assert.match(source, /xl:grid-rows-\[400px_minmax\(0,1fr\)\]/)
+  assert.match(source, /Positive emotions/)
+  assert.match(source, /Reflection for today/)
+  assert.match(source, /getDailyReflectionMessage/)
+})
+
+test("Growth and Progress extends its blue header background through the top inset", async () => {
+  const source = await readSource("components/dashboard/growth-avatar-card.tsx")
+
+  assert.match(source, /border-border\/50 pt-0 shadow-sm/)
+  assert.match(source, /to-secondary\/40 px-3 pb-3 pt-9/)
+})
