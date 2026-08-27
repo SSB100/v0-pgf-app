@@ -40,7 +40,7 @@ test("minimal dashboard check-in state is truthful and does not link to a missin
   const source = await readSource("app/dashboard/page.tsx")
 
   assert.match(source, /has_check_in_history/)
-  assert.match(source, /Your first check-in, when you're ready/)
+  assert.match(source, /Your first Daily Reflection, when you're ready/)
   assert.match(source, /href="#weekly-overview"/)
   assert.match(source, /id="weekly-overview"/)
   assert.doesNotMatch(source, /href="\/progress"/)
@@ -56,8 +56,8 @@ test("desktop dashboard does not assume every client uses a Growth Companion", a
 test("weekly overview does not assume an empty seven-day window means a first-ever check-in", async () => {
   const source = await readSource("components/dashboard/weekly-overview-card.tsx")
 
-  assert.match(source, /No check-ins in this 7-day view yet/)
-  assert.doesNotMatch(source, /Complete your first check-in to get started/)
+  assert.match(source, /No Daily Reflections in this 7-day view yet/)
+  assert.doesNotMatch(source, /Complete your first Daily Reflection to get started/)
 })
 
 test("minimal dashboard values and skill suggestions remain optional and truthful", async () => {
@@ -83,15 +83,15 @@ test("public getting-started copy describes the comprehensive baseline onboardin
   assert.match(home, /Establish your Waypoint baseline/)
   assert.match(home, /relevant history and patterns/)
   assert.match(home, /your values and strengths/)
-  assert.match(home, /your first Daily Check-in/)
+  assert.match(home, /your first Daily Reflection/)
   assert.doesNotMatch(home, /personalise the experience further later/)
 
   assert.match(faq, /complete guided onboarding to establish your starting self-reported baseline/)
   assert.match(faq, /relevant history and patterns/)
   assert.match(faq, /your values and strengths/)
-  assert.match(faq, /first Daily Check-in/)
+  assert.match(faq, /first Daily Reflection/)
   assert.doesNotMatch(faq, /brief setup gets you to your dashboard/)
-  assert.doesNotMatch(faq, /Daily check-ins, values work and other personalisation can be used later/)
+  assert.doesNotMatch(faq, /Daily Reflections, values work and other personalisation can be used later/)
 
   assert.match(footer, /© 2026 Waypoint/)
 })
