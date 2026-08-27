@@ -212,6 +212,8 @@ export default async function DashboardPage() {
             </p>
           </div>
 
+          <QuickActionsBar />
+
           <div className="grid gap-4 lg:grid-cols-12 lg:items-start xl:items-stretch">
             <div className="lg:col-span-4 lg:min-w-0">
               <GrowthAvatarCard
@@ -359,13 +361,9 @@ export default async function DashboardPage() {
           />
         )}
 
-        <div className="hidden lg:block">
-          <QuickActionsBar />
-        </div>
-
-        <section className="grid gap-5 lg:grid-cols-12 lg:gap-6" aria-label="Your Waypoint overview">
+        <section className="grid gap-5 lg:grid-cols-12 lg:gap-6 xl:items-stretch" aria-label="Your Waypoint overview">
           <div className="space-y-5 lg:col-span-8 lg:min-w-0 lg:space-y-6 xl:contents">
-            <div id="weekly-overview" className={`scroll-mt-24 xl:min-w-0 ${journeyTypes.length > 0 ? "xl:col-span-8" : "xl:col-span-12"}`}>
+            <div id="weekly-overview" className={`scroll-mt-24 xl:h-full xl:min-w-0 xl:[&>*]:h-full ${journeyTypes.length > 0 ? "xl:col-span-8" : "xl:col-span-12"}`}>
               <WeeklyOverviewCard checkins={weeklyCheckins} journeyTypes={journeyTypes} accountCreatedAt={user.created_at} />
             </div>
             {journeyTypes.length > 0 && (
