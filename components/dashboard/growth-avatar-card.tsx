@@ -122,11 +122,11 @@ export default function GrowthAvatarCard({ avatarType, level, levelCredits, stre
 
   return (
     <Card className="overflow-hidden border-border/50 shadow-sm">
-      <div className="relative overflow-hidden border-b border-border/40 bg-gradient-to-br from-primary/15 via-card to-secondary/40 px-5 pb-5 pt-4">
+      <div className="relative overflow-hidden border-b border-border/40 bg-gradient-to-br from-primary/15 via-card to-secondary/40 px-3 pb-3 pt-3">
         <div className="pointer-events-none absolute -right-16 -top-16 size-44 rounded-full bg-primary/10 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-20 -left-16 size-44 rounded-full bg-primary/10 blur-3xl" />
 
-        <div className="relative flex items-start justify-between gap-4">
+        <div className="relative flex items-start justify-between gap-4 px-1">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Growth &amp; Progress</p>
             <h3 className="mt-0.5 text-lg font-bold leading-tight text-foreground">{progressOnly ? "Progress only" : `Your ${config.name}`}</h3>
@@ -145,47 +145,43 @@ export default function GrowthAvatarCard({ avatarType, level, levelCredits, stre
           </TooltipProvider>
         </div>
 
-        <div className="relative mt-4 flex flex-col items-center text-center">
+        <div className="relative mt-3 flex justify-center">
           {progressOnly ? (
-            <div className="flex size-36 items-center justify-center rounded-[2rem] border border-primary/25 bg-background/80 shadow-lg ring-4 ring-background/50">
-              <Sparkles className="size-12 text-primary" />
+            <div className="flex h-48 w-full items-center justify-center rounded-[1.75rem] border border-primary/25 bg-background/80 shadow-lg ring-2 ring-background/50">
+              <Sparkles className="size-14 text-primary" />
             </div>
           ) : (
-            <div className="relative size-40 overflow-hidden rounded-[2rem] border border-primary/25 bg-background shadow-lg ring-4 ring-background/60">
+            <div className="relative h-52 w-full overflow-hidden rounded-[1.75rem] border border-primary/25 bg-background shadow-lg ring-2 ring-background/60">
               <Image
                 id="growth-avatar-image"
                 src={avatar.image || "/placeholder.svg"}
                 alt={avatar.stage}
                 fill
-                sizes="160px"
-                className="rounded-[2rem] object-contain transition-all duration-700 ease-in-out"
+                sizes="(min-width: 1280px) 420px, 100vw"
+                className="rounded-[1.75rem] object-contain transition-all duration-700 ease-in-out"
                 priority
               />
             </div>
           )}
-
-          <div className="mt-3">
-            <div className={`text-2xl font-bold ${progressOnly ? "text-primary" : avatar.color}`}>{progressOnly ? `Level ${currentLevel}` : avatar.stage}</div>
-            <div className="mt-0.5 text-sm font-medium text-muted-foreground">Engagement level {currentLevel}</div>
-            <div className="mx-auto mt-1 max-w-sm text-pretty text-xs leading-relaxed text-muted-foreground">
-              {progressOnly ? "Your engagement progress without a character or creature." : avatar.description}
-            </div>
-          </div>
         </div>
       </div>
 
-      <CardContent className="space-y-4 pt-4">
-        <div className="flex items-center justify-between gap-3 rounded-2xl border border-border/50 bg-secondary/30 px-4 py-3">
-          <div>
-            <div className="mb-0.5 text-xs font-medium text-muted-foreground">Current check-in run</div>
-            <p className="text-pretty text-xs leading-snug text-muted-foreground">
-              This counts consecutive recorded check-ins. Missing a day does not erase earlier entries or mean you have failed.
-            </p>
+      <CardContent className="space-y-4 pt-3">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 rounded-2xl border border-border/50 bg-secondary/30 px-4 py-3.5">
+          <div className="min-w-0">
+            <div className={`text-xl font-bold ${progressOnly ? "text-primary" : avatar.color}`}>{progressOnly ? `Level ${currentLevel}` : avatar.stage}</div>
+            <div className="mt-0.5 text-sm font-medium text-muted-foreground">Engagement level {currentLevel}</div>
+            <div className="mt-1 text-pretty text-xs leading-relaxed text-muted-foreground">
+              {progressOnly ? "Your engagement progress without a character or creature." : avatar.description}
+            </div>
           </div>
-          <div className="flex-shrink-0 text-right">
-            <div className="text-2xl font-bold text-primary">{streak}</div>
-            <div className="text-xs text-muted-foreground">days</div>
-            {longestStreak > 0 && <div className="text-[10px] text-muted-foreground">Longest recorded run: {longestStreak}</div>}
+          <div className="min-w-[92px] flex-shrink-0 text-right">
+            <div className="mb-1 text-xs font-medium text-muted-foreground">Current check-in run</div>
+            <div className="flex items-baseline justify-end gap-1">
+              <div className="text-2xl font-bold text-primary">{streak}</div>
+              <div className="text-xs text-muted-foreground">days</div>
+            </div>
+            {longestStreak > 0 && <div className="mt-0.5 text-[10px] text-muted-foreground">Longest recorded run: {longestStreak}</div>}
           </div>
         </div>
 
