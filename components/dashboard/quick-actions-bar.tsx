@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
 import CommunityButton from "./community-button"
-import { HeartHandshake, Share2, Shield } from "lucide-react"
+import { Share2, Shield } from "lucide-react"
 
 export default function QuickActionsBar() {
   const router = useRouter()
@@ -16,15 +16,6 @@ export default function QuickActionsBar() {
       </div>
 
       <div className="flex shrink-0 items-center gap-2">
-        <Button
-          onClick={() => router.push("/support")}
-          variant="outline"
-          className="border-destructive/20 bg-destructive/5 font-medium text-destructive hover:bg-destructive/10 hover:text-destructive"
-        >
-          <HeartHandshake className="mr-2 size-4" />
-          Support
-        </Button>
-
         <Button
           onClick={() => router.push("/safeguards")}
           variant="outline"
