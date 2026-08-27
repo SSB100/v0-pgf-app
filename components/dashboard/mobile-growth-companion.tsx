@@ -71,6 +71,21 @@ function getStage(avatarType: string, level: number): Stage {
         { min: 20, stage: "Celestial Fox", image: "/images/avatar-fox-celestial.jpg" },
       ],
     },
+    waka_journey: {
+      name: "Waka",
+      levels: [
+        { min: 0, stage: "Shaped", image: "/images/avatar-waka-01.png" },
+        { min: 1, stage: "Bound", image: "/images/avatar-waka-02.png" },
+        { min: 3, stage: "Ready", image: "/images/avatar-waka-03.png" },
+        { min: 5, stage: "Prepared", image: "/images/avatar-waka-04.png" },
+        { min: 7, stage: "Launched", image: "/images/avatar-waka-05.png" },
+        { min: 9, stage: "Carrying", image: "/images/avatar-waka-06.png" },
+        { min: 11, stage: "Steady", image: "/images/avatar-waka-07.png" },
+        { min: 14, stage: "Guided", image: "/images/avatar-waka-08.png" },
+        { min: 17, stage: "Travelling", image: "/images/avatar-waka-09.png" },
+        { min: 20, stage: "Wayfound", image: "/images/avatar-waka-10.png" },
+      ],
+    },
   }
 
   const config = stages[avatarType] || stages.growth_tree
