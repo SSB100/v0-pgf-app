@@ -28,7 +28,7 @@ test("Waypoint preference sanitizer accepts only known focus areas and growth pr
   assert.equal(progressOnly.ok, true)
   assert.equal(progressOnly.growthAvatar, "none")
   assert.ok(WAYPOINT_FOCUS_AREAS.length >= 6)
-  assert.equal(GROWTH_COMPANION_IDS.length, 5)
+  assert.equal(GROWTH_COMPANION_IDS.length, 6)
   assert.ok(GROWTH_PRESENTATION_IDS.includes("none"))
 })
 
@@ -159,7 +159,7 @@ test("Settings retains Progress only after the baseline is complete", async () =
 
   assert.match(preferences, /waypoint-preferences-policy/)
   assert.match(preferences, /Progress only/)
-  assert.match(preferences, /Fantasy Companions/)
+  assert.match(preferences, /Growth Companions/)
   assert.match(preferences, /do not erase your history, credits, Journey progress or sharing settings/)
   assert.match(desktopGrowth, /avatarType === "none"/)
   assert.match(mobileGrowth, /avatarType === "none"/)
