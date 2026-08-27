@@ -164,7 +164,7 @@ export default function WaypointPreferencesCard() {
               </div>
             </button>
 
-            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Fantasy Companions</p>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Growth Companions</p>
             <div className="grid gap-2 sm:grid-cols-2">
               {AVATAR_OPTIONS.map((avatar) => {
                 const selected = preferences.growthAvatar === avatar.id

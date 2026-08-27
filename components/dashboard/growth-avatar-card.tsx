@@ -66,6 +66,21 @@ const avatarConfig = {
       return { stage: "Celestial Fox", image: "/images/avatar-fox-celestial.jpg", color: "text-indigo-500", description: "A later engagement stage" }
     },
   },
+  waka_journey: {
+    name: "Waka",
+    getStage: (level: number) => {
+      if (level === 0) return { stage: "Shaped", image: "/images/avatar-waka-01.webp", color: "text-primary", description: "The starting stage" }
+      if (level < 3) return { stage: "Bound", image: "/images/avatar-waka-02.webp", color: "text-primary", description: "Early activity in Waypoint" }
+      if (level < 5) return { stage: "Ready", image: "/images/avatar-waka-03.webp", color: "text-primary", description: "More Waypoint activities completed" }
+      if (level < 7) return { stage: "Prepared", image: "/images/avatar-waka-04.webp", color: "text-primary", description: "Your engagement journey is taking shape" }
+      if (level < 9) return { stage: "Launched", image: "/images/avatar-waka-05.webp", color: "text-primary", description: "Continued engagement with Waypoint" }
+      if (level < 11) return { stage: "Carrying", image: "/images/avatar-waka-06.webp", color: "text-primary", description: "Ongoing activity across Waypoint" }
+      if (level < 14) return { stage: "Steady", image: "/images/avatar-waka-07.webp", color: "text-primary", description: "A growing record of engagement" }
+      if (level < 17) return { stage: "Guided", image: "/images/avatar-waka-08.webp", color: "text-primary", description: "Further engagement with Waypoint" }
+      if (level < 20) return { stage: "Travelling", image: "/images/avatar-waka-09.webp", color: "text-primary", description: "A later engagement stage" }
+      return { stage: "Wayfound", image: "/images/avatar-waka-10.webp", color: "text-primary", description: "The current final visual stage" }
+    },
+  },
 }
 
 export default function GrowthAvatarCard({ avatarType, level, levelCredits, streak, longestStreak }: GrowthAvatarCardProps) {
