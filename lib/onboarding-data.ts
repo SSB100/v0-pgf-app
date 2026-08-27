@@ -39,6 +39,14 @@ export const AVATAR_OPTIONS = [
     stages: ["Kit", "Young Fox", "Spirit Fox", "Mystic Fox", "Celestial Fox"],
     previewImage: "/images/avatar-fox-preview.jpg",
   },
+  {
+    id: "waka_journey",
+    name: "Waka",
+    description: "A waka shaped, prepared and guided into a journey, representing movement, navigation and purposeful progress",
+    theme: "Movement & Navigation",
+    stages: ["Shaped", "Bound", "Ready", "Prepared", "Launched", "Carrying", "Steady", "Guided", "Travelling", "Wayfound"],
+    previewImage: "/images/avatar-waka-01.png",
+  },
 ]
 
 export const VALUE_DOMAINS = [
