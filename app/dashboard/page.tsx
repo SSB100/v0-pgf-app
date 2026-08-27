@@ -222,7 +222,7 @@ export default async function DashboardPage() {
             </p>
           </div>
 
-          <div className="grid gap-4 lg:grid-cols-12 lg:items-start">
+          <div className="grid gap-4 lg:grid-cols-12 lg:items-start xl:items-stretch">
             <div className="lg:col-span-4 lg:min-w-0">
               <GrowthAvatarCard
                 avatarType={profile.growth_avatar || "growth_tree"}
@@ -233,7 +233,7 @@ export default async function DashboardPage() {
               />
             </div>
 
-            <div className="grid gap-4 lg:col-span-8 lg:min-w-0 xl:grid-cols-[minmax(0,1.5fr)_minmax(280px,0.85fr)]">
+            <div className="grid gap-4 lg:col-span-8 lg:min-w-0 xl:h-full xl:grid-cols-[minmax(0,1.5fr)_minmax(280px,0.85fr)] xl:grid-rows-[minmax(270px,auto)_1fr]">
               {nextJourneyModule ? (
                 <div className="relative min-h-[270px] overflow-hidden rounded-2xl border border-primary/25 bg-card shadow-sm">
                   <div className="pointer-events-none absolute inset-0">
@@ -353,6 +353,10 @@ export default async function DashboardPage() {
                   </Link>
                 )}
               </div>
+
+              <div className="hidden xl:col-span-2 xl:block xl:min-w-0 xl:[&>*]:h-full">
+                <CoreValuesCard values={values} layout="horizontal" />
+              </div>
             </div>
           </div>
         </section>
@@ -370,14 +374,16 @@ export default async function DashboardPage() {
         </div>
 
         <section className="grid gap-5 lg:grid-cols-12 lg:gap-6" aria-label="Your Waypoint overview">
-          <div className="space-y-5 lg:col-span-8 lg:min-w-0 lg:space-y-6">
-            <div id="weekly-overview" className="scroll-mt-24">
+          <div className="space-y-5 lg:col-span-8 lg:min-w-0 lg:space-y-6 xl:contents">
+            <div id="weekly-overview" className="scroll-mt-24 xl:col-span-8 xl:min-w-0">
               <WeeklyOverviewCard checkins={weeklyCheckins} journeyTypes={journeyTypes} accountCreatedAt={user.created_at} />
             </div>
-            <SuggestedSkillsCard awareness={latestAwareness} problems={primaryProblem} values={values} weeklyCheckins={weeklyCheckins} />
+            <div className="xl:col-span-4 xl:min-w-0">
+              <SuggestedSkillsCard awareness={latestAwareness} problems={primaryProblem} values={values} weeklyCheckins={weeklyCheckins} />
+            </div>
           </div>
 
-          <aside className="space-y-5 lg:col-span-4 lg:min-w-0 lg:space-y-6" aria-label="Values">
+          <aside className="space-y-5 lg:col-span-4 lg:min-w-0 lg:space-y-6 xl:hidden" aria-label="Values">
             <CoreValuesCard values={values} />
           </aside>
         </section>
