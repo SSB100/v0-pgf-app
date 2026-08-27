@@ -1,0 +1,172 @@
+name: Apply dashboard overflow alignment fix
+
+on:
+  push:
+    branches:
+      - fix/dashboard-reflection-overflow-align
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
+      - name: Apply compact reflection and alignment changes
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace_once(text: str, old: str, new: str, label: str) -> str:
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f"{label}: expected exactly one match, found {count}")
+              return text.replace(old, new, 1)
+
+          def replace_exact_count(text: str, old: str, new: str, expected: int, label: str) -> str:
+              count = text.count(old)
+              if count != expected:
+                  raise SystemExit(f"{label}: expected {expected} matches, found {count}")
+              return text.replace(old, new)
+
+          dashboard_path = Path("app/dashboard/page.tsx")
+          dashboard = dashboard_path.read_text()
+
+          dashboard = replace_once(
+              dashboard,
+              '<div className="lg:col-span-4 lg:min-w-0">\n              <GrowthAvatarCard',
+              '<div className="lg:col-span-4 lg:min-w-0 xl:h-full xl:[&>*]:h-full">\n              <GrowthAvatarCard',
+              "Growth and Progress full-height wrapper",
+          )
+
+          start_marker = '              <div className={`flex min-h-[360px] flex-col rounded-2xl border p-5 shadow-sm sm:p-6 xl:h-full xl:min-h-0 xl:p-5 ${todayCheckIn ? "border-emerald-500/25 bg-emerald-500/5" : "border-border/70 bg-card"}`}>'
+          end_marker = '\n\n              <div className="hidden xl:col-span-2 xl:block xl:min-w-0 xl:[&>*]:h-full">'
+          start = dashboard.find(start_marker)
+          end = dashboard.find(end_marker, start)
+          if start == -1 or end == -1:
+              raise SystemExit("Could not isolate Daily Reflection card")
+
+          reflection = dashboard[start:end]
+          reflection = replace_once(
+              reflection,
+              'xl:h-full xl:min-h-0 xl:p-5',
+              'xl:h-full xl:min-h-0 xl:overflow-hidden xl:p-4',
+              "Daily Reflection desktop padding",
+          )
+          reflection = replace_once(
+              reflection,
+              'flex size-11 shrink-0 items-center justify-center rounded-xl border',
+              'flex size-11 shrink-0 items-center justify-center rounded-xl border xl:size-9',
+              "Daily Reflection icon tile",
+          )
+          reflection = replace_once(
+              reflection,
+              'className="mt-4 text-xl font-bold tracking-tight text-foreground"',
+              'className="mt-4 text-xl font-bold tracking-tight text-foreground xl:mt-3 xl:text-lg"',
+              "Daily Reflection title spacing",
+          )
+          reflection = replace_once(
+              reflection,
+              'className="mt-1.5 text-sm leading-relaxed text-muted-foreground"',
+              'className="mt-1.5 text-sm leading-relaxed text-muted-foreground xl:mt-1 xl:text-xs xl:leading-snug"',
+              "Daily Reflection intro copy",
+          )
+          reflection = replace_once(
+              reflection,
+              '<div className="mt-4 space-y-3">',
+              '<div className="mt-4 space-y-3 xl:mt-3 xl:space-y-2">',
+              "Daily Reflection completed spacing",
+          )
+          reflection = replace_exact_count(
+              reflection,
+              'className="rounded-xl border border-border/60 bg-background/70 p-3"',
+              'className="rounded-xl border border-border/60 bg-background/70 p-3 xl:px-3 xl:py-2"',
+              2,
+              "Daily Reflection score tiles",
+          )
+          reflection = replace_exact_count(
+              reflection,
+              'className="mt-0.5 text-xl font-bold text-foreground"',
+              'className="mt-0.5 text-xl font-bold text-foreground xl:text-lg"',
+              2,
+              "Daily Reflection score typography",
+          )
+          reflection = replace_once(
+              reflection,
+              'className="col-span-2 rounded-xl border border-border/60 bg-background/70 p-3 sm:col-span-1"',
+              'className="col-span-2 rounded-xl border border-border/60 bg-background/70 p-3 sm:col-span-1 xl:px-3 xl:py-2"',
+              "Daily Reflection emotion tile",
+          )
+          reflection = replace_once(
+              reflection,
+              'className="mt-1.5 flex flex-wrap gap-1.5"',
+              'className="mt-1.5 flex flex-wrap gap-1.5 xl:mt-1 xl:gap-1"',
+              "Daily Reflection emotion chips spacing",
+          )
+          reflection = replace_once(
+              reflection,
+              'className="mt-1.5 truncate text-[10px] text-muted-foreground"',
+              'className="mt-1.5 truncate text-[10px] text-muted-foreground xl:mt-1"',
+              "Daily Reflection strongest emotion spacing",
+          )
+          reflection = replace_once(
+              reflection,
+              'className="flex items-start gap-3 rounded-xl border border-primary/15 bg-primary/[0.04] px-3.5 py-3"',
+              'className="flex items-start gap-3 rounded-xl border border-primary/15 bg-primary/[0.04] px-3.5 py-3 xl:gap-2.5 xl:px-3 xl:py-2"',
+              "Daily Reflection quote panel",
+          )
+          reflection = replace_once(
+              reflection,
+              'className="mt-1 text-xs leading-relaxed text-foreground/80"',
+              'className="mt-1 text-xs leading-relaxed text-foreground/80 xl:mt-0.5 xl:text-[11px] xl:leading-snug"',
+              "Daily Reflection quote copy",
+          )
+          reflection = replace_once(
+              reflection,
+              '<div className="mt-auto pt-4">',
+              '<div className="mt-auto pt-4 xl:pt-3">',
+              "Daily Reflection action spacing",
+          )
+          reflection = replace_exact_count(
+              reflection,
+              'className="inline-flex min-h-11 w-full',
+              'className="inline-flex min-h-11 w-full xl:min-h-10',
+              2,
+              "Daily Reflection action height",
+          )
+
+          dashboard = dashboard[:start] + reflection + dashboard[end:]
+          dashboard_path.write_text(dashboard)
+
+          test_path = Path("tests/client-first-use-policy.test.mjs")
+          tests = test_path.read_text()
+          tests += '''\n\ntest("Daily Reflection compacts its XL completed state without increasing the fixed row", async () => {
+            const source = await readSource("app/dashboard/page.tsx")
+
+            assert.match(source, /xl:grid-rows-\\[400px_minmax\\(0,1fr\\)\\]/)
+            assert.match(source, /xl:overflow-hidden xl:p-4/)
+            assert.match(source, /xl:mt-3 xl:space-y-2/)
+            assert.match(source, /xl:text-\\[11px\\] xl:leading-snug/)
+            assert.match(source, /xl:min-h-10/)
+          })
+
+          test("Growth and Progress stretches to the bottom of the Core Values row on desktop", async () => {
+            const source = await readSource("app/dashboard/page.tsx")
+
+            assert.match(source, /lg:col-span-4 lg:min-w-0 xl:h-full xl:\\[&>\\*\\]:h-full/)
+            assert.match(source, /hidden xl:col-span-2 xl:block xl:min-w-0 xl:\\[&>\\*\\]:h-full/)
+          })\n'''
+          test_path.write_text(tests)
+          PY
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/dashboard/page.tsx tests/client-first-use-policy.test.mjs
+          git rm .github/workflows/temp-dashboard-overflow-align.yml
+          git commit -m "Fit Daily Reflection and align dashboard cards"
+          git push origin HEAD
