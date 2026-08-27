@@ -72,8 +72,8 @@ const POLISH: Record<string, ModulePolish> = {
   },
   "building-awareness": {
     description: "Take a quick snapshot of how things are today without turning the snapshot into a score.",
-    whyItMatters: "One rough hour can feel like the whole story. A simple check-in gives you information instead of a verdict.",
-    keyLearning: "A check-in is a weather report, not a school grade. A few snapshots over time can show useful patterns.",
+    whyItMatters: "One rough hour can feel like the whole story. A simple Daily Reflection gives you information instead of a verdict.",
+    keyLearning: "A Daily Reflection is a weather report, not a school grade. A few snapshots over time can show useful patterns.",
     removeSectionTitles: ["Notice the difference between the camera and the narrator"],
   },
   "recognizing-triggers": {

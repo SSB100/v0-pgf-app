@@ -189,7 +189,7 @@ export default function MobileDashboardHome({ userName, journeyProgress }: Mobil
                   </div>
                 </div>
               ) : (
-                <p className="mt-0.5 text-[10px] font-semibold text-primary">Check in or choose a next step</p>
+                <p className="mt-0.5 text-[10px] font-semibold text-primary">Start a Daily Reflection or choose a next step</p>
               )}
             </div>
           </Link>
@@ -223,7 +223,7 @@ export default function MobileDashboardHome({ userName, journeyProgress }: Mobil
               <CheckCircle2 className="size-4 text-primary" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-foreground">Check-in history</p>
+              <p className="text-sm font-semibold text-foreground">Daily Reflection history</p>
               <p className="truncate text-[11px] text-muted-foreground">Recent entries and seven-day patterns</p>
             </div>
             <ChevronRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
@@ -244,7 +244,7 @@ export default function MobileDashboardHome({ userName, journeyProgress }: Mobil
         <Link
           href="/dashboard/check-ins"
           className="group min-w-0 rounded-2xl border border-border/70 bg-card px-3.5 py-3 shadow-sm transition-colors hover:bg-secondary/20"
-          aria-label="Open seven-day check-in overview"
+          aria-label="Open seven-day Daily Reflection overview"
         >
           <div className="flex items-center gap-2.5">
             <div className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-primary/10">
@@ -271,7 +271,7 @@ export default function MobileDashboardHome({ userName, journeyProgress }: Mobil
                   aria-label={
                     checkin
                       ? `${date}: mood ${checkin.moodRating ?? "not recorded"} out of 10, overall ${checkin.overallRating ?? "not recorded"} out of 10`
-                      : `${date}: no check-in recorded`
+                      : `${date}: no Daily Reflection recorded`
                   }
                 >
                   <div className="flex h-9 items-end justify-center gap-0.5 rounded-md bg-secondary/35 px-1 pt-1">

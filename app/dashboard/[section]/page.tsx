@@ -109,15 +109,15 @@ export default async function DashboardSectionPage({ params }: { params: Promise
               <div className={`flex size-11 items-center justify-center rounded-2xl ${todayCheckIn ? "bg-emerald-500/10" : "bg-primary/10"}`}>
                 {todayCheckIn ? <CheckCircle2 className="size-5 text-emerald-600" /> : <CalendarDays className="size-5 text-primary" />}
               </div>
-              <span className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${todayCheckIn ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300" : "bg-secondary text-muted-foreground"}`}>
+              <span className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${todayCheckIn ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300" : "invisible bg-secondary text-muted-foreground"}`} aria-hidden={!todayCheckIn}>
                 {todayCheckIn ? "Recorded today" : "Optional"}
               </span>
             </div>
-            <h1 className="mt-3 text-xl font-bold text-foreground">{todayCheckIn ? "Your check-in is saved" : "How are things today?"}</h1>
+            <h1 className="mt-3 text-xl font-bold text-foreground">{todayCheckIn ? "Your Daily Reflection is saved" : "How are things today?"}</h1>
             <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
               {todayCheckIn
                 ? "You can leave it there for today or look back at what you recorded."
-                : "A short check-in can capture mood, urges and what stood out. Skip it if it would not help today."}
+                : "A short Daily Reflection can capture mood, urges and what stood out. Skip it if it would not help today."}
             </p>
             {todayCheckIn && (
               <div className="mt-3 grid grid-cols-3 gap-2">
@@ -127,7 +127,7 @@ export default async function DashboardSectionPage({ params }: { params: Promise
               </div>
             )}
             <Link href={todayCheckIn ? "/dashboard/check-ins" : "/check-in"} className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground">
-              {todayCheckIn ? "View check-ins" : "Open check-in"} <ArrowRight className="size-4" />
+              {todayCheckIn ? "View Daily Reflections" : "Open Daily Reflection"} <ArrowRight className="size-4" />
             </Link>
           </section>
 
@@ -186,7 +186,7 @@ export default async function DashboardSectionPage({ params }: { params: Promise
     const latest = checkins[checkins.length - 1] || null
 
     return (
-      <MobileDashboardSectionShell title="Check-ins" description="Your recent entries at a glance">
+      <MobileDashboardSectionShell title="Daily Reflections" description="Your recent entries at a glance">
         <div className="flex flex-1 flex-col gap-3">
           <section className="rounded-3xl border border-border/70 bg-card p-4 shadow-sm">
             <div className="flex items-center justify-between gap-3">
@@ -196,7 +196,7 @@ export default async function DashboardSectionPage({ params }: { params: Promise
               </div>
               <div className="flex size-11 items-center justify-center rounded-2xl bg-primary/10"><CalendarDays className="size-5 text-primary" /></div>
             </div>
-            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">Empty days stay empty. Missing a check-in is not treated as a good or bad result.</p>
+            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">Empty days stay empty. Missing a Daily Reflection is not treated as a good or bad result.</p>
             <div className="mt-4 grid grid-cols-7 gap-1.5">
               {days.map((day) => (
                 <div key={day.date} className="text-center">
@@ -231,11 +231,11 @@ export default async function DashboardSectionPage({ params }: { params: Promise
               </div>
             </section>
           ) : (
-            <section className="rounded-2xl border border-dashed border-border p-4 text-center text-sm text-muted-foreground">No check-ins have been recorded in this seven-day window.</section>
+            <section className="rounded-2xl border border-dashed border-border p-4 text-center text-sm text-muted-foreground">No Daily Reflections have been recorded in this seven-day window.</section>
           )}
 
           <Link href="/check-in" className="mt-auto inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-primary/25 bg-primary/5 text-sm font-semibold text-primary">
-            Open daily check-in <ArrowRight className="size-4" />
+            Open Daily Reflection <ArrowRight className="size-4" />
           </Link>
         </div>
       </MobileDashboardSectionShell>

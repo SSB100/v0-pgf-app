@@ -157,7 +157,7 @@ export default function GrowthTreeCard({
               </TooltipTrigger>
               <TooltipContent className="max-w-xs">
                 <p className="text-sm">
-                  Grow your tree by completing daily check-ins and finishing modules in your My Journey plan. Each
+                  Grow your tree by completing Daily Reflections and finishing modules in your My Journey plan. Each
                   activity earns you level credits that help your tree flourish!
                 </p>
               </TooltipContent>
@@ -209,7 +209,7 @@ export default function GrowthTreeCard({
 
         <div className="bg-card/80 rounded-lg p-4 space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Check-in Streak</span>
+            <span className="text-sm text-muted-foreground">Daily Reflection Streak</span>
             <div className="text-right">
               <div className="text-lg font-bold text-primary">{streak} days</div>
               {longestStreak > streak && <div className="text-xs text-muted-foreground">Best: {longestStreak}</div>}

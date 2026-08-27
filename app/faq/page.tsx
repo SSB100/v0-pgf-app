@@ -25,7 +25,7 @@ export default function FAQPage() {
               <AccordionItem value="item-1" className="border rounded-lg px-6 bg-card">
                 <AccordionTrigger className="text-lg font-semibold text-primary hover:no-underline">What is Waypoint?</AccordionTrigger>
                 <AccordionContent className="text-primary/70">
-                  Waypoint is a developing self-guided recovery and wellbeing platform for adults. It includes onboarding, daily check-ins, learning and skills modules, values work, progress views, support information and an optional peer community. It is a support tool, not a health service or clinical treatment programme.
+                  Waypoint is a developing self-guided recovery and wellbeing platform for adults. It includes onboarding, Daily Reflections, learning and skills modules, values work, progress views, support information and an optional peer community. It is a support tool, not a health service or clinical treatment programme.
                 </AccordionContent>
               </AccordionItem>
 
@@ -58,9 +58,9 @@ export default function FAQPage() {
               </AccordionItem>
 
               <AccordionItem value="item-6" className="border rounded-lg px-6 bg-card">
-                <AccordionTrigger className="text-lg font-semibold text-primary hover:no-underline">What are daily check-ins?</AccordionTrigger>
+                <AccordionTrigger className="text-lg font-semibold text-primary hover:no-underline">What are Daily Reflections?</AccordionTrigger>
                 <AccordionContent className="text-primary/70">
-                  Daily check-ins let you record self-reported information such as mood, urges, emotions, skills used and relevant behaviours. Your dashboard can show patterns in what you have entered over time. Waypoint does not interpret those entries as a diagnosis or clinical assessment.
+                  Daily Reflections let you record self-reported information such as mood, urges, emotions, skills used and relevant behaviours. Your dashboard can show patterns in what you have entered over time. Waypoint does not interpret those entries as a diagnosis or clinical assessment.
                 </AccordionContent>
               </AccordionItem>
 
@@ -95,7 +95,7 @@ export default function FAQPage() {
               <AccordionItem value="item-11" className="border rounded-lg px-6 bg-card">
                 <AccordionTrigger className="text-lg font-semibold text-primary hover:no-underline">How do I get started?</AccordionTrigger>
                 <AccordionContent className="text-primary/70">
-                  Create an adult account and complete guided onboarding to establish your starting self-reported baseline. The onboarding asks about the areas you want support with, relevant history and patterns, your values and strengths, and includes your first Daily Check-in and Growth Companion choice. This gives Waypoint a meaningful starting point for later reflection and personalisation. Some preferences can still be changed later in Settings. The current MVP is intended for people aged 18 and over.
+                  Create an adult account and complete guided onboarding to establish your starting self-reported baseline. The onboarding asks about the areas you want support with, relevant history and patterns, your values and strengths, and includes your first Daily Reflection and Growth Companion choice. This gives Waypoint a meaningful starting point for later reflection and personalisation. Some preferences can still be changed later in Settings. The current MVP is intended for people aged 18 and over.
                 </AccordionContent>
               </AccordionItem>
 

@@ -38,7 +38,7 @@ export default async function Home() {
             </h1>
             <p className="text-lg md:text-xl text-foreground/80 leading-relaxed max-w-xl text-pretty">
               Waypoint is a self-guided recovery and wellbeing companion for adults. It helps you notice patterns, practise useful skills,
-              check in with yourself and stay connected to the goals and values that matter to you.
+              use Daily Reflections and stay connected to the goals and values that matter to you.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 pt-2">
               <Link href="/auth/signup">
@@ -87,7 +87,7 @@ export default async function Home() {
             <ul className="space-y-3">
               {[
                 "11 interactive learning and skills modules",
-                "Daily check-ins for mood, urges and patterns you choose to track",
+                "Daily Reflections for mood, urges and patterns you choose to track",
                 "An optional Growth Companion or progress-only view for your Waypoint engagement",
               ].map((item) => (
                 <li key={item} className="flex items-start gap-3">
@@ -161,7 +161,7 @@ export default async function Home() {
             },
             {
               icon: Calendar,
-              title: "Daily Check-Ins",
+              title: "Daily Reflections",
               desc: "Record your self-reported mood, urges, emotions and relevant behaviours so you can look back at patterns over time.",
               img: "/images/daily-reflection.jpg",
             },
@@ -174,7 +174,7 @@ export default async function Home() {
             {
               icon: TrendingUp,
               title: "Visual Progress",
-              desc: "See trends in your own check-ins and Waypoint activity without treating engagement scores as a clinical measure of recovery.",
+              desc: "See trends in your own Daily Reflections and Waypoint activity without treating engagement scores as a clinical measure of recovery.",
             },
             {
               icon: CheckCircle,
@@ -227,7 +227,7 @@ export default async function Home() {
               {
                 n: "01",
                 title: "Establish your Waypoint baseline",
-                desc: "Create your account, then complete guided onboarding covering the areas you want support with, relevant history and patterns, your values and strengths, and your first Daily Check-in. You will also choose a Growth Companion for your initial progress view.",
+                desc: "Create your account, then complete guided onboarding covering the areas you want support with, relevant history and patterns, your values and strengths, and your first Daily Reflection. You will also choose a Growth Companion for your initial progress view.",
               },
               {
                 n: "02",
@@ -236,7 +236,7 @@ export default async function Home() {
               },
               {
                 n: "03",
-                title: "Keep checking in",
+                title: "Use Daily Reflections",
                 desc: "Record your mood, urges, emotions and reflections over time so you can compare later entries with your own starting point and notice patterns.",
               },
               {

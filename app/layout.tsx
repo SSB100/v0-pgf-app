@@ -9,7 +9,7 @@ const _geistMono = Geist_Mono({ subsets: ["latin"] })
 export const metadata: Metadata = {
   title: "Waypoint - Recovery & Wellbeing Companion",
   description:
-    "A developing self-guided recovery and wellbeing companion for adults in Aotearoa New Zealand, with reflection, check-ins, practical skills and support resources.",
+    "A developing self-guided recovery and wellbeing companion for adults in Aotearoa New Zealand, with reflection, Daily Reflections, practical skills and support resources.",
   generator: "v0.app",
   icons: {
     icon: [

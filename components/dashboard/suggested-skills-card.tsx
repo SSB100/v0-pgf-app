@@ -99,7 +99,7 @@ export default function SuggestedSkillsCard({ awareness, problems, weeklyCheckin
   if (avgMood !== null && avgMood <= 5 && avgUrges !== null && avgUrges >= 6) {
     suggestions.push({
       skill: "Reality Acceptance",
-      reason: "Your recent check-ins included lower mood and stronger urges",
+      reason: "Your recent Daily Reflections included lower mood and stronger urges",
       description: "An acceptance-based module for facts that cannot be changed right now while preserving boundaries, safety and available action.",
       link: "/journey/learn/reality-acceptance",
     })

@@ -33,7 +33,7 @@ export default function MobileNav() {
       label: "Journey",
       active: pathname.startsWith("/journey") || pathname.startsWith("/skills") || pathname.startsWith("/training"),
     },
-    { href: "/check-in", icon: Calendar, label: "Check-in", active: pathname.startsWith("/check-in"), isDone: checkInDone },
+    { href: "/check-in", icon: Calendar, label: "Reflection", active: pathname.startsWith("/check-in"), isDone: checkInDone },
     { href: "/safeguards", icon: Shield, label: "Safety", active: pathname.startsWith("/safeguards") },
     { href: communityHref, icon: Users, label: "Community", active: pathname.startsWith("/community") },
   ]
@@ -63,7 +63,7 @@ export default function MobileNav() {
               <div className="relative flex size-7 items-center justify-center">
                 <Icon className={`size-5 ${item.active ? "stroke-[2.4]" : "stroke-2"}`} />
                 {item.isDone && (
-                  <CheckCircle2 className="absolute -right-1 -top-1 size-3.5 fill-card text-primary stroke-[2.5]" aria-label="Today's check-in recorded" />
+                  <CheckCircle2 className="absolute -right-1 -top-1 size-3.5 fill-card text-primary stroke-[2.5]" aria-label="Today's Daily Reflection recorded" />
                 )}
               </div>
 

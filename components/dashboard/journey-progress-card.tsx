@@ -192,7 +192,7 @@ export default function JourneyProgressCard({
           </div>
         )}
 
-        <div className={`rounded-lg border border-primary/20 bg-primary/5 ${compact ? "p-2.5" : "mt-4 p-3"}`}>
+        <div className={`invisible rounded-lg border border-primary/20 bg-primary/5 ${compact ? "p-2.5" : "mt-4 p-3"}`} aria-hidden="true">
           <p className={compact ? "text-xs leading-relaxed text-muted-foreground" : "text-sm text-muted-foreground"}>
             Dates, focus areas and app activity can help you reflect on patterns, but they do not by themselves show whether your health or recovery is improving.
           </p>

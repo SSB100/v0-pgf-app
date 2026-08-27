@@ -17,8 +17,8 @@ export const PROFESSIONAL_SHARE_SCOPES = [
   },
   {
     id: "daily_checkins_summary",
-    label: "Daily check-in summaries",
-    description: "Selected trend and summary information from daily check-ins. Free-text reflections and private notes are excluded.",
+    label: "Daily Reflection summaries",
+    description: "Selected trend and summary information from Daily Reflections. Free-text reflections and private notes are excluded.",
     sensitivity: "sensitive" as ProfessionalSensitivity,
   },
   {

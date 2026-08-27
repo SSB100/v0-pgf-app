@@ -38,7 +38,7 @@ export default function PrivacyPolicyPage() {
               <li>account information such as your name, email address and password hash;</li>
               <li>age-eligibility and demographic information currently collected at signup, including date of birth, country and gender;</li>
               <li>onboarding information about goals, challenges, values, strengths, wellbeing and recovery context;</li>
-              <li>daily check-ins, urges, behaviour information, skills practice, Journey progress and reflections you choose to enter;</li>
+              <li>Daily Reflections, urges, behaviour information, skills practice, Journey progress and reflections you choose to enter;</li>
               <li>safeguard/support-plan information you choose to save;</li>
               <li>community profile, membership, posts, messages and reports where community features are used;</li>
               <li>account-security, consent, sharing and access records as those governance features are introduced.</li>
@@ -52,7 +52,7 @@ export default function PrivacyPolicyPage() {
 
           <section>
             <h2 className="mb-3 text-2xl font-semibold text-primary">4. Professional sharing</h2>
-            <p>The current production sharing screen is a prototype and does not give a healthcare professional access to your Waypoint information. Before professional sharing is enabled, Waypoint is being designed to require a verified professional relationship, explicit user approval, category-by-category sharing permissions, revocation, expiry where appropriate and access logging. Private free-text reflections will not be included simply because summary check-in sharing is enabled.</p>
+            <p>The current production sharing screen is a prototype and does not give a healthcare professional access to your Waypoint information. Before professional sharing is enabled, Waypoint is being designed to require a verified professional relationship, explicit user approval, category-by-category sharing permissions, revocation, expiry where appropriate and access logging. Private free-text reflections will not be included simply because Daily Reflection summary sharing is enabled.</p>
           </section>
 
           <section>

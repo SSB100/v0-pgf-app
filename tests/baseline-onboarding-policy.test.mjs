@@ -63,7 +63,7 @@ test("active onboarding remains the comprehensive baseline flow", async () => {
 
   assert.match(page, /OnboardingFlow/)
   assert.match(page, /requestedStep <= 50/)
-  assert.match(page, /focus areas, values, strengths and first check-in/)
+  assert.match(page, /focus areas, values, strengths and first Daily Reflection/)
 
   for (const requiredStep of [
     "journey_type",

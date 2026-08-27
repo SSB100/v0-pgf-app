@@ -349,7 +349,7 @@ export default function PrivacyCentreClient() {
                   <p className="mt-1 leading-5">The current MVP still stores your exact date of birth after checking the 18+ requirement. Waypoint is reviewing whether the final product can retain only an age-verification result or age band instead.</p>
                 </div>
               )}
-              <p className="leading-5 text-muted-foreground">Your recovery data can include onboarding answers, daily check-ins, saved Journey responses and progress, skills, values, safeguards and community activity you choose to create. The data register is being refined before formal pilot use.</p>
+              <p className="leading-5 text-muted-foreground">Your recovery data can include onboarding answers, Daily Reflections, saved Journey responses and progress, skills, values, safeguards and community activity you choose to create. The data register is being refined before formal pilot use.</p>
             </CardContent>
           </Card>
 
@@ -473,7 +473,7 @@ export default function PrivacyCentreClient() {
                   )}
 
                   <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-4">
-                    <p className="text-xs leading-5 text-muted-foreground">Private check-in notes remain excluded. Completed Journey exercise and quick-check responses are available only through the separate Journey responses permission shown above.</p>
+                    <p className="text-xs leading-5 text-muted-foreground">Private Daily Reflection notes remain excluded. Completed Journey exercise and quick-check responses are available only through the separate Journey responses permission shown above.</p>
                     <Button
                       onClick={() => saveSharing(connection.id)}
                       disabled={!canEdit || sharingSaving === connection.id || (addingJourneyResponses && !journeyHistoryChoice)}

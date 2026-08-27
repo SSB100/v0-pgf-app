@@ -66,9 +66,9 @@ export default async function CheckInPage() {
                 </svg>
               </div>
               <div className="space-y-1">
-                <h1 className="text-2xl font-bold text-foreground">Check-In Complete</h1>
+                <h1 className="text-2xl font-bold text-foreground">Daily Reflection Complete</h1>
                 <p className="text-muted-foreground text-sm max-w-xs mx-auto">
-                  You've already completed today's check-in. Come back tomorrow to log your next one.
+                  You've already completed today's Daily Reflection. Come back tomorrow for your next one.
                 </p>
               </div>
               <Link
@@ -81,10 +81,10 @@ export default async function CheckInPage() {
           ) : (
             <>
               <div className="mb-6">
-                <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">Daily Check-In</h1>
+                <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">Daily Reflection</h1>
                 <p className="text-muted-foreground text-sm sm:text-base">
-                  Take a moment to reflect on your day and track your progress. Regular check-ins help you stay aware
-                  and build resilience.
+                  Take a moment to reflect on your day and record what stands out. Daily Reflections can help you notice patterns
+                  and stay aware of what is changing over time.
                 </p>
               </div>
               <CheckInForm userId={userId} journeyTypes={journeyTypes} problems={problems} />

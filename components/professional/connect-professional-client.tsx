@@ -180,7 +180,7 @@ export default function ConnectProfessionalClient({ token }: { token: string }) 
             <div className="flex gap-2"><AlertTriangle className="mt-0.5 size-4 shrink-0" /><p>{preview.monitoringNotice}</p></div>
           </div>
           <div className="rounded-lg border bg-muted/20 p-4 text-sm text-muted-foreground">
-            Private check-in notes remain excluded. Journey exercise and quick-check responses are shared only if the separate Journey responses category is selected above. You can change sharing permissions later from Privacy &amp; Sharing.
+            Private Daily Reflection notes remain excluded. Journey exercise and quick-check responses are shared only if the separate Journey responses category is selected above. You can change sharing permissions later from Privacy &amp; Sharing.
           </div>
         </CardContent>
       </Card>
